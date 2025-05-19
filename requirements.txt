@@ -1,0 +1,4 @@
+setuptools~=75.8.0
+pygame~=2.6.1
+pyvidplayer2~=0.9.26
+cachetools~=5.5.2
