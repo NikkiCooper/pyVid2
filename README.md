@@ -109,7 +109,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `--printVideoList`           | Print a list of available videos |
 | `--printIgnoreList`          | Search for `.ignore` files in specified directories |
 
-### ❕ <span style="color:DodgerBlue">Example Command-Line</span>
+### ✔️ <span style="color:DodgerBlue">Example Command-Line</span>
 
 ```sh
 PyVid2 --loop --shuffle --enableFFprobe --Paths ~/SlideShows ~/MyVideos ~/mnt/MediaServer/Music \Videos
@@ -179,20 +179,22 @@ to create an ignore file is: ```touch .ignore``` from the command-prompt. The fo
 concept:
 
 ```md
-        Video_Repository
-        ----------------
+     +------------------+
+     | Video_Repository |
+     +------------------+
               |
               |
-       +--------------+
-       |              |
-       |              |
-   Music_Vids   SlideShow_Vids
-   ----------   --------------
-    .ignore     Slideshow1.mp4
-    M1.mp4      Slideshow2.mp4
-    M2.mp4      Slideshow3.mp4
-    M3.mp3      Slideshow4.mp4
-      ...            ...
+      +-------+--------+
+      |                |
+      |                |
+ +----+-----+   +------+-------+
+ |Music_Vids|   |SlideShow_Vids|
+ +----------+   +--------------+
+    .ignore      Slideshow1.mp4
+    M1.mp4       Slideshow2.mp4
+    M2.mp4       Slideshow3.mp4
+    M3.mp3       Slideshow4.mp4
+     ...              ...
 ```
 
 In the above simplified example, if 'Video_Repository' is the directory pyVid2 is recursively scanning,
@@ -202,7 +204,7 @@ it will ignore all playable media in Music_Vids, while playing everything in Sli
 given the **--printIgnoreList** command-line argument along with one or more directories to scan via **--Paths**, it will
 produce a report in the console of all *.ignore* files found in the specified directory trees. For example: ```pyVid2 --printIgnoreList --Paths Video_Repository```.  By default, **pyVid2** honors all *.ignore* files it encounters. The command line argument **--noIgnore** will direct pyVid2 to ignore any *.ignore* files it encounters in any paths specified by the **--Paths** argument. **--noIgnore**  is global across all specified paths given to **--Paths**.  In other words,  to **pyVid2**,  it is an all or nothing proposition.
 
-### <span style="color:DodgerBlue">Environment Variables</span>
+### ☁️ <span style="color:DodgerBlue">Environment Variables</span>
 
 Command line arguments (if there are any) always takes priority over any set environment variables.
 
@@ -213,14 +215,14 @@ Command line arguments (if there are any) always takes priority over any set env
 Currently, there is only one command line argument that overrides any set environment variables:  **--display**.  For example: ```pyVid2 --display 2`` will start the video on monitor #2 on a three monitor setup.  Note that monitor numbers begin with 0.  By default, pyVid2 will
 render the video in the active monitor it is run in.  
 
-## 🔧 <span style="color:DodgerBlue">Installation</span>
+## 🛠️ <span style="color:DodgerBlue">Installation</span>
 
 ### ✅ <spam style="color:DodgerBlue">Requirements</spam>
 
-- ✅ [pygame>=2.6](https://www.pygame.org/download.shtml)
-- ✅ [cachetools>=75.8.0](https://pypi.org/project/cachetools/)
-- ✅ [setuptools>=5.5.2](https://pypi.org/project/setuptools/)
-- ✅ [pyvidplayer2>=0.9.26](https://pypi.org/project/pyvidplayer2/)
+- 🔗 [pygame>=2.6](https://www.pygame.org/download.shtml)
+- 🔗 [cachetools>=75.8.0](https://pypi.org/project/cachetools/)
+- 🔗 [setuptools>=5.5.2](https://pypi.org/project/setuptools/)
+- 🔗 [pyvidplayer2>=0.9.26](https://pypi.org/project/pyvidplayer2/)
 
 ```sh
 git clone https://github.com/NikkiCooper/pyVid2.git
