@@ -6,6 +6,8 @@
 #
 import argparse
 import os
+
+#from matplotlib.rcsetup import validate_bool
 from Bcolors import Bcolors
 
 bc = Bcolors()
@@ -48,6 +50,7 @@ def cmdLineOptions():
     system_group = parser.add_argument_group(f"{bc.BOLD}{bc.Blue_f}System Settings{bc.RESET}")
     system_group.add_argument("--verbose", action="store_true", help=f"{bc.Light_Yellow_f}Be verbose on errors and execeptions\n{bc.Magenta_f}Default: False{bc.RESET}")
     system_group.add_argument("--display", type=str, help=f"{bc.Light_Yellow_f}Enable output on a specific display\n{bc.Magenta_f}Default: The currenty active display{bc.RESET}")
+    #system_group.add_argument("--listActiveMonitors", type=str, help=f"{bc.Light_Yellow_f}Lists active monitors detected on your computer.  Use as a helper func to --display.{bc.RESET}")
     system_group.add_argument("--consoleStatusBar", action="store_true", help=f"{bc.Light_Yellow_f}Enables a debug status bar in the console\n{bc.Magenta_f}Default: Disable console status bar{bc.RESET}")
 
     # 📂 File & Directory Management
@@ -61,6 +64,7 @@ def cmdLineOptions():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--Paths", nargs="+", type=validate_user_dirs, default=None, help=f"{bc.Light_Yellow_f}Directories to scan for playable media{bc.RESET}")
     group.add_argument("--loadPlayList", type=validate_playList, help=f"{bc.Light_Yellow_f}Load a playlist from a file\n{bc.Magenta_f}Specify: /path/PlaylistName{bc.RESET}")
+    group.add_argument("--listActiveMonitors", nargs="?", const=True, help=f"{bc.Light_Yellow_f}Lists active monitors detected on your computer. Then exit.\nUse as a helper func to --display.{bc.RESET}")
 
     args = parser.parse_args()
 
@@ -71,17 +75,25 @@ def cmdLineOptions():
     args.loop_flag = False
     args.actualDuration = 0
 
+
     if args.loadPlayList is None:
         args.loadPlayListFlag = False
     else:
         args.loadPlayListFlag = True
     return args
 
+
 # Validate that the user supplied path/playlist exists.
 def validate_playList(playlist):
     if not os.path.isfile(os.path.expanduser(playlist)):
         raise argparse.ArgumentTypeError(f"Error: {bc.Red_f}'{playlist}'{bc.Light_Yellow_f} was not found.{bc.RESET}")
     return playlist
+
+'''
+# Validate that --listActiveMonitors is a bool
+def validate_bool(value):
+    return True
+'''
 
 # Validate user supplied media directories
 def validate_user_dirs(path):

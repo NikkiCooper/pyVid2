@@ -5,14 +5,9 @@
 
 ## 💋 <span style="color:DodgerBlue">Overview</span>
 
-pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuourly play
-media in an automated manner.
+pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media in an automated manner.
 
-pyVid2 is unique in that it only supports playing videos that it finds in user supplied directories.  The scan in
-pyVid2 is capable of finding Tens of thousands of playable media in just seconds. The resulting internal playlist
-can contain +500K or more entries, limited only by how much ram is available. The speed of course depends upon the
-hardware PyVid2 is running on. For now, pyVid2 is only in the testing phase.  There are many features missing or
-not working correctly. In short, pyVid2 is not yet ready for prime time.
+pyVid2 is unique in that it only supports playing videos that it finds in user supplied directories.  The scan in pyVid2 is capable of finding Tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
 
 ## 🧸 <span style="color:DodgerBlue">Features</span>
 

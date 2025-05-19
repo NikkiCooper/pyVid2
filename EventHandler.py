@@ -134,7 +134,6 @@ class EventHandler:
 						self.PlayVideoInstance.progress_percentage = 0
 						self.PlayVideoInstance.progress_active = False
 
-				# This works too
 				elif event.x == 0 and event.y == WHEEL_DOWN:
 					if self.PlayVideoInstance.vid.active:
 						self.PlayVideoInstance.vid.seek(-5)
@@ -448,3 +447,4 @@ class EventHandler:
 				self.PlayVideoInstance.vid.mute()
 			else:
 				self.PlayVideoInstance.vid.unmute()
+

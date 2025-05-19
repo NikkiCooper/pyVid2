@@ -20,6 +20,7 @@ class FindVideos:
 		self.pathList = opts.Paths
 		self.videoList  = []
 		self.ignoreList = []
+
 		self.numVideos = self.getVideos()
 
 	def getVideos(self):

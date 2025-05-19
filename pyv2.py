@@ -6,12 +6,20 @@
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
 import os
+import subprocess
 from Bcolors import Bcolors
 from cmdLineOpts import cmdLineOptions
 from PlayVideo import PlayVideo
 from EventHandler import EventHandler
 from FindVideos import FindVideos
 
+def listActiveMonitors():
+	"""
+	Helper function for --display cli
+	Lists to console all active monitors
+	"""
+	result = subprocess.run(["xrandr", "--listactivemonitors"], capture_output=True, text=True)
+	print(result.stdout)
 
 def main():
 	# Create a Bcolors instance to give us colors in the console.
@@ -28,6 +36,11 @@ def main():
 
 	#opts, pathList, reader = cliOptions(bcolors)
 	opts = cmdLineOptions()
+	
+	if opts.listActiveMonitors:
+		listActiveMonitors()
+		exit()
+
 	# Create a FindVideos instance, populate Videos.videoList with the path/filename of all found playable media.
 	Videos = FindVideos(opts)
 

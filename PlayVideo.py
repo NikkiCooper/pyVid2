@@ -47,6 +47,7 @@ class PlayVideo:
 		so no point in continuing.
 		Just exit the program instead.
 		'''
+
 		if len(self.videoList) == 0:
 			print("No playable media files were found.  Exiting.")
 			exit(128)
