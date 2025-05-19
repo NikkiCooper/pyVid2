@@ -116,10 +116,9 @@ class PlayVideo:
 		pygame.transform.set_smoothscale_backend(self.smoothscaleBackend)
 		self.clock = pygame.time.Clock()
 
-		# OSD
-		# OSD Icons. 
+		# OSD Icons.
 		# The width and height of self.OSD_ICON_X & self.OSD_ICON_Y will be taken off the play icon.
-		# Therefore ALL icons must have the same width and height and their backgrounds must be transparent.
+		# Therefore, ALL icons must have the same width and height and their backgrounds must be transparent.
 		self.playIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/play.png").convert_alpha()
 		self.pauseIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/pause.png").convert_alpha()
 		self.forwardIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/forward10s.png").convert_alpha()
@@ -168,13 +167,16 @@ class PlayVideo:
 		self.font_regular_50 = pygame.font.Font(self.FONT_DIR + 'RobotoCondensed-Regular.ttf',  50)
 		self.font_bold_regular_75 = pygame.font.Font(self.FONT_DIR + 'Roboto-Bold.ttf',75)
 
+		# Referenced in addShadowEffect()
+		self.font = None
+
 		# Location of the thumbnail cache directory
 		self.CACHE_DIR = self.USER_HOME + '/.local/share/pyVid/thumbs'
 		# Create a thumbnail cache with a maximum of 25 entries that reside in memory.
 		self.thumbnail_cache = cachetools.LRUCache(maxsize=25)
 
 	def addShadowEffect(self, screen, font, video_name, org_dur, cur_dur, play_speed, curPos):
-		self.font = font
+		#self.font = font
 		shadow_color = pygame.color.THECOLORS['red']
 		text_color = pygame.color.THECOLORS['white']
 		position = (self.displayWidth // 2, self.displayHeight - 12)
@@ -769,7 +771,7 @@ class PlayVideo:
 
 	def render_filename_text(self, text, y, font_size=60,outline_style="default"):
 		"""Renders OSD text with a bold black outline for better visibility on light backgrounds."""
-		# Really Good!
+		# Perfect!
 		font = pygame.font.Font(self.FONT_DIR + "luximb.ttf", font_size)
 
 		# Render text with no outline
@@ -895,7 +897,7 @@ class PlayVideo:
 	def render_osd_text(self, text, x, y, curPos, font_size=50, outline_style="default"):
 		"""Renders OSD text with a bold black outline for better visibility on light backgrounds."""
 		color = pygame.color.THECOLORS['dodgerblue']  # Default assignment
-		# Really Good!
+		# Excellent!
 		START_FADE_TIME = 20
 		font = pygame.font.Font(self.FONT_DIR + "luximb.ttf", font_size)
 
@@ -905,7 +907,7 @@ class PlayVideo:
 		if int(time_delta) <= cutoff_time:
 			color = self.get_fade_color(time_delta, cutoff_time) if self.OSD_curPos_flag else pygame.color.THECOLORS['dodgerblue']
 
-		text_render = font.render(text, True, (color))
+		text_render = font.render(text, True, color)
 		#text_width, text_height = text_render.get_size()
 		self.osd_text_width, self.osd_text_height = text_render.get_size()
 
@@ -1228,7 +1230,7 @@ class PlayVideo:
 		print()
 		print(f"{self.bcolors.BOLD}{self.bcolors.Blue_f}System Settings:{self.bcolors.RESET}")
 		print(f"{self.bcolors.BOLD}opts.verbose: {(self.bcolors.BOOL_TRUE + 'True' if verbose else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
-		print(f"{self.bcolors.BOLD}opts.display: {self.bcolors.Magenta_f}{(display)}{self.bcolors.RESET}")
+		print(f"{self.bcolors.BOLD}opts.display: {self.bcolors.Magenta_f}{display}{self.bcolors.RESET}")
 		print(f"{self.bcolors.BOLD}opts.consoleStatusBar: {(self.bcolors.BOOL_TRUE + 'True' if consoleStatusBar else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
 		print()
 		print(f"{self.bcolors.BOLD}{self.bcolors.BOLD}{self.bcolors.Blue_f}File Handling:{self.bcolors.RESET}")
