@@ -231,7 +231,7 @@ it will ignore all playable media in Music_Vids, while playing everything in Sli
 given the **--printIgnoreList** command-line argument along with one or more directories to scan via **--Paths**, it will
 produce a report in the console of all *.ignore* files found in the specified directory trees. For example: ```pyVid2 --printIgnoreList --Paths Video_Repository```.  By default, **pyVid2** honors all *.ignore* files it encounters. The command line argument **--noIgnore** will direct pyVid2 to ignore any *.ignore* files it encounters in any paths specified by the **--Paths** argument. **--noIgnore**  is global across all specified paths given to **--Paths**.  In other words,  to **pyVid2**,  it is an all or nothing proposition.
 
-### ☁️ <span style="color:DodgerBlue">Environment Variables</span>
+### ♻️ <span style="color:DodgerBlue">Environment Variables</span>
 
 Command line arguments (if there are any) always take priority over any set environment variables.
 
@@ -263,7 +263,7 @@ pip install -r requirements.txt
 ./pyvid2 --help
 ```
 
-### 🐛 <span style="color:HotPink">Ubuntu Linux</span>
+### 💩 <span style="color:HotPink">Ubuntu Linux</span>
 
 If pyVid2 doesn't run in your version of Ubuntu Linux, don't despair. Simply run pyVid2 in a
 Python virtual environment using **venv**,  🔗  [Anaconda](https://www.anaconda.com/docs/getting-started/anaconda/install) or  🔗 [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install)
@@ -294,7 +294,7 @@ cd "pyVid2_installation_dir"
 pip install -r requirements.txt
 ```
 
-## 🐜 <span style="color:DodgerBlue">Issues</span>
+## ☠️ <span style="color:DodgerBlue">Issues</span>
 
 - PyVid2 is work in progress and does not pretend to be anything other than a learning tool.
 - There are some usability bugs, but these are quickly being squashed.
