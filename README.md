@@ -263,12 +263,12 @@ pip install -r requirements.txt
 ./pyvid2 --help
 ```
 
-### 💩 <span style="color:HotPink">Ubuntu Linux</span>
+## 💩 <span style="color:HotPink">Ubuntu Linux</span>
 
 If pyVid2 doesn't run in your version of Ubuntu Linux, don't despair. Simply run pyVid2 in a
 Python virtual environment using **venv**,  🔗  [Anaconda](https://www.anaconda.com/docs/getting-started/anaconda/install) or  🔗 [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install)
 
-### Using venv (easiest, is included with Python)
+### 😺 Using venv (easiest, is included with Python)
 
 ```sh
 # Create the environment 
