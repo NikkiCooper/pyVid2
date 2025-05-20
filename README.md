@@ -64,11 +64,12 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ## 📜 <span style="color:DodgerBlue">Command-Line Arguments</span>
 
-| **Option**                   | **Description** |
-|------------------------------|-----------------------------------------------------|
-| `-h, --help`                | Show help message and exit |
-| `--Paths PATHS [PATHS ...]` | Directories to scan for playable media |
-| `--loadPlayList LOADPLAYLIST` | Load a playlist from a file (`/path/PlaylistName`) |
+| **Option**                    | **Description**                                           |
+|-------------------------------|-----------------------------------------------------------|
+| `-h, --help`                  | Show help message and exit                                |
+| `--Paths PATHS [PATHS ...]`   | Directories to scan for playable media                    |
+| `--listActiveMonitors`        | Prints a list of detected active monitors to the console  |
+| `--loadPlayList LOADPLAYLIST` | Load a playlist from a file (`/path/PlaylistName`)        |
 
 ### 📽️ **<span style="color:HotPink">Video Playback Options</span>**
 
@@ -117,9 +118,33 @@ PyVid2 --loop --shuffle --enableFFprobe --Paths ~/SlideShows ~/MyVideos ~/mnt/Me
 
 ## 📚 <span style="color:DodgerBlue">Documentation</span>
 
+### 🔖 <span style="color:DodgerBlue">Mutually exclusive arguments</span>
+There are currently three command line arguments whose use are mutually exclusive of each other:
+1. --Paths PATHS [PATHS ...]
+2. --loadPlayList LOADPLAYLIST
+3. --listActiveMonitors
+
+Due to how _argparse_ handles mutually exclusive argument groups, **--listActiveMonitors** is shown as requiring a parameter.
+when using **--help** or **-h**.  Passing a parameter to **--listActiveMonitors** is not necesesary.
+The **--Paths** argument is _always_ required unless using **--loadPlayList**, or in more rare cases
+**--listActiveMonitors**.  Supply **--Paths** with as many _directories_ you want scanned for media as necessary.
+In order to use **--loadPlayList**, an active pyVid2 playlist must be saved to a file after pyVid2 is up and running by
+pressing the 'w' key. This writes pyVid2s running playlist to ```~/VideoPlayList-SIZE.txt```, where **_SIZE_** is the
+number of entries in the list.  Example: ```~/VideoPlayList-454.txt``` indicates there are 454 entries in the list.
+
 **NOTE:**
-For the moment, pyVid2 lacks the ability to specify specific videos on the command-line to play!
-  This is not by accident but rather by design. But take 💗 in that I'll be adding this soon so stay tuned.
+For the moment, pyVid2 lacks the ability to specify specific videos on the command-line to play!  This is not by 
+accident but rather by design. pyVid2 was not designed for this purpose.  pyVid2 was designed as a presentation video player
+supporting huge playlists consisting of thousands of entries. 
+
+### 🔖 <span style="color:DodgerBlue">--noRecurse</span>
+**--noRecurse** applies to _all_ paths supplied to the **--Paths** argument.  
+
+### 🔖 <span style="color:DodgerBlue">--interp lanczos4</span>
+When using **lanczos4** and **--playSpeed** with a playback speed > 1X, playback will experience some lost frames  unless
+the hardware pyVid2 is running on is _very_ high end in performance.  This is due to the fact that **lanczos4**  by its
+nature is very processor intensive.  By default, pyVid2 defaults to interp=cubic, which is suitable for most hardware.
+
 
 ### ⌨ <span style="color:DodgerBlue">Keyboard-commands</span>
 
