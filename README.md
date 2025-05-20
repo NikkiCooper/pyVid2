@@ -130,7 +130,9 @@ The **--Paths** argument is _always_ required unless using **--loadPlayList**, o
 **--listActiveMonitors**.  Supply **--Paths** with as many _directories_ you want scanned for media as necessary.
 In order to use **--loadPlayList**, an active pyVid2 playlist must be saved to a file after pyVid2 is up and running by
 pressing the 'w' key. This writes pyVid2s running playlist to ```~/VideoPlayList-SIZE.txt```, where **_SIZE_** is the
-number of entries in the list.  Example: ```~/VideoPlayList-454.txt``` indicates there are 454 entries in the list.
+number of entries in the list.  Example: ```~/VideoPlayList-454.txt``` indicates there are 454 entries in the list. The
+default path used for the saved playlist is **~**, however, this can be changed by setting an environment variable.
+See **Environment variables** below. 
 
 **NOTE:**
 For the moment, pyVid2 lacks the ability to specify specific videos on the command-line to play!  This is not by 
@@ -231,14 +233,13 @@ produce a report in the console of all *.ignore* files found in the specified di
 
 ### ☁️ <span style="color:DodgerBlue">Environment Variables</span>
 
-Command line arguments (if there are any) always takes priority over any set environment variables.
+Command line arguments (if there are any) always take priority over any set environment variables.
 
 - **PYGAME_DISPLAY=display** For multiple monitor setups. Sets the monitor to play media on.  Select 0|1|2 ...
 - **SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0** For multi-monitor setups, this is necessary to avoid the video minimizing when it loses focus.
 - **SAVE_PLAYLIST_PATH=path** Specifiy the path to save pyVids playlist to ('w' keyboard command)
 
-Currently, there is only one command line argument that overrides any set environment variables:  **--display**.  For example: ```pyVid2 --display 2`` will start the video on monitor #2 on a three monitor setup.  Note that monitor numbers begin with 0.  By default, pyVid2 will
-render the video in the active monitor it is run in.  
+Currently, there is only one command line argument that overrides any set environment variables:  **--display**.  For example: ```pyVid2 --display 2`` will start the video on monitor #2 on a three monitor setup.  Note that monitor numbers begin with 0.  By default, pyVid2 will render the video in the active monitor it is run in. Use **--listActiveMonitors** to retrieve a list of possible monitors to use with the **--display** argument.   
 
 ## 🛠️ <span style="color:DodgerBlue">Installation</span>
 
