@@ -143,7 +143,7 @@ supporting huge playlists consisting of thousands of entries.
 ### 🔖 <span style="color:DodgerBlue">--interp lanczos4</span>
 When using **lanczos4** and **--playSpeed** with a playback speed > 1X, playback will experience some lost frames  unless
 the hardware pyVid2 is running on is _very_ high end in performance.  This is due to the fact that **lanczos4**  by its
-nature is very processor intensive.  By default, pyVid2 defaults to interp=cubic, which is suitable for most hardware.
+nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, which is suitable for most hardware.
 
 
 ### ⌨ <span style="color:DodgerBlue">Keyboard-commands</span>
