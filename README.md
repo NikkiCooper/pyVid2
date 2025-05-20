@@ -143,7 +143,7 @@ supporting huge playlists consisting of thousands of entries.
 **--noRecurse** applies to _all_ paths supplied to the **--Paths** argument.  
 
 ### 🔖 <span style="color:DodgerBlue">--interp lanczos4</span>
-When using **lanczos4** and **--playSpeed** with a playback speed > 1X, playback will experience some lost frames  unless
+When using **lanczos4** and **--playSpeed** with a playback speed > 1x, playback will experience some lost frames  unless
 the hardware pyVid2 is running on is _very_ high end in performance.  This is due to the fact that **lanczos4**  by its
 nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, which is suitable for most hardware.
 
@@ -250,6 +250,9 @@ Currently, there is only one command line argument that overrides any set enviro
 - 🔗 [setuptools>=5.5.2](https://pypi.org/project/setuptools/)
 - 🔗 [pyvidplayer2>=0.9.26](https://pypi.org/project/pyvidplayer2/)
 
+There are other requirements such as **_ffmpeg_** that will likey need to be installed via your Linux distribution's 
+package manager. Refer to your particular distributions documention for information how to accomplish that. 
+
 ```sh
 git clone https://github.com/NikkiCooper/pyVid2.git
 cd pyVid2
@@ -260,10 +263,10 @@ pip install -r requirements.txt
 ./pyvid2 --help
 ```
 
-### <span style="color:HotPink">Ubuntu Linux</span>
+### 🐛 <span style="color:HotPink">Ubuntu Linux</span>
 
-If pyVid2 doesn't run in your version of Ubuntu Linux (It likely won't) don't despair. Simply run pyVid2 in a
-Python virtual environment using **venv**, **Conda** or **Miniconda**:
+If pyVid2 doesn't run in your version of Ubuntu Linux, don't despair. Simply run pyVid2 in a
+Python virtual environment using **venv**,  🔗  [Anaconda](https://www.anaconda.com/docs/getting-started/anaconda/install) or  🔗 [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install)
 
 ### Using venv (easiest, is included with Python)
 
@@ -277,7 +280,7 @@ cd "pyVid2_installation_dir"
 pip install -r requirements.txt
 ```
 
-### Using Conda or Miniconda (requires that Conda or Miniconda be installed)
+###  🐍 Using Anaconda or Miniconda (requires that Anaconda or Miniconda be installed)
 
 ```sh
 # Update to latest
@@ -291,7 +294,7 @@ cd "pyVid2_installation_dir"
 pip install -r requirements.txt
 ```
 
-## 🛠️ <span style="color:DodgerBlue">Issues</span>
+## 🐜 <span style="color:DodgerBlue">Issues</span>
 
 - PyVid2 is work in progress and does not pretend to be anything other than a learning tool.
 - There are some usability bugs, but these are quickly being squashed.
