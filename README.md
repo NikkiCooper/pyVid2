@@ -11,7 +11,7 @@ pyVid2 is unique in that it only supports playing videos that it finds in user s
 
 ## 🧸 <span style="color:DodgerBlue">Features</span>
 
-- Supports multiple video readers: **Auto, FFmpeg, OpenCV, ImageIO, Decord**
+- Supports multiple video reader backends: **Auto, FFmpeg, OpenCV, ImageIO, Decord**
 - Optimized for really fast directory scanning **speed and efficiency**.
 - Handles **recursive directory scanning** for playable media.
 - Can play .GIF files (feature in development)
