@@ -58,6 +58,8 @@ git clone https://github.com/NikkiCooper/pyVid2.git
 cd pyVid2
 # Install the required Python libraries
 pip install -r requirements.txt
+# Install required fonts to ~/.local/share/pyVid/fonts
+./install.sh
 # Sample invocation
 python pyvid2.py --loop --shuffle --Paths ~/Videos
 ```
