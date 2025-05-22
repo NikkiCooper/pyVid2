@@ -150,6 +150,22 @@ the hardware pyVid2 is running on is _very_ high end in performance.  This is du
 nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, which is suitable for most hardware.
 
 
+
+### <span style="color:DodgerBlue">Playback status bar</span>
+The playback status bar is work in progress. It is automatically displayed when the mouse cursor is in the lower 15% of
+the display. It accepts mouse button clicks too.  This includes the Playback speed and the Volume.  Left-clicking on the 
+extreme left of the playback speed or the Volume decreases the values, Left-clicking on the extreme left of the playback
+speed or the Volume decreases the values.  The Right-Mouse button also works, only in the opposite manner. 
+
+![Playback status bar](./assets/Playback-1.jpg)
+
+![Playback status bar](./assets/Playback.jpg)
+
+As shown in the above illustration,  when the playback speed is anything other than [1X], the playback duration at that
+speed is also displayed to the left of the -->.
+
+
+
 ### ⌨ <span style="color:DodgerBlue">Keyboard-commands</span>
 
 There are a number of keyboard commands available while a video is playing:
