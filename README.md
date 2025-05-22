@@ -1,11 +1,12 @@
-# 🎬 PyVid2 – A Video Playback Application _vesion 0.50_
+# 🎬 PyVid2 – A Video Playback Application
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen)
 
 ## 💋 <span style="color:DodgerBlue">Overview</span>
 
-pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media in an automated manner.
+pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media
+in an automated manner. The latest version is  _vesion 0.50_
 
 pyVid2 is unique in that it only supports playing videos that it finds in user supplied directories.  The scan in pyVid2 is capable of finding tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
 
