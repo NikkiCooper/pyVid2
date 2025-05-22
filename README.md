@@ -162,7 +162,7 @@ speed or the Volume decreases the values.  The Right-Mouse button also works, on
 ![Playback status bar](./assets/Playback.jpg)
 
 As shown in the above illustration,  when the playback speed is anything other than [1X], the playback duration at that
-speed is also displayed to the left of the -->.
+speed is also displayed to the right of the -->.
 
 
 
