@@ -252,7 +252,7 @@ Currently, there is only one command line argument that overrides any set enviro
 - 🔗 [setuptools>=5.5.2](https://pypi.org/project/setuptools/)
 - 🔗 [pyvidplayer2>=0.9.26](https://pypi.org/project/pyvidplayer2/)
 
-There are other requirements such as **_ffmpeg_** that will likey need to be installed via your Linux distribution's 
+There are other requirements such as **_ffmpeg_** that will need to be installed via your Linux distributions 
 package manager. Refer to your particular distributions documention for information how to accomplish that. 
 
 ```sh
