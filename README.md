@@ -1,4 +1,4 @@
-# 🎬 PyVid2 – A Video Playback Application
+# 🎬 PyVid2 – A Video Playback Application _vesion 0.50_
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen)

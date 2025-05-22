@@ -36,7 +36,7 @@ def main():
 
 	#opts, pathList, reader = cliOptions(bcolors)
 	opts = cmdLineOptions()
-	
+
 	if opts.listActiveMonitors:
 		listActiveMonitors()
 		exit()
