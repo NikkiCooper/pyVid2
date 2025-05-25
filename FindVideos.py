@@ -4,6 +4,7 @@
 #  terms of the GNU Lesser General Public License, version 3.0 which is available at
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
+# Class to generate the pyVid2 internal master playlist.
 import os
 
 class FindVideos:

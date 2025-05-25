@@ -4,6 +4,8 @@
 #  terms of the GNU Lesser General Public License, version 3.0 which is available at
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
+# Pygame event handler class
+import os
 import pygame
 import time
 
@@ -52,6 +54,8 @@ class EventHandler:
 		self.threshold = int(self.PlayVideoInstance.displayHeight * self.threshold_ratio)
 		self.current_video = -1
 
+
+
 	def handle_events(self):
 		for event in pygame.event.get():
 
@@ -61,6 +65,9 @@ class EventHandler:
 
 			elif event.type == pygame.MOUSEMOTION:
 				mouse_x, mouse_y = pygame.mouse.get_pos()
+				if self.PlayVideoInstance.video_info_box:
+					# render the tooltip
+					self.update_video_info(mouse_x, mouse_y)
 				# Toggle status bar visibility
 				self.PlayVideoInstance.status_bar_visible = mouse_y >= self.PlayVideoInstance.displayHeight - self.threshold
 
@@ -95,6 +102,11 @@ class EventHandler:
 								mouse_x, mouse_y =  pygame.mouse.get_pos()
 								self.update_volume(mouse_x, mouse_y)
 								self.update_video_speed(mouse_x, mouse_y)
+								if self.PlayVideoInstance.video_info_box:
+									#self.update_video_info(mouse_x, mouse_y)
+									if self.PlayVideoInstance.drawVidInfo.button_rect.collidepoint(event.pos): # process the OK button
+										self.PlayVideoInstance.video_info_box = False
+										#self.PlayVideoInstance.vid.play()
 
 							if self.mouse_press_times.get(LEFT_BUTTON_SHORT) and self.mouse_press_times.get(RIGHT_BUTTON_SHORT):
 								self.PlayVideoInstance.quit_video()
@@ -170,8 +182,13 @@ class EventHandler:
 			self.PlayVideoInstance.print_cli_options()
 
 		# Toggle loop current video; The current video will loop until toggled.
-		#if key  == "i":
-			#pygame.display.toggle_fullscreen()
+		elif key  == "i":
+			#self.PlayVideoInstance.vid.pause()
+			self.PlayVideoInstance.video_info_box = True
+			filename = self.PlayVideoInstance.vid.name + self.PlayVideoInstance.vid.ext
+			path = os.path.dirname(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
+			filepath = os.path.join(path, "")
+			self.PlayVideoInstance.DrawVideoInfoBox(filepath, filename)
 		elif key == "l":
 			self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
 		# Restart video
@@ -336,7 +353,6 @@ class EventHandler:
 			self.PlayVideoInstance.vid.close()
 			# Start a new instance of the video
 			try:
-				pygame.time.delay(500)
 				self.PlayVideoInstance.vid = self.PlayVideoInstance.playVideo(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
 				# Seek to the last frame played prior to changing the playback speed
 				self.PlayVideoInstance.vid.seek_frame(currFrame)
@@ -448,3 +464,16 @@ class EventHandler:
 			else:
 				self.PlayVideoInstance.vid.unmute()
 
+	def update_video_info(self, mouse_x, mouse_y):
+		if self.PlayVideoInstance.drawVidInfo.filename_rect.collidepoint(mouse_x, mouse_y):
+			self.PlayVideoInstance.video_info_box_tooltip = True
+			self.PlayVideoInstance.video_info_box_tooltip_mouse_x = mouse_x + 15
+			self.PlayVideoInstance.video_info_box_tooltip_mouse_y = mouse_y + 5
+			self.PlayVideoInstance.drawVidInfo.draw_tooltip(
+											self.PlayVideoInstance.win,
+							                self.PlayVideoInstance.vid.name + self.PlayVideoInstance.vid.ext,
+							                mouse_x + 15,
+											mouse_y + 5
+											)
+		else:
+			self.PlayVideoInstance.video_info_box_tooltip = False

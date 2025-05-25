@@ -4,6 +4,8 @@
 #  terms of the GNU Lesser General Public License, version 3.0 which is available at
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
+# Class that plays the video and updates all information dialog boxes ETC.
+#
 import os
 import datetime
 import cachetools
@@ -23,6 +25,7 @@ from fractions import Fraction
 from pyvidplayer2.video_pygame import VideoPygame
 from pyvidplayer2 import Video
 import pyvidplayer2
+from DrawVideoInfo import DrawVideoInfo
 
 class PlayVideo:
 	def __init__(self, opts: object, videoList: list, bcolors: object) -> None:
@@ -42,6 +45,15 @@ class PlayVideo:
 		# A list containing the path/filenames of each video to be played
 		self.videoList = videoList
 		self.USER_HOME = None
+
+		self.drawVidInfo = None
+		#  flag to decide if we display the  video info box or not
+		self.video_info_box = False
+		# Flag to render the video info box tooltip
+		self.video_info_box_tooltip = False
+		self.video_info_box_tooltip_mouse_x = 0
+		self.video_info_box_tooltip_mouse_y = 0
+
 		'''
 		There are no entries in self.videoList,
 		so no point in continuing.
@@ -119,10 +131,11 @@ class PlayVideo:
 		# OSD Icons.
 		# The width and height of self.OSD_ICON_X & self.OSD_ICON_Y will be taken off the play icon.
 		# Therefore, ALL icons must have the same width and height and their backgrounds must be transparent.
-		self.playIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/play.png").convert_alpha()
-		self.pauseIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/pause.png").convert_alpha()
-		self.forwardIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/forward10s.png").convert_alpha()
-		self.rewindIcon = pygame.image.load("/home/nikki/PycharmProjects/pyVid2/Resources/rewind10s.png").convert_alpha()
+		self.RESOURCES_DIR = self.USER_HOME + "/.local/share/pyVid/Resources/"
+		self.playIcon = pygame.image.load(self.RESOURCES_DIR + "play.png").convert_alpha()
+		self.pauseIcon = pygame.image.load(self.RESOURCES_DIR + "pause.png").convert_alpha()
+		self.forwardIcon = pygame.image.load(self.RESOURCES_DIR + "forward10s.png").convert_alpha()
+		self.rewindIcon = pygame.image.load(self.RESOURCES_DIR + "rewind10s.png").convert_alpha()
 		# x,y coordinates of the OSD play/pause icons
 		self.OSD_ICON_X = 50
 		self.OSD_ICON_Y = 28
@@ -143,14 +156,6 @@ class PlayVideo:
 		self.last_osd_position = 0.0
 		self.seekFwd_flag = False
 		self.seekRewind_flag = False
-
-
-		'''
-		self.cursor_hand = pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_HAND)
-		self.cursor_wait = pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_WAIT)
-		self.cursor_crosshair = pygame.cursors.Cursor(pygame.SYSTEM_CURSOR_CROSSHAIR)
-		'''
-
 
 		''' 
 		Setup some fonts to be used by the status bar.
@@ -1240,6 +1245,11 @@ class PlayVideo:
 		print(f"{self.bcolors.BOLD}opts.printIgnoreList: {(self.bcolors.BOOL_TRUE + 'True' if printIgnoreList else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
 		print()
 
+	def DrawVideoInfoBox(self, FilePath, Filename):
+		self.drawVidInfo = DrawVideoInfo(self.win, FilePath, Filename, self.USER_HOME)
+		self.drawVidInfo.draw_info_box()
+		#pygame.display.flip()
+
 	def playVideo(self, video):
 		"""
 		Method that creates a VideoPygame object and starts playing it.
@@ -1256,6 +1266,7 @@ class PlayVideo:
 			self.vid: VideoPygame = Video(video,
 										  use_pygame_audio=self.opts.usePygameAudio,
 										  interp=self.opts.interp,
+			                              audio_track=self.opts.audioTrack,
 										  speed=self.opts.playSpeed,
 										  no_audio=self.opts.noAudio,
 										  reader=self.opts.reader_val_int
@@ -1317,6 +1328,10 @@ class PlayVideo:
 				self.seek_flag = False          # Reset seek behavior
 				self.last_vid_info_pos = 0.0
 				self.seek_flag2 = False
+				#
+				# reset the video metadata box  and tooltip if active
+				self.video_info_box = False
+				self.video_info_box_tooltip = False
 
 				#print(f"📌 New video loaded! Resetting OSD tracking to prevent glitches.")
 
@@ -1382,6 +1397,15 @@ class PlayVideo:
 												  self.vid.get_volume(),
 												  self.vid.get_pos()
 												  )
+
+						if self.video_info_box:
+							self.drawVidInfo.draw_info_box()
+							if self.video_info_box_tooltip:
+								self.drawVidInfo.draw_tooltip(self.win,
+								                              self.vid.name + self.vid.ext,
+								                              self.video_info_box_tooltip_mouse_x,
+								                              self.video_info_box_tooltip_mouse_y
+								                              )
 
 						if self.progress_active:
 							if pygame.time.get_ticks() - self.last_update_time > 10:

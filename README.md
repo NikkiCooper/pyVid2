@@ -35,6 +35,9 @@ Here are some examples of pyVid2 in action:
 ![Playback with video info splash. Definitely work in progress!](./assets/800x500/pyVid2Splash.jpg)
 *Playback with video info splash. Definitely work in progress!*
 
+![Video Metadata info](./assets/800x500/pyVid2MetaData.jpg)
+*The very beginnings of a video metadata window*
+
 <!--
 ![No OSD](./assets/800x500/pyVid2No-OSD.jpg)
 
@@ -90,11 +93,12 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 🔊 **<span style="color:HotPink">Audio Settings</span>**
 
-| **Option**                   | **Description** |
-|------------------------------|-----------------------------------------------------|
-| `--mute`                     | Mute all audio globally (**default: disabled**) |
-| `--noAudio`                  | Specify if videos have audio tracks (**default: assume videos might have audio**) |
-| `--usePygameAudio`           | Use **Pygame** or **Pyaudio** (**default: Pyaudio**) |
+| **Option**                | **Description**                                                                   |
+|---------------------------|-----------------------------------------------------------------------------------|
+| `--mute`                  | Mute all audio globally (**default: disabled**)                                   |
+| `--noAudio`               | Specify if videos have audio tracks (**default: assume videos might have audio**) |
+| `--audioTrack` AUDIOTRACK | Selects which audio track to use. (**default: 0**)                               |
+| `--usePygameAudio`        | Use **Pygame** or **Pyaudio** (**default: Pyaudio**)                              |
 
 ### ⚙️ **<span style="color:HotPink">System Settings</span>**
 
@@ -173,6 +177,7 @@ There are a number of keyboard commands available while a video is playing:
 
 - ░**d**░ = Debug: Print the value of all command line options to the console.
 - ░**g**░ = Reshuffle video playlist in place.
+- ░**i**░ = Show video metadata window. Click the **OK** button to clear. [work in progress] 
 - ░**l**░ = Loop the currently playing video indefinately. This is a toggle.
 - ░**m**░ = Toggle mute video.
 - ░**n**░ = Advance to next video.
