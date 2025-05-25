@@ -1266,7 +1266,7 @@ class PlayVideo:
 			self.vid: VideoPygame = Video(video,
 										  use_pygame_audio=self.opts.usePygameAudio,
 										  interp=self.opts.interp,
-			                              audio_track=self.opts.audioTrack,
+			                              audio_track=self.opts.aTrack,
 										  speed=self.opts.playSpeed,
 										  no_audio=self.opts.noAudio,
 										  reader=self.opts.reader_val_int

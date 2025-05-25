@@ -43,8 +43,8 @@ def cmdLineOptions():
     # 🔊 Audio Settings Group
     audio_group = parser.add_argument_group(f"{bc.BOLD}{bc.Blue_f}Audio Settings{bc.RESET}")
     audio_group.add_argument("--mute", action="store_true", help=f"{bc.Light_Yellow_f}Mute all audio globally\n{bc.Magenta_f}Default: Don't mute{bc.RESET}")
+    audio_group.add_argument("--aTrack", type=int, default=0,help=f"{bc.Light_Yellow_f}Selects which audio track to use.\n{bc.Magenta_f}Default: 0{bc.RESET}")
     audio_group.add_argument("--noAudio", action="store_true", help=f"{bc.Light_Yellow_f}Specify if videos have audio tracks\n{bc.Magenta_f}Default: Assume videos _might_ have audio tracks{bc.RESET}")
-    audio_group.add_argument("--audioTrack", type=int, default=0,help=f"{bc.Light_Yellow_f}Selects which audio track to use.\n{bc.Magenta_f}Default: 0{bc.RESET}")
     audio_group.add_argument("--usePygameAudio", action="store_true", help=f"{bc.Light_Yellow_f}Use Pygame or Pyaudio\n{bc.Magenta_f}Default: Pyaudio (False){bc.RESET}")
 
     # 🖥️ System & Display Settings
