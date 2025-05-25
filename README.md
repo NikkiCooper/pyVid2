@@ -93,12 +93,12 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 🔊 **<span style="color:HotPink">Audio Settings</span>**
 
-| **Option**                | **Description**                                                                    |
-|---------------------------|------------------------------------------------------------------------------------|
-| `--mute`                  | Mute all audio globally (**default: disabled**)                                    |
-| `--noAudio`               | Specify if videos have audio tracks (**default: assume videos might have audio**)  |
-| `--audioTrack AUDIOTRACK` | Selects which audio track to use. (**default: 0**)                                 |
-| `--usePygameAudio`        | Use **Pygame** or **Pyaudio** (**default: Pyaudio**)                               |
+| **Option**           | **Description**                                                                    |
+|----------------------|------------------------------------------------------------------------------------|
+| `--mute`             | Mute all audio globally (**default: disabled**)                                    |
+| `--noAudio`          | Specify if videos have audio tracks (**default: assume videos might have audio**)  |
+| `--audioTrack TRACK` | Selects which audio track to use. (**default: 0**)                                 |
+| `--usePygameAudio`   | Use **Pygame** or **Pyaudio** (**default: Pyaudio**)                               |
 
 ### ⚙️ **<span style="color:HotPink">System Settings</span>**
 
