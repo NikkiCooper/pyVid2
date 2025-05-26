@@ -1,0 +1,328 @@
+1
+00:00:17,903 --> 00:00:21,719
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+2
+00:00:21,922 --> 00:00:23,930
+<font color=orange>But the very next day</font>
+
+3
+00:00:24,286 --> 00:00:26,008
+<font color=orange>You gave it away</font>
+
+4
+00:00:26,851 --> 00:00:30,876
+<font color=orange>This year to save me from tears</font>
+
+5
+00:00:31,907 --> 00:00:34,442
+<font color=orange>I'll give it to someone special!</font>
+
+6
+00:00:35,838 --> 00:00:39,524
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+7
+00:00:39,524 --> 00:00:42,041
+<font color=orange>But the very next day</font>
+
+8
+00:00:42,525 --> 00:00:43,868
+<font color=orange>You gave it away</font>
+
+9
+00:00:43,868 --> 00:00:44,850
+<font color=orange>You gave it away</font>
+
+10
+00:00:44,850 --> 00:00:48,898
+<font color=orange>This year to save me from tears</font>
+
+11
+00:00:50,357 --> 00:00:52,416
+<font color=orange>I'll give it to someone special!</font>
+
+12
+00:00:52,416 --> 00:00:54,289
+<font color=orange>Special!</font>
+
+13
+00:01:12,147 --> 00:01:13,617
+<font color=orange>Once bitten</font>
+
+14
+00:01:13,617 --> 00:01:15,982
+<font color=orange>And twice shy</font>
+
+15
+00:01:16,089 --> 00:01:18,107
+<font color=orange>I keep my distance</font>
+
+16
+00:01:18,107 --> 00:01:20,987
+<font color=orange>But you still catch my eye</font>
+
+17
+00:01:20,987 --> 00:01:22,699
+<font color=orange>Tell me baby</font>
+
+18
+00:01:22,702 --> 00:01:25,002
+<font color=orange>Do you recognize me?</font>
+
+19
+00:01:25,002 --> 00:01:27,123
+<font color=orange>Well it's been year</font>
+
+20
+00:01:27,073 --> 00:01:28,813
+<font color=orange>It doesn't surprise me</font>
+
+21
+00:01:28,813 --> 00:01:30,096
+<font color=orange>Happy Christmas!</font>
+
+22
+00:01:31,879 --> 00:01:32,940
+<font color=orange>I wrapped it up</font>
+
+23
+00:01:33,026 --> 00:01:33,674
+<font color=orange>And sent it</font>
+
+24
+00:01:33,674 --> 00:01:36,164
+<font color=orange>With a note saying</font>
+
+25
+00:01:36,164 --> 00:01:37,349
+<font color=orange>I LOVE YOU!!</font>
+
+26
+00:01:37,349 --> 00:01:38,560
+<font color=orange>I meant it!</font>
+
+27
+00:01:38,560 --> 00:01:39,886
+<font color=orange>Now I know</font>
+
+28
+00:01:39,886 --> 00:01:40,934
+<font color=orange>What! a fool</font>
+
+29
+00:01:40,934 --> 00:01:42,249
+<font color=orange>I've been</font>
+
+30
+00:01:42,249 --> 00:01:44,520
+<font color=orange>And if you kiss me now</font>
+
+31
+00:01:44,520 --> 00:01:45,436
+<font color=orange>I know you...</font>
+
+32
+00:01:45,436 --> 00:01:47,017
+<font color=orange>You'd fool me again</font>
+
+33
+00:01:47,017 --> 00:01:51,475
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+34
+00:01:51,475 --> 00:01:53,904
+<font color=orange>But the very next day</font>
+
+35
+00:01:53,904 --> 00:01:55,584
+<font color=orange>You gave it away</font>
+
+36
+00:01:55,584 --> 00:01:56,836
+<font color=orange>Gave it away</font>
+
+37
+00:01:56,836 --> 00:02:00,761
+<font color=orange>This year to save me from tears</font>
+
+38
+00:02:01,999 --> 00:02:04,004
+<font color=orange>I'll give it to someone special!</font>
+
+39
+00:02:04,004 --> 00:02:05,424
+<font color=orange>Special!</font>
+
+40
+00:02:05,135 --> 00:02:09,419
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+41
+00:02:09,419 --> 00:02:11,840
+<font color=orange>But the very next day</font>
+
+42
+00:02:12,207 --> 00:02:14,079
+<font color=orange>You gave it away</font>
+
+43
+00:02:14,079 --> 00:02:18,718
+<font color=orange>This year to save me from tears</font>
+
+44
+00:02:20,431 --> 00:02:22,122
+<font color=orange>I'll give it to someone special!</font>
+
+45
+00:02:22,122 --> 00:02:23,427
+<font color=orange>Special!</font>
+
+46
+00:02:23,338 --> 00:02:24,845
+<font color=orange>Oh!</font>
+
+47
+00:02:26,845 --> 00:02:29,917
+<font color=orange>Oh! baby</font>
+
+48
+00:02:41,668 --> 00:02:43,677
+<font color=orange>A crowded room</font>
+
+49
+00:02:43,677 --> 00:02:46,167
+<font color=orange>Friends with tired eyes</font>
+
+50
+00:02:46,167 --> 00:02:48,294
+<font color=orange>I am hiding from you</font>
+
+51
+00:02:48,773 --> 00:02:50,591
+<font color=orange>And your soul of ice</font>
+
+52
+00:02:50,591 --> 00:02:52,264
+<font color=orange>My God I thought you were</font>
+
+53
+00:02:52,488 --> 00:02:54,599
+<font color=orange>Someone to rely on</font>
+
+54
+00:02:54,599 --> 00:02:58,778
+<font color=orange>Me?  I guess I was a shoulder to cry on</font>
+
+55
+00:02:58,778 --> 00:03:00,830
+<font color=orange>A face-on lover</font>
+
+56
+00:03:00,830 --> 00:03:03,128
+<font color=orange>With a fire in her heart</font>
+
+57
+00:03:03,494 --> 00:03:06,065
+<font color=orange>A girl undercover but you</font>
+
+58
+00:03:06,065 --> 00:03:10,607
+<font color=orange>Tore me a part</font>
+
+59
+00:03:10,607 --> 00:03:12,111
+<font color=orange>Ooh-ooh</font>
+
+60
+00:03:12,111 --> 00:03:15,180
+<font color=orange>Now I found a real love you never</font>
+
+61
+00:03:15,180 --> 00:03:16,847
+<font color=orange>Fool me again.</font>
+
+62
+00:03:16,847 --> 00:03:21,155
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+63
+00:03:21,492 --> 00:03:23,689
+<font color=orange>But the very next day</font>
+
+64
+00:03:23,689 --> 00:03:25,209
+<font color=orange>You gave it away</font>
+
+65
+00:03:25,209 --> 00:03:26,343
+<font color=orange>You gave it away</font>
+
+66
+00:03:26,343 --> 00:03:30,425
+<font color=orange>This year to save me from tears</font>
+
+67
+00:03:30,425 --> 00:03:32,630
+<font color=orange>I'll gave it to someone...</font>
+
+68
+00:03:32,568 --> 00:03:35,063
+<font color=orange>Special!</font>
+
+69
+00:03:35,063 --> 00:03:39,339
+<font color=orange>Last Christmas, I gave you my heart</font>
+
+70
+00:03:40,166 --> 00:03:41,426
+<font color=orange>But the very next day</font>
+
+71
+00:03:41,426 --> 00:03:44,289
+<font color=orange>You gave it away</font>
+
+72
+00:03:44,383 --> 00:03:48,302
+<font color=orange>This year to save me from tears</font>
+
+73
+00:03:48,302 --> 00:03:50,629
+<font color=orange>I'll gave it to someone...</font>
+
+74
+00:03:50,600 --> 00:03:53,567
+<font color=orange>Special!</font>
+
+75
+00:03:53,568 --> 00:03:54,940
+<font color=orange>A face-on lover</font>
+
+76
+00:03:54,940 --> 00:03:56,764
+<font color=orange>With a fire in her heart (I gave you my heart)</font>
+
+77
+00:03:56,764 --> 00:03:59,686
+<font color=orange>A girl undercover but you</font>
+
+78
+00:03:59,686 --> 00:04:01,403
+<font color=orange>Tore her apart</font>
+
+79
+00:04:03,386 --> 00:04:05,490
+<font color=orange>Maybe next year</font>
+
+80
+00:04:05,490 --> 00:04:08,393
+<font color=orange>I'll gave it to someone...</font>
+
+81
+00:04:08,393 --> 00:04:10,550
+<font color=orange>I'll gave it to someone...</font>
+
+82
+00:04:10,550 --> 00:04:14,275
+<font color=orange>Special!</font>
+

@@ -38,6 +38,9 @@ def cmdLineOptions():
     video_group.add_argument("--interp", type=str, choices=["area", "cubic", "linear", "nearest", "lanczos4"], default="cubic" ,help=f"{bc.Light_Yellow_f}Use interpolation method for resizing frames\n{bc.Magenta_f}Default: Cubic (recommended){bc.RESET}")
     video_group.add_argument("--loopDelay" , type=int, default=1,  help=f"{bc.Light_Yellow_f}The delay in seconds between each video\n{bc.Magenta_f}Default: 1 sec (recommended){bc.RESET}")
     video_group.add_argument("--playSpeed", type=restricted_float_or_int, default=1.0, help=f"{bc.Light_Yellow_f}Set playback speed (0.5 - 5.0)\n{bc.Magenta_f}Default: 1.0{bc.RESET}")
+
+    video_group.add_argument("--enableSubs", action="store_true", help=f"{bc.Light_Yellow_f}Enable Subtitles\n{bc.Magenta_f}Default: False{bc.RESET}")
+
     video_group.add_argument("--enableOSDcurpos", action="store_true", help=f"{bc.Light_Yellow_f}Enable OSD current position counter on startup.\n{bc.Magenta_f}Default: False{bc.RESET}")
 
     # 🔊 Audio Settings Group

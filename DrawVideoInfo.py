@@ -30,8 +30,12 @@ class DrawVideoInfo:
         # Resources
         self.RESOURCES_DIR = self.USER_HOME + "/.local/share/pyVid/Resources/"
 
+        # Rect and Surface for the Filename
         self.filename_rect = None
         self.filename_surface = None
+        # Rect and surface for the Path
+        self.path_rect = None
+        self.path_surface = None
 
         # Load Fonts
         self.font_filename = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 32)
@@ -39,7 +43,7 @@ class DrawVideoInfo:
         self.font_filepath = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 22)
         self.font_button = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 24)
         # Load and scale checkmark icon
-        self.check_icon = pygame.image.load(self.RESOURCES_DIR + 'checkmark.png')
+        self.check_icon = pygame.image.load(self.RESOURCES_DIR + 'checkmark.png').convert_alpha()
         self.check_icon = pygame.transform.scale(self.check_icon, (32, 32))
 
         # Calculate wrapped filepath lines
@@ -103,6 +107,13 @@ class DrawVideoInfo:
 
         return truncated + "..."
 
+    @staticmethod
+    def truncate_path(path, max_length=60):
+        if len(path) <= max_length:
+            return path
+        else:
+            return path[:30] + "..." + path[-27:]
+
     # Tooltip function
     def draw_tooltip(self, disp_surface, text, x, y):
         #print("draw_tooltip()")
@@ -112,7 +123,20 @@ class DrawVideoInfo:
 
         pygame.draw.rect(disp_surface, pygame.color.THECOLORS['green'], (x, y, tooltip_width + 10, tooltip_height + 6), border_radius=5)
         disp_surface.blit(tooltip_surface, (x + 5, y + 3))
-        pygame.display.flip()
+       #pygame.display.flip()
+
+    # Tooltip function
+    def draw_path_tooltip(self, disp_surface, text, x, y):
+        #print("draw_tooltip()")
+        #print(f"draw_path_tooltip text: {text}")
+        tooltip_path_font = pygame.font.Font( self.FONT_DIR + "Montserrat-Regular.ttf", 18)
+        tooltip_path_surface = tooltip_path_font.render(text, True, BLACK)
+        tooltip_path_width, tooltip_path_height = tooltip_path_surface.get_size()
+
+        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['green'], (x, y, tooltip_path_width + 10, tooltip_path_height + 6), border_radius=5)
+        disp_surface.blit(tooltip_path_surface, (x + 5, y + 3))
+
+
 
     def draw_info_box(self):
         y_offset = 0
@@ -129,13 +153,28 @@ class DrawVideoInfo:
         # Render Wrapped Filepath Below Filename
         y_offset = self.BOX_Y + 50   # The Y coordinate of filepath
 
+        '''
         for line in self.wrapped_filepath_lines:
             path_surface = self.font_filepath.render(line, True, BLACK)  # Now using independent font for filepath
             self.display.blit(path_surface, (self.BOX_X + 20, y_offset))
             y_offset += 24  # Increased spacing slightly
+        '''
+        truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
+        path_surface = self.font_filepath.render(truncated_path, True, BLACK)
+        self.path_rect = pygame.Rect(self.BOX_X + 20,
+                                     y_offset,
+                                     path_surface.get_width(),
+                                     path_surface.get_height()
+                                     )
+        self.display.blit(
+                          path_surface,
+                          (self.BOX_X + 20, y_offset)
+                          )
+        #y_offset += 24
 
         # Render Metadata Below Filepath
-        y_offset += 20
+        #y_offset += 20
+        y_offset += 44  # instead of separate 24 + 20 updates.
         column_spacing = 350  # spacing between the descriptors and their data
 
         for key, value in self.video_metadata.items():

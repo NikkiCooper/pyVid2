@@ -53,6 +53,12 @@ class PlayVideo:
 		self.video_info_box_tooltip = False
 		self.video_info_box_tooltip_mouse_x = 0
 		self.video_info_box_tooltip_mouse_y = 0
+		# The path tooltip
+		self.video_info_box_path_tooltip = False
+		self.video_info_box_path_tooltip_mouse_x = 0
+		self.video_info_box_path_tooltip_mouse_y = 0
+
+
 
 		'''
 		There are no entries in self.videoList,
@@ -105,6 +111,8 @@ class PlayVideo:
 		self.Splash_Height = 400
 		self.image_surface = None
 		self.shuffleSplashFlag = False
+
+		self.filePath = None
 
 		# screenshot splash
 		self.saveScreenShotFlag = False
@@ -1269,6 +1277,7 @@ class PlayVideo:
 			                              audio_track=self.opts.aTrack,
 										  speed=self.opts.playSpeed,
 										  no_audio=self.opts.noAudio,
+			                              subs=None,
 										  reader=self.opts.reader_val_int
 										  )
 
@@ -1332,6 +1341,8 @@ class PlayVideo:
 				# reset the video metadata box  and tooltip if active
 				self.video_info_box = False
 				self.video_info_box_tooltip = False
+				# Reset the path tooltip flag
+				self.video_info_box_path_tooltip = False
 
 				#print(f"📌 New video loaded! Resetting OSD tracking to prevent glitches.")
 
@@ -1406,6 +1417,13 @@ class PlayVideo:
 								                              self.video_info_box_tooltip_mouse_x,
 								                              self.video_info_box_tooltip_mouse_y
 								                              )
+							else:
+								if self.video_info_box_path_tooltip:
+									self.drawVidInfo.draw_path_tooltip(self.win,
+									                                   self.vid.path,
+									                                   self.video_info_box_path_tooltip_mouse_x,
+									                                   self.video_info_box_path_tooltip_mouse_y
+									                                   )
 
 						if self.progress_active:
 							if pygame.time.get_ticks() - self.last_update_time > 10:

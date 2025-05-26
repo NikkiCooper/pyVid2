@@ -68,6 +68,7 @@ class EventHandler:
 				if self.PlayVideoInstance.video_info_box:
 					# render the tooltip
 					self.update_video_info(mouse_x, mouse_y)
+					self.update_video_path_info(mouse_x, mouse_y)
 				# Toggle status bar visibility
 				self.PlayVideoInstance.status_bar_visible = mouse_y >= self.PlayVideoInstance.displayHeight - self.threshold
 
@@ -188,6 +189,7 @@ class EventHandler:
 			filename = self.PlayVideoInstance.vid.name + self.PlayVideoInstance.vid.ext
 			path = os.path.dirname(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
 			filepath = os.path.join(path, "")
+			self.PlayVideoInstance.filePath = filepath
 			self.PlayVideoInstance.DrawVideoInfoBox(filepath, filename)
 		elif key == "l":
 			self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
@@ -477,3 +479,18 @@ class EventHandler:
 											)
 		else:
 			self.PlayVideoInstance.video_info_box_tooltip = False
+
+	def update_video_path_info(self, mouse_x, mouse_y):
+		if self.PlayVideoInstance.drawVidInfo.path_rect.collidepoint(mouse_x, mouse_y):
+			#print(f"self.PlayVideoInstance.filePath: {self.PlayVideoInstance.filePath}")
+			self.PlayVideoInstance.video_info_box_path_tooltip = True
+			self.PlayVideoInstance.video_info_box_path_tooltip_mouse_x = mouse_x + 15
+			self.PlayVideoInstance.video_info_box_path_tooltip_mouse_y = mouse_y + 5
+			self.PlayVideoInstance.drawVidInfo.draw_path_tooltip(
+											self.PlayVideoInstance.win,
+							                self.PlayVideoInstance.filePath,
+							                mouse_x + 15,
+											mouse_y + 5
+											)
+		else:
+			self.PlayVideoInstance.video_info_box_path_tooltip = False
