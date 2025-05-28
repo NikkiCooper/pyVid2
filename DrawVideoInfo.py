@@ -136,8 +136,6 @@ class DrawVideoInfo:
         pygame.draw.rect(disp_surface, pygame.color.THECOLORS['green'], (x, y, tooltip_path_width + 10, tooltip_path_height + 6), border_radius=5)
         disp_surface.blit(tooltip_path_surface, (x + 5, y + 3))
 
-
-
     def draw_info_box(self):
         y_offset = 0
         path_surface = None

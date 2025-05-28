@@ -54,8 +54,6 @@ class EventHandler:
 		self.threshold = int(self.PlayVideoInstance.displayHeight * self.threshold_ratio)
 		self.current_video = -1
 
-
-
 	def handle_events(self):
 		for event in pygame.event.get():
 
@@ -70,7 +68,13 @@ class EventHandler:
 					self.update_video_info(mouse_x, mouse_y)
 					self.update_video_path_info(mouse_x, mouse_y)
 				# Toggle status bar visibility
-				self.PlayVideoInstance.status_bar_visible = mouse_y >= self.PlayVideoInstance.displayHeight - self.threshold
+				#self.PlayVideoInstance.status_bar_visible = mouse_y >= self.PlayVideoInstance.displayHeight - self.threshold
+				# Tottle new status bar visibility
+				self.PlayVideoInstance.drawVideoPlayBarFlag = mouse_y >= self.PlayVideoInstance.displayHeight - self.threshold
+				self.PlayVideoInstance.status_bar_visible = self.PlayVideoInstance.drawVideoPlayBarFlag
+				if self.PlayVideoInstance.status_bar_visible:
+					self.PlayVideoInstance.DrawVideoPlayBar()
+
 
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				self.mouse_press_times[event.button] = pygame.time.get_ticks()
@@ -181,7 +185,10 @@ class EventHandler:
 		# Print out some variable debug info pertaining to the cli options.
 		if key == "d":
 			self.PlayVideoInstance.print_cli_options()
-
+		elif key == "b":
+			self.PlayVideoInstance.drawVideoPlayBarFlag = not self.PlayVideoInstance.drawVideoPlayBarFlag
+			if self.PlayVideoInstance.drawVideoPlayBarFlag:
+				self.PlayVideoInstance.DrawVideoPlayBar()
 		# Toggle loop current video; The current video will loop until toggled.
 		elif key  == "i":
 			#self.PlayVideoInstance.vid.pause()
@@ -494,3 +501,17 @@ class EventHandler:
 											)
 		else:
 			self.PlayVideoInstance.video_info_box_path_tooltip = False
+
+	def update_videoPlayBarVolume(self, Event, mouse_x, mouse_y):
+		if self.PlayVideoInstance.drawVideoPlayBarFlag:
+			self.PlayVideoInstance.videoPlayBar.MOUSE_X = mouse_x
+			self.PlayVideoInstance.videoPlayBar.MOUSE_Y = mouse_y
+			print(f"videoPLayBar.volumeRect: {self.PlayVideoInstance.videoPlayBar.volumeRect}")
+			if self.PlayVideoInstance.videoPlayBar.volumeRect.collidepoint(mouse_x, mouse_y):
+				print("mousewheel and volumeRect.collidepoint()")
+				self.PlayVideoInstance.videoPlayBar.volumeLevel = min(max(
+					self.PlayVideoInstance.videoPlayBar.volumeLevel + Event.y * 5, 0), 100)
+				print(f"Volume Level: {self.PlayVideoInstance.videoPlayBar.volumeLevel}%")  # Debug Output
+
+
+

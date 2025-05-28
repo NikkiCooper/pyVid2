@@ -26,6 +26,7 @@ from pyvidplayer2.video_pygame import VideoPygame
 from pyvidplayer2 import Video
 import pyvidplayer2
 from DrawVideoInfo import DrawVideoInfo
+from VideoPlayBar import VideoPlayBar
 
 class PlayVideo:
 	def __init__(self, opts: object, videoList: list, bcolors: object) -> None:
@@ -59,6 +60,9 @@ class PlayVideo:
 		self.video_info_box_path_tooltip_mouse_y = 0
 
 
+		# VideoPlayBar
+		self.videoPlayBar = None
+		self.drawVideoPlayBarFlag = False
 
 		'''
 		There are no entries in self.videoList,
@@ -1258,6 +1262,10 @@ class PlayVideo:
 		self.drawVidInfo.draw_info_box()
 		#pygame.display.flip()
 
+	def DrawVideoPlayBar(self):
+		self.videoPlayBar = VideoPlayBar(self.win, self.USER_HOME)
+
+
 	def playVideo(self, video):
 		"""
 		Method that creates a VideoPygame object and starts playing it.
@@ -1394,10 +1402,15 @@ class PlayVideo:
 					pos_w, pos_h = self.getResolutions()
 					if self.vid.draw(self.win, (pos_w, pos_h), force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
 
+						if self.drawVideoPlayBarFlag:
+							self.DrawVideoPlayBar()
+							self.videoPlayBar.drawVideoPlayBar()
+
 						if self.draw_OSD_active:
 							if not (self.seekFwd_flag or self.seekRewind_flag):
 								self.draw_OSD()
 								self.draw_filename()
+
 
 						if self.status_bar_visible:
 							self.displayVideoInfo(self.win,
@@ -1408,6 +1421,7 @@ class PlayVideo:
 												  self.vid.get_volume(),
 												  self.vid.get_pos()
 												  )
+
 
 						if self.video_info_box:
 							self.drawVidInfo.draw_info_box()
