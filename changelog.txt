@@ -1,3 +1,10 @@
+28-May-2025	Added the very rough draft beginnings a of a true video playback bar with functional icons ETC.  Note
+		that in this commit, the  playback bar is not functional.  That said, since it is semi-transparent,
+		It overlays on top of the current text playback bar which remains functional.  There are issues with
+		pygame.rect.collidepoint() functionality in the new class, and this is holding up development until
+		the root cause is found. 
+
+
 25-May-2025:    Fixed a major goof-up with pyVid2 resources.  The paths were
                 Hardcoded.  Resources, which are found in the Resources directory,
 	        are icons the application uses.  PyVids uses the following path
