@@ -139,6 +139,55 @@ class DrawVideoInfo:
     def draw_info_box(self):
         y_offset = 0
         path_surface = None
+
+        # Create a surface to apply the gradient
+        gradient_surface = pygame.Surface((self.BOX_WIDTH, self.BOX_HEIGHT), pygame.SRCALPHA)
+        gradient_surface.set_alpha(175)
+        gradient_surface.set_colorkey((0, 255, 0))
+        DrawVideoInfo.apply_gradient(gradient_surface, DODGERBLUE, DODGERBLUE4, self.BOX_WIDTH, self.BOX_HEIGHT)
+
+        # Blit the gradient to the display
+        self.display.blit(gradient_surface, (self.BOX_X, self.BOX_Y))
+
+        # Draw Border on top of the gradient
+        pygame.draw.rect(self.display, DODGERBLUE4, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), 2,
+                         border_radius=10)
+
+        # Render filename
+        truncated_filename = DrawVideoInfo.truncate_text(self.filename, self.font_filename, self.BOX_WIDTH - 40)
+        self.filename_surface = self.font_filename.render(truncated_filename, True, BLACK)
+        self.filename_rect = self.filename_surface.get_rect(center=(self.BOX_X + self.BOX_WIDTH // 2, self.BOX_Y + 20))
+        self.display.blit(self.filename_surface, self.filename_rect.topleft)
+
+        # Render Wrapped Filepath Below Filename
+        y_offset = self.BOX_Y + 50
+        truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
+        path_surface = self.font_filepath.render(truncated_path, True, BLACK)
+        self.path_rect = pygame.Rect(self.BOX_X + 20, y_offset, path_surface.get_width(), path_surface.get_height())
+        self.display.blit(path_surface, (self.BOX_X + 20, y_offset))
+
+        # Render Metadata Below Filepath
+        y_offset += 44
+        column_spacing = 350
+
+        for key, value in self.video_metadata.items():
+            key_surface = self.font_info.render(f"{key}:", True, BLACK)
+            value_surface = self.font_info.render(value, True, BLACK)
+            self.display.blit(key_surface, (self.BOX_X + 20, y_offset))
+            self.display.blit(value_surface, (self.BOX_X + 20 + column_spacing, y_offset))
+            y_offset += 30
+
+        # Render OK Button
+        pygame.draw.rect(self.display, DODGERBLUE4, self.button_rect, border_radius=8)
+        self.display.blit(self.check_icon, (self.button_rect.x + 10, self.button_rect.y + 4))
+        ok_surface = self.font_button.render("OK", True, WHITE)
+        self.display.blit(ok_surface, (self.button_rect.x + 50, self.button_rect.y + 5))
+
+
+    '''
+    def draw_info_box(self):
+        y_offset = 0
+        path_surface = None
         # Draw Dialog Box
         pygame.draw.rect(self.display, DODGERBLUE, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), border_radius=10)
         pygame.draw.rect(self.display, DODGERBLUE4, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), 2, border_radius=10)
@@ -151,12 +200,6 @@ class DrawVideoInfo:
         # Render Wrapped Filepath Below Filename
         y_offset = self.BOX_Y + 50   # The Y coordinate of filepath
 
-        '''
-        for line in self.wrapped_filepath_lines:
-            path_surface = self.font_filepath.render(line, True, BLACK)  # Now using independent font for filepath
-            self.display.blit(path_surface, (self.BOX_X + 20, y_offset))
-            y_offset += 24  # Increased spacing slightly
-        '''
         truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
         path_surface = self.font_filepath.render(truncated_path, True, BLACK)
         self.path_rect = pygame.Rect(self.BOX_X + 20,
@@ -187,6 +230,9 @@ class DrawVideoInfo:
         self.display.blit(self.check_icon, (self.button_rect.x + 10, self.button_rect.y + 4))
         ok_surface = self.font_button.render("OK", True, WHITE)
         self.display.blit(ok_surface, (self.button_rect.x + 50, self.button_rect.y + 5))
+    '''
+
+
 
     @staticmethod
     def __load_metadata(video_path):
@@ -294,4 +340,18 @@ class DrawVideoInfo:
         minutes, seconds = divmod(remainder, 60)  # Separate minutes and seconds
 
         return f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+    @staticmethod
+    def apply_gradient(surface, color_start, color_end, width, height, alpha_start=50, alpha_end=200):
+        for y in range(height):
+            ratio = y / height
+            new_color = (
+                int(color_start[0] * (1 - ratio) + color_end[0] * ratio),  # Red
+                int(color_start[1] * (1 - ratio) + color_end[1] * ratio),  # Green
+                int(color_start[2] * (1 - ratio) + color_end[2] * ratio),  # Blue
+                int(alpha_start * (1 - ratio) + alpha_end * ratio)  # Alpha blending
+            )
+            pygame.draw.line(surface, new_color, (0, y), (width, y))
+
+
 

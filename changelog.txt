@@ -1,24 +1,36 @@
-28-May-2025	Added the very rough draft beginnings a of a true video playback bar with functional icons ETC.  Note
-		that in this commit, the  playback bar is not functional.  That said, since it is semi-transparent,
-		It overlays on top of the current text playback bar which remains functional.  There are issues with
-		pygame.rect.collidepoint() functionality in the new class, and this is holding up development until
-		the root cause is found. 
+29-May-2025     More refinements on  the video playback bar.  It is still in the develomental stages so things are not
+                very likely to work.  Volume  does not update correctly (yet).   No mouse drag yet on the slider either.
+                Play/Pause work, Stop doesn't.  Previous / Next work as expected, as do the +/- icons for the playback
+                speed.  The loop icon works too. Clicking on the speaker should mute/unmute the audio.
+
+                More transparent gradient refinements on the seek progress bar, as well as the video metadata window.
+                Attempted to add tooltips to the playback bar icons, but it is all disabled.  Remember that pyvid2 aims
+                to be a "multimedia presentation" playback tool.  There are too many really good video players out there
+                to want to compete with any of them.  At some point, pyvid2 will morph into a client/server model
+                capable of driving dozens of displays spread out across multiple video cards.  Right now though, it is
+                primarly a learning tool for me.
+
+28-May-2025	    Added the very rough draft beginnings a of a true video playback bar with functional icons ETC.  Note
+                that in this commit, the  playback bar is not functional.  That said, since it is semi-transparent,
+                It overlays on top of the current text playback bar which remains functional.  There are issues with
+                pygame.rect.collidepoint() functionality in the new class, and this is holding up development until
+                the root cause is found. Made some small refinements to the Video Splash window as well.
 
 
 25-May-2025:    Fixed a major goof-up with pyVid2 resources.  The paths were
                 Hardcoded.  Resources, which are found in the Resources directory,
-	        are icons the application uses.  PyVids uses the following path
-	        to find its resources:  $HOME/.local/share/pyVid.  Currently,
-	        this directory tree consists of the following subdirs:
+	            are icons the application uses.  PyVids uses the following path
+	            to find its resources:  $HOME/.local/share/pyVid.  Currently,
+	            this directory tree consists of the following subdirs:
 
-	        1. fonts           All application fonts
-	        2. Resources       All Icons
-	        3. thumbs          Thumbnail cache directory used by cachetools.LRUCache()
+                1. fonts           All application fonts
+                2. Resources       All Icons
+                3. thumbs          Thumbnail cache directory used by cachetools.LRUCache()
 
-	        Added --aTrack which accepts an integer as a parameter.  This allows selection of a specific audio track
-	        in a video if it has more than one.  Note this has very limited usefulness  and currently there is no
-	        validation checking performed. If you select a track that does not exist, you will be greeted with a nice
-	        black screen but no playing video. The default is 0.
+                Added --aTrack which accepts an integer as a parameter. This allows selection of a specific audio track
+                in a video if it has more than one.  Note this has very limited usefulness  and currently there is no
+                validation checking performed. If you select a track that does not exist, you will be greeted with a
+                nice black screen but no playing video. The default is 0.
 
                 Added a video metadata class. It is envoked by pressing the 'i' key once a video is up and playing.
                 This gives very basic video metadata along with a nice OK button to make it disappear.  This is very
@@ -28,8 +40,8 @@
                 Wow!  Groovy baby!  This is all very rough alpha level. Expect using it to crash the program unexpectedly.
                 Works for the most part (I guess).
 
-                Pygame is a pain.  No wrappers or helper functions making it intutitive and easier to use. That means I must
-	        start writing my own.  *sigh*.
+                Pygame is a pain.  No wrappers or helper functions making it intutitive and easier to use. That means I
+                must start writing my own.  *sigh*.
 
 
 My 7 year old daughter: "What cha doin' mommy?"
