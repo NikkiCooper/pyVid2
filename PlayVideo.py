@@ -10,6 +10,8 @@ import os
 import datetime
 import cachetools
 import subprocess
+import help_text as  _help_
+
 
 # This must be called BEFORE importing pygame
 # else set it in ~/.bashrc
@@ -30,7 +32,10 @@ from VideoPlayBar import VideoPlayBar
 
 
 # Define colors
+
 WHITE = (255, 255, 255)
+HEADING_COLOR = (255, 200, 0)  # Yellow for headings
+TEXT_COLOR = WHITE   # White for regular text
 BLACK = (0, 0, 0)
 DODGERBLUE = (30, 144, 255)
 DODGERBLUE4 = (16, 78, 139)
@@ -65,8 +70,6 @@ class PlayVideo:
         self.video_info_box_path_tooltip = False
         self.video_info_box_path_tooltip_mouse_x = 0
         self.video_info_box_path_tooltip_mouse_y = 0
-
-
 
         '''
         There are no entries in self.videoList,
@@ -152,6 +155,9 @@ class PlayVideo:
         self.pauseIcon = pygame.image.load(self.RESOURCES_DIR + "pause.png").convert_alpha()
         self.forwardIcon = pygame.image.load(self.RESOURCES_DIR + "forward10s.png").convert_alpha()
         self.rewindIcon = pygame.image.load(self.RESOURCES_DIR + "rewind10s.png").convert_alpha()
+        self.check_icon = pygame.image.load(self.RESOURCES_DIR + 'checkmark.png').convert_alpha()
+        self.check_icon = pygame.transform.scale(self.check_icon, (32, 32))
+
         # x,y coordinates of the OSD play/pause icons
         self.OSD_ICON_X = 50
         self.OSD_ICON_Y = 28
@@ -187,6 +193,11 @@ class PlayVideo:
         self.font_regular_36 = pygame.font.Font( self.FONT_DIR + 'RobotoCondensed-Regular.ttf', 36)
         self.font_regular_50 = pygame.font.Font(self.FONT_DIR + 'RobotoCondensed-Regular.ttf',  50)
         self.font_bold_regular_75 = pygame.font.Font(self.FONT_DIR + 'Roboto-Bold.ttf',75)
+        self.font_button = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 24)
+        #self.font_help = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 15)
+        self.font_help = pygame.font.Font(self.FONT_DIR + 'Arial.ttf', 16)
+        self.font_help_bold = pygame.font.Font(self.FONT_DIR + 'Arial_Black.ttf', 16)
+
 
         # Referenced in addShadowEffect()
         self.font = None
@@ -222,6 +233,10 @@ class PlayVideo:
         self.stopButtonClicked = False
         self.playButtonClicked = False
 
+        # Help window
+        self.help_visible = False
+        self.is_hovered = False
+        self.help_button_rect = None
 
     @staticmethod
     def apply_gradient(surface, color_start, color_end, width, height, alpha_start=50, alpha_end=200):
@@ -234,7 +249,6 @@ class PlayVideo:
                 int(alpha_start * (1 - ratio) + alpha_end * ratio)  # Alpha blending
             )
             pygame.draw.line(surface, new_color, (0, y), (width, y))
-
 
     def addShadowEffect(self, screen, font, video_name, org_dur, cur_dur, play_speed, curPos):
         #self.font = font
@@ -520,6 +534,7 @@ class PlayVideo:
 
     def saveSplash(self, path, filename):
         text_color = pygame.color.THECOLORS['white']
+        border_color = pygame.color.THECOLORS['dodgerblue4']
         # Define box dimensions
         box_width, box_height = 300, 125
         box_x = (self.displayWidth - box_width) // 2
@@ -527,13 +542,26 @@ class PlayVideo:
 
         # Create a semi-transparent surface for the box
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)  # Allows transparency
-        box_surface.fill((16, 78, 139, 200))  # RGBA: (R, G, B, Alpha), 150 = semi-transparent
+        box_surface_rect = box_surface.get_rect()
+        box_surface.set_alpha(165)
+        box_surface.set_colorkey((0, 255, 0))
+        PlayVideo.apply_gradient(box_surface,
+                                 DODGERBLUE,
+                                 DODGERBLUE4,
+                                 box_width,
+                                 box_height
+                                 )
+        pygame.draw.rect(
+                         box_surface,
+                         border_color,
+                         (0, 0, box_width, box_height),
+                         2,
+                         border_radius=10
+                         )
 
-        message_lines = [f"Saving {filename} to: ", os.path.expanduser(path)]
-
+        message_lines = [f"Saving {filename} to: ", os.path.expanduser(path)]\
         # Blit semi-transparent box
         self.win.blit(box_surface, (box_x, box_y))
-
         # Render and position text
         line_spacing = 25
         for i, line in enumerate(message_lines):
@@ -544,6 +572,7 @@ class PlayVideo:
 
     def shuffleSplash(self):
         text_color = pygame.color.THECOLORS['white']
+        border_color = pygame.color.THECOLORS['dodgerblue4']
 
         # Define box dimensions
         box_width, box_height = 300, 125
@@ -552,7 +581,22 @@ class PlayVideo:
 
         # Create a semi-transparent surface for the box
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)  # Allows transparency
-        box_surface.fill((16, 78, 139, 200))  # RGBA: (R, G, B, Alpha), 150 = semi-transparent
+        box_surface_rect = box_surface.get_rect()
+        box_surface.set_alpha(165)
+        box_surface.set_colorkey((0, 255, 0))
+        PlayVideo.apply_gradient(box_surface,
+                                 DODGERBLUE,
+                                 DODGERBLUE4,
+                                 box_width,
+                                 box_height
+                                 )
+        pygame.draw.rect(
+                          box_surface,
+                          border_color,
+                         (0, 0, box_width, box_height),
+                         2,
+                         border_radius=10
+                         )
 
         message_line = "Randomizing master playlist..."
 
@@ -796,10 +840,9 @@ class PlayVideo:
 
     def sshot_splash(self):
         text_color = pygame.color.THECOLORS['white']
-
+        border_color = pygame.color.THECOLORS['dodgerblue4']
         # Define box width
         box_width = 600
-
         message_lines =["PyVid2 Screenshot:", self.save_sshot_error]
 
         # Calculate box height dynamically based on number of lines
@@ -813,26 +856,37 @@ class PlayVideo:
 
         # Create a semi-transparent surface for the box
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
-        box_surface.fill((16, 78, 139, 225))
+        box_surface_rect = box_surface.get_rect()
 
+        box_surface.set_alpha(165)
+        box_surface.set_colorkey((0, 255, 0))
+        PlayVideo.apply_gradient(box_surface,
+                                 DODGERBLUE,
+                                 DODGERBLUE4,
+                                 box_width,
+                                 box_height
+                                 )
+        pygame.draw.rect(
+                         box_surface,
+                         border_color,
+                         (0, 0, box_width, box_height),
+                         2,
+                         border_radius=10
+                         )
         # Blit semi-transparent box
         self.win.blit(box_surface, (box_x, box_y))
-
         # Render and position text inside the box
         for i, line in enumerate(message_lines):
             text_surface = self.font_bold_regular.render(line, True, text_color)
-            #text_rect = text_surface.get_rect(
-                #center=(box_x + (box_width // 2), box_y + (padding // 2) + (i * (font_height + 10))))
             text_rect = text_surface.get_rect(
-                center=(box_x + (box_width // 2), box_y + (padding // 2) + 15 + (i * (font_height + 10))))
-
+                                            center=(box_x + (box_width // 2),
+                                                    box_y + (padding // 2) + 15 + (i * (font_height + 10)))
+                                             )
             self.win.blit(text_surface, text_rect)
-
         pygame.display.flip()
 
     def render_filename_text(self, text, y, font_size=60,outline_style="default"):
         """Renders OSD text with a bold black outline for better visibility on light backgrounds."""
-        # Perfect!
         font = pygame.font.Font(self.FONT_DIR + "luximb.ttf", font_size)
 
         # Render text with no outline
@@ -842,12 +896,7 @@ class PlayVideo:
         # Create transparent surface for text
         text_surface = pygame.Surface((text_width + 20, text_height + 30), pygame.SRCALPHA)
         text_surface.fill((0, 0, 0, 0))  # Fully transparent background
-
-        # **Render thicker outline**
-        #outline_color = (0, 0, 0)  # Black outline
-        #outline_color = (255, 255, 255)
         outline_color = pygame.color.THECOLORS['dodgerblue4']
-        #outline_render = font.render(text, True, outline_color)
 
         if outline_style == "blurred":
             # Simulate a blurred outline using multiple transparent layers
@@ -958,7 +1007,6 @@ class PlayVideo:
     def render_osd_text(self, text, x, y, curPos, font_size=50, outline_style="default"):
         """Renders OSD text with a bold black outline for better visibility on light backgrounds."""
         color = pygame.color.THECOLORS['dodgerblue']  # Default assignment
-        # Excellent!
         START_FADE_TIME = 20
         font = pygame.font.Font(self.FONT_DIR + "luximb.ttf", font_size)
 
@@ -1074,30 +1122,43 @@ class PlayVideo:
             progress_color = DodgerBlue
             border_color = DODGERBLUE4
             progress_bg = (20, 20, 20, progress_alpha)  # Background with transparency
-
-            #font = pygame.font.SysFont("Arial", 24)  # Choose your preferred font and size
             font = pygame.font.Font(self.FONT_DIR + "LiberationSans-Regular.ttf", 24)
-            progress_text = font.render(f"{int(self.progress_percentage)}%", True, (255, 255, 255))  # White text
+            progress_text = font.render(f"{int(self.progress_percentage)}%",
+                                        True,
+                                        (255, 255, 255))  # White text
 
             # Create transparent surface
             progress_surface = pygame.Surface((progress_width, progress_height), pygame.SRCALPHA)
-            #progress_surface.fill(progress_bg)  # Semi-transparent background
             progress_surface.set_alpha(165)
             progress_surface.set_colorkey((0, 255, 0))
             progress_bar_rect = progress_surface.get_rect()
-            PlayVideo.apply_gradient(progress_surface, DODGERBLUE, DODGERBLUE4, progress_width, progress_height)
-
+            PlayVideo.apply_gradient(progress_surface,
+                                     DODGERBLUE,
+                                     DODGERBLUE4,
+                                     progress_width,
+                                     progress_height,
+                                     alpha_start=100,
+                                     alpha_end=200
+                                     )
             progress_x = progress_bar_rect.x + (progress_width // 2) - (progress_text.get_width() // 2)
             progress_y = progress_bar_rect.y + (progress_height // 2) - (progress_text.get_height() // 2)
 
             # Fill progress dynamically
             fill_width = int(progress_width * (self.progress_value / 100))  # Scale width based on progress
-
-            pygame.draw.rect(progress_surface, progress_color, (0, 0, fill_width, progress_height))
-            pygame.draw.rect(progress_surface, border_color, (0, 0, fill_width, progress_height), 1)
-            progress_surface.blit(progress_text, (progress_x, progress_y))
+            pygame.draw.rect(progress_surface,
+                             progress_color,
+                             (0, 0, fill_width, progress_height)
+                             )
+            pygame.draw.rect(progress_surface,
+                             (0, 0, 0),
+                             (0, 0, fill_width, progress_height),
+                             2
+                             )
+            progress_surface.blit(progress_text,
+                                  (progress_x, progress_y))
             # Blit progress bar to screen center
-            self.win.blit(progress_surface, ((self.displayWidth - progress_width) // 2, self.displayHeight // 2))
+            self.win.blit(progress_surface,
+                          ((self.displayWidth - progress_width) // 2, self.displayHeight // 2))
 
     def create_thumbnail(self, video_path):
         """Extract thumbnail and store it permanently."""
@@ -1161,13 +1222,21 @@ class PlayVideo:
         splash_surface = pygame.Surface((self.Splash_Width, self.Splash_Height), pygame.SRCALPHA)
         splash_surface.set_alpha(175)
         splash_surface.set_colorkey((0, 255, 0))
-        PlayVideo.apply_gradient(splash_surface, DODGERBLUE, DODGERBLUE4, self.Splash_Width, self.Splash_Height)
-        #splash_surface.fill(DodgerBlue4)
-        splash_rect = (0,0, self.Splash_Width, self.Splash_Height)
-        pygame.draw.rect(splash_surface, DodgerBlue, splash_rect, 1, 15)
+        PlayVideo.apply_gradient(splash_surface,
+                                 DODGERBLUE,
+                                 DODGERBLUE4,
+                                 self.Splash_Width,
+                                 self.Splash_Height
+                                 )
+        splash_rect = (0, 0, self.Splash_Width, self.Splash_Height)
+        pygame.draw.rect(splash_surface,
+                         DodgerBlue4,
+                         splash_rect,
+                         2,
+                         border_radius=10
+                         )
 
         alpha = 0  # Start fully transparent
-
         # Fade In
         while alpha < 255:
             alpha += 5  # Increase alpha to fade in
@@ -1187,7 +1256,6 @@ class PlayVideo:
         self.vid.play()
 
     def draw_video_splash(self, splash_surface, video_info):
-
         #WHITE = (255, 255, 255)
         #BLACK = (0, 0, 0)
         gray = (103,103,103)
@@ -1318,8 +1386,105 @@ class PlayVideo:
     def printMetaData(self):
         if self.vid.active:
             metadata = self.vid.get_metadata()
+            print()
             for key, value in metadata.items():
                 print(f"{key} : {value}")
+            print()
+
+    def draw_help(self, is_hovered):
+        self.help_button_rect =  self.draw_help_overlay(is_hovered)
+        return self.help_button_rect
+
+    def draw_help_overlay(self, is_hovered):
+
+        """
+        Redraws the entire help overlay, including the gradient background,
+        text, and OK button. The button color changes when hovered.
+        Returns a pygame.Rect representing the OK button.
+        """
+        BOX_HEIGHT = 570
+        BOX_WIDTH = 800
+        BOX_X = (self.displayWidth - BOX_WIDTH) // 2
+        BOX_Y = (self.displayHeight - BOX_HEIGHT) // 2
+
+        # Create and draw the gradient background
+        gradient_surface = pygame.Surface((BOX_WIDTH, BOX_HEIGHT), pygame.SRCALPHA)
+        gradient_surface.fill((0, 0, 0, 175))
+        gradient_surface.set_colorkey((0, 255, 0))
+        PlayVideo.apply_gradient(
+                                 gradient_surface,
+                                 DODGERBLUE,
+                                 DODGERBLUE4,
+                                 BOX_WIDTH,
+                                 BOX_HEIGHT,
+                                 alpha_start=165,
+                                 alpha_end=200
+        )
+        self.win.blit(gradient_surface, (BOX_X, BOX_Y))
+
+        # Draw a vertical separator line (this will always be drawn)
+        pygame.draw.line(gradient_surface, WHITE, (400, 20), (400, 500), 2)
+
+        pygame.draw.rect(self.win,
+                         WHITE,
+                        (BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT),
+                         3,
+                         border_radius=15
+                        )
+
+        # Render left column text
+        y_start = 20
+        line_offset = self.font_help.get_height() + 5
+        y_offset = y_start
+        for line in _help_.HELP_TEXT_LEFT.split("\n"):
+            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
+            text_surface = (self.font_help.render(line.strip(), True, color)) if not line.isupper() else self.font_help_bold.render(line.strip(), True, color )
+            gradient_surface.blit(text_surface, (50, y_offset))
+            if line.isupper():
+                text_width, _ = self.font_help_bold.size(line.strip())
+                pygame.draw.aaline(gradient_surface, HEADING_COLOR, (50, y_offset + line_offset),
+                                   (50 + text_width, y_offset + line_offset))
+                y_offset += 35
+            else:
+                y_offset += 25
+
+        # Render right column text
+        y_offset = y_start
+        for line in _help_.HELP_TEXT_RIGHT.split("\n"):
+            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
+            #text_surface = self.font_help.render(line.strip(), True, color)
+            text_surface = (self.font_help.render(line.strip(), True,color)) if not line.isupper() else self.font_help_bold.render(line.strip(), True, color)
+            gradient_surface.blit(text_surface, (450, y_offset))
+            if line.isupper():
+                text_width, _ = self.font_help_bold.size(line.strip())
+                pygame.draw.aaline(gradient_surface, HEADING_COLOR, (450, y_offset + line_offset),
+                                   (450 + text_width, y_offset + line_offset))
+                y_offset += 35
+            else:
+                y_offset += 25
+
+        self.win.blit(gradient_surface, (BOX_X, BOX_Y))
+
+        # Define button geometry (OK button)blit(
+        button_x = BOX_X + BOX_WIDTH // 2 - 60
+        button_y = BOX_Y + BOX_HEIGHT - 60
+        button_width = 120
+        button_height = 40
+        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
+
+        # Draw the OK button with hover effect
+        button_color = DODGERBLUE4 if is_hovered else DODGERBLUE
+        pygame.draw.rect(self.win, button_color, button_rect, border_radius=10)
+        pygame.draw.rect(self.win, BLACK, button_rect, 1, border_radius=10)
+
+        # Draw check icon and button text
+        self.win.blit(self.check_icon, (button_x + 10, button_y + 4))
+        ok_surface = self.font_button.render("OK", True, WHITE)
+        self.win.blit(ok_surface, (button_x + 50, button_y + 5))
+
+        # Update the full display (or you can update only portions if desired)
+        self.help_button_rect = button_rect
+        return button_rect
 
     def playVideo(self, video):
         """
@@ -1374,26 +1539,8 @@ class PlayVideo:
         :rtype:
         """
         while True:
-            #print(f"while True: Entering into the eventHandler.handle_events()")
-            if self.stopButtonClicked:
-                eventHandler.handle_events()
-                if self.drawVideoPlayBarFlag:
-                    self.videoPlayBar.loop_flag = self.opts.loop_flag
-                    self.videoPlayBar.volume = self.vid.get_volume()
-                    self.videoPlayBar.muted = self.vid.muted
-                    self.videoPlayBar.playbackSpeed = self.vid.speed
-                    self.videoPlayBar.vid_paused = self.vid.paused
-                    self.videoPlayBar.vid_duration = self.format_seconds(round(self.vid.duration / self.vid.speed, 1))
-                    self.videoPlayBar.vid_curpos = self.format_seconds(self.vid.get_pos())
-                    self.videoPlayBar.drawVideoPlayBar()
-                    if self.drawVideoPlayBarToolTip:
-                        self.videoPlayBar.draw_tooltip(self.drawVideoPlayBarToolTipText,
-                                                       self.drawVideoPlayBarToolTipMouse_x,
-                                                       self.drawVideoPlayBarToolTipMouse_y
-                                                       )
-                self.update()
             self.currVidIndx = -1
-            while (self.currVidIndx < len(self.videoList) - 1) and not self.stopButtonClicked:
+            while self.currVidIndx < len(self.videoList):
                 self.forwardsFlag = False
                 self.win.fill((0, 0, 0))
                 if not self.backwardsFlag:
@@ -1428,6 +1575,7 @@ class PlayVideo:
                 #print(f"📌 New video loaded! Resetting OSD tracking to prevent glitches.")
 
                 self.vid = self.playVideo(self.videoList[self.currVidIndx])
+
                 if self.vid is None:
                     continue
                 print(f"Playing {self.currVidIndx+1} of {len(self.videoList  )}: {self.vid.name}{self.vid.ext}")
@@ -1460,11 +1608,18 @@ class PlayVideo:
                         self.OSD_curPos_flag = not self.OSD_curPos_flag
                         self.draw_OSD_active = (not self.draw_OSD_active if not self.OSD_curPos_flag else True)
 
-                    if self.mute_flag or self.key_mute_flag:
+                    if self.vid.no_audio:
+                        self.mute_flag = True
+                        self.key_mute_flag = True
+
+                    if self.mute_flag or self.key_mute_flag or self.vid.no_audio:
                         self.vid.mute()
 
                     pos_w, pos_h = self.getResolutions()
                     if self.vid.draw(self.win, (pos_w, pos_h), force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
+
+                        if self.help_visible:
+                            self.help_button_rect = self.draw_help(self.is_hovered)
 
                         if self.drawVideoPlayBarFlag:
                             self.videoPlayBar.loop_flag = self.opts.loop_flag
@@ -1486,7 +1641,6 @@ class PlayVideo:
                                 self.draw_OSD()
                                 self.draw_filename()
 
-
                         if self.status_bar_visible:
                             self.displayVideoInfo(self.win,
                                                   self.vid.name,
@@ -1501,17 +1655,20 @@ class PlayVideo:
                             self.drawVidInfo.draw_info_box()
                             if self.video_info_box_tooltip:
                                 self.drawVidInfo.draw_tooltip(self.win,
-                                                              self.vid.name + self.vid.ext,
+                                                              #self.vid.name + self.vid.ext,
+                                                              self.vid.path,
                                                               self.video_info_box_tooltip_mouse_x,
                                                               self.video_info_box_tooltip_mouse_y
                                                               )
-                            else:
-                                if self.video_info_box_path_tooltip:
-                                    self.drawVidInfo.draw_path_tooltip(self.win,
-                                                                       self.vid.path,
-                                                                       self.video_info_box_path_tooltip_mouse_x,
-                                                                       self.video_info_box_path_tooltip_mouse_y
-                                                                       )
+                            #else:
+                                #if self.video_info_box_path_tooltip:
+                                    #path = os.path.dirname(self.videoList[self.currVidIndx])
+                                    #filepath = os.path.join(path, "")
+                                    #self.drawVidInfo.draw_path_tooltip(self.win,
+                                                                       #filepath,
+                                                                       #self.video_info_box_path_tooltip_mouse_x,
+                                                                       #self.video_info_box_path_tooltip_mouse_y
+                                                                       #)
 
                         if self.progress_active:
                             if pygame.time.get_ticks() - self.last_update_time > 10:

@@ -14,6 +14,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 DODGERBLUE = (30, 144, 255)
 DODGERBLUE4 = (16, 78, 139)
+HEADING_COLOR = (255, 200, 0)  # Yellow for headings
 
 class DrawVideoInfo:
     def __init__(self, Display, Filepath, Filename, USER_HOME):
@@ -38,10 +39,14 @@ class DrawVideoInfo:
         self.path_surface = None
 
         # Load Fonts
-        self.font_filename = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 32)
-        self.font_info = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 26)  # Increased text spacing slightly
-        self.font_filepath = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 22)
+        #self.font_filename = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 32)
+        self.font_filename = pygame.font.Font(self.FONT_DIR + 'Arial_Black.ttf', 36)
+        #self.font_info = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 26)  # Increased text spacing slightly
+        #self.font_filepath = pygame.font.Font(self.FONT_DIR + 'Montserrat-Regular.ttf', 22)
+        self.font_filepath = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 24)
         self.font_button = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', 24)
+        self.font_info = pygame.font.Font(self.FONT_DIR + 'Arial.ttf', 26)
+        self.font_info_bold = pygame.font.Font(self.FONT_DIR + 'Arial_Black.ttf', 26)
         # Load and scale checkmark icon
         self.check_icon = pygame.image.load(self.RESOURCES_DIR + 'checkmark.png').convert_alpha()
         self.check_icon = pygame.transform.scale(self.check_icon, (32, 32))
@@ -53,6 +58,7 @@ class DrawVideoInfo:
 
         # Get the metadata from self.filepath and parse it, stuff it into self.video_metadata
         self.video_metadata = DrawVideoInfo.get_metadata(self.filepath + self.filename)
+
 
         # Determine box height dynamically
         self.num_metadata_lines = len(self.video_metadata) + self.num_filepath_lines
@@ -117,11 +123,12 @@ class DrawVideoInfo:
     # Tooltip function
     def draw_tooltip(self, disp_surface, text, x, y):
         #print("draw_tooltip()")
-        tooltip_font = pygame.font.Font( self.FONT_DIR + "Montserrat-Regular.ttf", 18)
-        tooltip_surface = tooltip_font.render(text, True, BLACK)
+        tooltip_font = pygame.font.Font( self.FONT_DIR + "Montserrat-Bold.ttf", 18)
+        tooltip_surface = tooltip_font.render(text, True, WHITE)
         tooltip_width, tooltip_height = tooltip_surface.get_size()
 
-        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['green'], (x, y, tooltip_width + 10, tooltip_height + 6), border_radius=5)
+        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['dodgerblue'], (x, y, tooltip_width + 10, tooltip_height + 8), border_radius=8)
+        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['dodgerblue4'], (x, y, tooltip_width + 10, tooltip_height + 8), 1, border_radius=8)
         disp_surface.blit(tooltip_surface, (x + 5, y + 3))
        #pygame.display.flip()
 
@@ -130,109 +137,76 @@ class DrawVideoInfo:
         #print("draw_tooltip()")
         #print(f"draw_path_tooltip text: {text}")
         tooltip_path_font = pygame.font.Font( self.FONT_DIR + "Montserrat-Regular.ttf", 18)
-        tooltip_path_surface = tooltip_path_font.render(text, True, BLACK)
+        tooltip_path_surface = tooltip_path_font.render(text, True, WHITE)
         tooltip_path_width, tooltip_path_height = tooltip_path_surface.get_size()
 
-        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['green'], (x, y, tooltip_path_width + 10, tooltip_path_height + 6), border_radius=5)
+        pygame.draw.rect(disp_surface, pygame.color.THECOLORS['dodgerblue'], (x, y, tooltip_path_width + 10, tooltip_path_height + 6), border_radius=5)
         disp_surface.blit(tooltip_path_surface, (x + 5, y + 3))
 
     def draw_info_box(self):
+        is_hovered = False
         y_offset = 0
         path_surface = None
 
         # Create a surface to apply the gradient
         gradient_surface = pygame.Surface((self.BOX_WIDTH, self.BOX_HEIGHT), pygame.SRCALPHA)
-        gradient_surface.set_alpha(175)
+        #gradient_surface.set_alpha(175)
+        #gradient_surface.set_colorkey((0, 255, 0))
+        gradient_surface.fill((0, 0, 0, 175))
         gradient_surface.set_colorkey((0, 255, 0))
-        DrawVideoInfo.apply_gradient(gradient_surface, DODGERBLUE, DODGERBLUE4, self.BOX_WIDTH, self.BOX_HEIGHT)
+        DrawVideoInfo.apply_gradient(
+                                     gradient_surface,
+                                     DODGERBLUE,
+                                     DODGERBLUE4,
+                                     self.BOX_WIDTH,
+                                     self.BOX_HEIGHT,
+                                     alpha_start=165,
+                                     alpha_end=225
+                                     )
 
         # Blit the gradient to the display
         self.display.blit(gradient_surface, (self.BOX_X, self.BOX_Y))
 
         # Draw Border on top of the gradient
-        pygame.draw.rect(self.display, DODGERBLUE4, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), 2,
-                         border_radius=10)
+        pygame.draw.rect(self.display,
+                         DODGERBLUE,
+                        (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT),
+                         3,
+                         border_radius=15
+                        )
 
         # Render filename
         truncated_filename = DrawVideoInfo.truncate_text(self.filename, self.font_filename, self.BOX_WIDTH - 40)
-        self.filename_surface = self.font_filename.render(truncated_filename, True, BLACK)
-        self.filename_rect = self.filename_surface.get_rect(center=(self.BOX_X + self.BOX_WIDTH // 2, self.BOX_Y + 20))
+        self.filename_surface = self.font_filename.render(truncated_filename, True, HEADING_COLOR)
+        self.filename_rect = self.filename_surface.get_rect(center=(self.BOX_X + self.BOX_WIDTH // 2, self.BOX_Y + 40))
         self.display.blit(self.filename_surface, self.filename_rect.topleft)
 
         # Render Wrapped Filepath Below Filename
         y_offset = self.BOX_Y + 50
-        truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
-        path_surface = self.font_filepath.render(truncated_path, True, BLACK)
-        self.path_rect = pygame.Rect(self.BOX_X + 20, y_offset, path_surface.get_width(), path_surface.get_height())
-        self.display.blit(path_surface, (self.BOX_X + 20, y_offset))
+        #truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
+        #path_surface = self.font_filepath.render(truncated_path, True, BLACK)
+        #self.path_rect = pygame.Rect(self.BOX_X + 20, y_offset, path_surface.get_width(), path_surface.get_height())
+        #self.display.blit(path_surface, (self.BOX_X + 20, y_offset))
 
         # Render Metadata Below Filepath
-        y_offset += 44
+        y_offset += 70
         column_spacing = 350
-
+        column_spacing2 = 100
+        #print(f"{self.video_metadata}")
         for key, value in self.video_metadata.items():
-            key_surface = self.font_info.render(f"{key}:", True, BLACK)
-            value_surface = self.font_info.render(value, True, BLACK)
-            self.display.blit(key_surface, (self.BOX_X + 20, y_offset))
-            self.display.blit(value_surface, (self.BOX_X + 20 + column_spacing, y_offset))
+            key_surface = self.font_info.render(f"{key}:", True, WHITE)
+            value_surface = self.font_info.render(str(value), True, WHITE)
+            self.display.blit(key_surface, (self.BOX_X + column_spacing2 + 20, y_offset))
+            self.display.blit(value_surface, (self.BOX_X + 20 + column_spacing2 + column_spacing, y_offset))
             y_offset += 30
 
         # Render OK Button
-        pygame.draw.rect(self.display, DODGERBLUE4, self.button_rect, border_radius=8)
+        button_color = DODGERBLUE4 if is_hovered else DODGERBLUE
+        pygame.draw.rect(self.display, button_color, self.button_rect, border_radius=8)
+        pygame.draw.rect(self.display, BLACK, self.button_rect, 1, border_radius=8)
         self.display.blit(self.check_icon, (self.button_rect.x + 10, self.button_rect.y + 4))
-        ok_surface = self.font_button.render("OK", True, WHITE)
+        ok_surface = self.font_button.render("OK", True, HEADING_COLOR)
         self.display.blit(ok_surface, (self.button_rect.x + 50, self.button_rect.y + 5))
-
-
-    '''
-    def draw_info_box(self):
-        y_offset = 0
-        path_surface = None
-        # Draw Dialog Box
-        pygame.draw.rect(self.display, DODGERBLUE, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), border_radius=10)
-        pygame.draw.rect(self.display, DODGERBLUE4, (self.BOX_X, self.BOX_Y, self.BOX_WIDTH, self.BOX_HEIGHT), 2, border_radius=10)
-
-        # Truncate and render filename (with tooltip support)
-        truncated_filename = DrawVideoInfo.truncate_text(self.filename, self.font_filename, self.BOX_WIDTH - 40)
-        self.filename_surface = self.font_filename.render(truncated_filename, True, BLACK)
-        self.filename_rect = self.filename_surface.get_rect(center=(self.BOX_X + self.BOX_WIDTH//2, self.BOX_Y + 20))
-        self.display.blit(self.filename_surface, self.filename_rect.topleft)
-        # Render Wrapped Filepath Below Filename
-        y_offset = self.BOX_Y + 50   # The Y coordinate of filepath
-
-        truncated_path = DrawVideoInfo.truncate_path(self.filepath, max_length=60)
-        path_surface = self.font_filepath.render(truncated_path, True, BLACK)
-        self.path_rect = pygame.Rect(self.BOX_X + 20,
-                                     y_offset,
-                                     path_surface.get_width(),
-                                     path_surface.get_height()
-                                     )
-        self.display.blit(
-                          path_surface,
-                          (self.BOX_X + 20, y_offset)
-                          )
-        #y_offset += 24
-
-        # Render Metadata Below Filepath
-        #y_offset += 20
-        y_offset += 44  # instead of separate 24 + 20 updates.
-        column_spacing = 350  # spacing between the descriptors and their data
-
-        for key, value in self.video_metadata.items():
-            key_surface = self.font_info.render(f"{key}:", True, BLACK)
-            value_surface = self.font_info.render(value, True, BLACK)
-            self.display.blit(key_surface, (self.BOX_X + 20, y_offset))
-            self.display.blit(value_surface, (self.BOX_X + 20 + column_spacing, y_offset))
-            y_offset += 30  # Increased spacing slightly
-
-        # Render OK Button with proper spacing
-        pygame.draw.rect(self.display, DODGERBLUE4, self.button_rect, border_radius=8)
-        self.display.blit(self.check_icon, (self.button_rect.x + 10, self.button_rect.y + 4))
-        ok_surface = self.font_button.render("OK", True, WHITE)
-        self.display.blit(ok_surface, (self.button_rect.x + 50, self.button_rect.y + 5))
-    '''
-
-
 
     @staticmethod
     def __load_metadata(video_path):
@@ -248,7 +222,7 @@ class DrawVideoInfo:
     @staticmethod
     def get_metadata(video_path):
 
-        print(f"video_path: {video_path}")
+        #print(f"video_path: {video_path}")
         # extract video medatata using FFprobe
         command = [
             "ffprobe", "-v", "quiet", "-print_format", "json",
@@ -290,8 +264,8 @@ class DrawVideoInfo:
             fps = round(float(fps_num / fps_dem), 2)
         else:
             fps = fps_num
+        '''    
         print(f"fps_num: {fps_num}, fps_dem {fps_dem}")
-
         # Print results
         print(f"Size: {file_size} KB, ({file_size // 1024} MB)")
         print(f"Length: {DrawVideoInfo.format_seconds(int(duration))}")
@@ -311,6 +285,7 @@ class DrawVideoInfo:
             print(f"Sample Rate: {audio_rate}")
         print(f"Channels: {channels}")
         print()
+        '''
 
         videoMetadata = {
             "Size": f"{file_size} KB ({file_size // 1024} MB)",

@@ -8,6 +8,9 @@
 #
 import pygame
 
+DODGERBLUE = (30, 144, 255)
+DODGERBLUE4 = (16, 78, 139)
+
 class VideoPlayBar:
     def __init__(self, DISPLAY, USER_HOME, loop_flag, volume, muted, playbackSpeed, vid_paused, vid_duration, vid_curpos):
         self.loop_flag = loop_flag
@@ -57,7 +60,7 @@ class VideoPlayBar:
         self.RESOURCES_DIR = self.USER_HOME + "/.local/share/pyVid/Resources/"
         # Icons.  All icons are 48x48 with transparent backgrounds
         self.playIcon = pygame.image.load(self.RESOURCES_DIR + "play.png").convert_alpha()
-        self.stopIcon = pygame.image.load(self.RESOURCES_DIR + "stop.png").convert_alpha()
+        self.stopIcon = pygame.image.load(self.RESOURCES_DIR + "exit.png").convert_alpha()
         self.previousIcon = pygame.image.load(self.RESOURCES_DIR + "previous.png").convert_alpha()
         self.nextIcon = pygame.image.load(self.RESOURCES_DIR + "next.png").convert_alpha()
         self.plusIcon = pygame.image.load(self.RESOURCES_DIR + "plus.png").convert_alpha()
@@ -85,23 +88,27 @@ class VideoPlayBar:
 
     def drawVideoPlayBar(self):
         #print(f"{self.vid_duration} : {self.vid_curpos}")
-        DodgerBlue = pygame.color.THECOLORS['dodgerblue']
-        barBorderColor = (0, 0, 0)
-        barColor = DodgerBlue
-        color_start = (0, 120, 255)  # DodgerBlue
-        color_end = (0, 50, 150)  # Darker Blue
+        border_color = pygame.color.THECOLORS['dodgerblue4']
 
         self.barSurface = pygame.Surface((self.barWidth, self.barHeight), pygame.SRCALPHA)
         self.barSurface.set_alpha(175)
         self.barSurface.set_colorkey((0, 255, 0))
-        VideoPlayBar.apply_gradient(self.barSurface, (0, 120, 255), (0, 50, 150), self.barWidth, self.barHeight)
+        VideoPlayBar.apply_gradient(self.barSurface,
+                                    DODGERBLUE,
+                                    DODGERBLUE4,
+                                    self.barWidth,
+                                    self.barHeight
+                                    )
         self.barRect = self.barSurface.get_rect()
-        pygame.draw.rect(self.barSurface, barBorderColor, (0, 0, self.barWidth, self.barHeight), 1)
+        pygame.draw.rect(self.barSurface,
+                         border_color,
+                         (0, 0, self.barWidth, self.barHeight),
+                         1
+                         )
         self.placeIcons()
         self.drawVolumeBar()
         self.drawVolumeKnob()
         self.display.blit(self.barSurface, (self.barRow, self.barColumn))
-
 
     def placeIcons(self):
         self.IconList = [
@@ -145,6 +152,7 @@ class VideoPlayBar:
     def print_IconRects(self):
         for name, rect in self.IconRects.items():
             print(f"{name}, {rect}")
+        print()
 
     @staticmethod
     def apply_gradient(surface, color_start, color_end, width, height, alpha_start=50, alpha_end=200):

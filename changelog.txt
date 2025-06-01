@@ -1,3 +1,19 @@
+01-Jun-2025     Added a new Help window.  It is envoked from the keyboard by pressing 'h'.  Pretty much all the
+                keyboard and mouse functions are listed there and are available while the help is being displayed.
+                The two mouse long click buttons (left and right) which advance to the next or previous video are
+                disabled while the Help window is being displayed.  This is to avoid conflicts with the OK button.
+
+                Also made modifications to the Video metadata window. As with the Help window, the two mouse long
+                click buttons (left and right) are disabled while the window is being displayed.
+                If the help window is being displayed and the user presses the 'i' key to view the video metadata
+                window,  the, help window is first closed  before the help window is displayed.  The same is true
+                if the metadata dialog box is being displayed  and the help dialog is envoked.
+
+                Cleaned up the event handler code.
+
+                In general, been tweaking the various dialog boxes trying to make them all the same.  This is
+                work in progress and likely will for some time.
+
 29-May-2025     More refinements on  the video playback bar.  It is still in the develomental stages so things are not
                 very likely to work.  Volume  does not update correctly (yet).   No mouse drag yet on the slider either.
                 Play/Pause work, Stop doesn't.  Previous / Next work as expected, as do the +/- icons for the playback

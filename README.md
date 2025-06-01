@@ -35,8 +35,12 @@ Here are some examples of pyVid2 in action:
 ![Playback with video info splash. Definitely work in progress!](./assets/800x500/pyVid2Splash.jpg)
 *Playback with video info splash. Definitely work in progress!*
 
-![Video Metadata info](./assets/800x500/pyVid2MetaData.jpg)
-*The very beginnings of a video metadata window*
+![Video Metadata info](./assets/800x500/pyVid2Metadata.png)
+*Some small visual improvements made to the video metadata window*
+
+![Video Help Window](./assets/800x500/pyVid2Help.png)
+*New interactive help window*
+
 
 <!--
 ![No OSD](./assets/800x500/pyVid2No-OSD.jpg)
@@ -79,17 +83,17 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 📽️ **<span style="color:HotPink">Video Playback Options</span>**
 
-| **Option**                   | **Description** |
-|------------------------------|-----------------------------------------------------|
-| `--loop`                     | Loop videos instead of exiting (**default: disabled**) |
-| `--shuffle`                  | Play videos in random order (**default: disabled**) |
-| `--disableGIF`               | Disable playing `.GIF` files (**default: enabled**) |
-| `--enableFFprobe`            | Enable FFprobe when using OpenCV (**default: disabled**) |
-| `--reader {auto, ffmpeg, opencv, imageio, dcord}` | Select video reading backend (**default: auto**) |
-| `--interp {area, cubic, linear, nearest, lanczos4}` | Use interpolation for resizing frames (**default: cubic**) |
-| `--loopDelay LOOPDELAY`      | Delay (in seconds) between videos (**default: 1 sec**) |
-| `--playSpeed PLAYSPEED`      | Set playback speed (`0.5 - 5.0`, **default: 1.0**) |
-| `--enableOSDcurpos`          | Enable on-screen display (OSD) position counter (**default: disabled**) |
+| **Option**                                          | **Description**                                                         |
+|-----------------------------------------------------|-------------------------------------------------------------------------|
+| `--loop`                                            | Loop videos instead of exiting (**default: disabled**)                  |
+| `--shuffle`                                         | Play videos in random order (**default: disabled**)                     |
+| `--disableGIF`                                      | Disable playing `.GIF` files (**default: enabled**)                     |
+| `--enableFFprobe`                                   | Enable FFprobe when using OpenCV (**default: disabled**)                |
+| `--reader {auto, ffmpeg, opencv, imageio, dcord}`   | Select video reading backend (**default: auto**)                        |
+| `--interp {area, cubic, linear, nearest, lanczos4}` | Use interpolation for resizing frames (**default: cubic**)              |
+| `--loopDelay LOOPDELAY`                             | Delay (in seconds) between videos (**default: 1 sec**)                  |
+| `--playSpeed PLAYSPEED`                             | Set playback speed (`0.5 - 5.0`, **default: 1.0**)                      |
+| `--enableOSDcurpos`                                 | Enable on-screen display (OSD) position counter (**default: disabled**) |
 
 ### 🔊 **<span style="color:HotPink">Audio Settings</span>**
 
@@ -110,12 +114,12 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 📁 **<span style="color:HotPink">File Handling</span>**
 
-| **Option**                   | **Description** |
-|------------------------------|-----------------------------------------------------|
-| `--noIgnore`                 | Do not honor `.ignore` files (**default: honor .ignore files**) |
-| `--noRecurse`                | Do not recurse into subdirectories (**default: recurse into all specified directories**) |
-| `--printVideoList`           | Print a list of available videos |
-| `--printIgnoreList`          | Search for `.ignore` files in specified directories |
+| **Option**          | **Description**                                                                          |
+|---------------------|------------------------------------------------------------------------------------------|
+| `--noIgnore`        | Do not honor `.ignore` files (**default: honor .ignore files**)                          |
+| `--noRecurse`       | Do not recurse into subdirectories (**default: recurse into all specified directories**) |
+| `--printVideoList`  | Print a list of available videos                                                         |
+| `--printIgnoreList` | Search for `.ignore` files in specified directories                                      |
 
 ### ✔️ <span style="color:DodgerBlue">Example Command-Line</span>
 
@@ -177,6 +181,7 @@ There are a number of keyboard commands available while a video is playing:
 
 - ░**d**░ = Debug: Print the value of all command line options to the console.
 - ░**g**░ = Reshuffle video playlist in place.
+- ░**h**░ = Help
 - ░**i**░ = Show video metadata window. Click the **OK** button to clear. [work in progress] 
 - ░**l**░ = Loop the currently playing video indefinately. This is a toggle.
 - ░**m**░ = Toggle mute video.
