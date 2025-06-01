@@ -38,7 +38,10 @@ Here are some examples of pyVid2 in action:
 ![Video Metadata info](./assets/800x500/pyVid2Metadata.png)
 *Some small visual improvements made to the video metadata window*
 
-![Video Help Window](./assets/800x500/pyVid2Help.png)
+![Video Playback bar](./assets/800x500/pyVid2PlaybackBar.png)
+*The very beginnings of a real video playback status bar.*
+
+![Video Help Window](./assets/1024x640/pyVid2Help.png)
 *New interactive help window*
 
 
