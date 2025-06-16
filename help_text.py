@@ -9,13 +9,15 @@
 
 # Help text
 HELP_TEXT_LEFT = """VIDEO CONTROLS
-[ g ] = Randomize playlist
+[ g ] = Greyscale video
 [ i ] = Show metadata info
+[ j ] = Randomize playlist
 [ l ] = Repeat video
 [ n ] = Next video
+[ o ] = Toggle OSD (3 states)
+[ q ] or [ ESC ] = Quit
 [ r ] = Restart video
-[ o ] = Toggle OSD
-[ m ] = Mute audio
+[ t ] = Toggle video title (3 states)
 
 Keypad [ + ] = Increase speed
 Keypad [ - ] = Decrease speed
@@ -25,26 +27,28 @@ Keypad [ - ] = Decrease speed
 [ left arrow ] = Seek -20 sec
 [ right arrow ] = Seek +20 sec
 
-'[ Mousewheel UP ]' = Seek forward 3 sec
-'[ Mousewheel DOWN ]' = Seek backward 3 sec
+[ Mousewheel UP ]  =  Seek +4 sec
+[ Mousewheel DWN ] =  Seek -4 sec
 """
 
 HELP_TEXT_RIGHT = """AUDIO CONTROLS
+[ m ] = Mute audio
 [ up arrow ] = Volume Up
 [ down arrow ] = Volume Down
 
 FILE CONTROLS
 [ s ] = Save screenshot
+[ Alt + s ] = saveMode
 [ w ] = Save playlist
 
 DEBUG CONTROLS
+[ b ] = Print bar coordinates
 [ d ] = Print CLI vars
 [ z ] = Print metadata
-[ t ] = Print video bar coordinates
 
 MOUSE CONTROLS
-Left button (Long) = Next video
-Right button (Long) = Previous video
-Middle button (Long) = Pause video
+Left (Long) = Next video
+Right (Long) = Prev video
+Middle (Long) = Pause video
 """
 

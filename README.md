@@ -96,6 +96,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `--interp {area, cubic, linear, nearest, lanczos4}` | Use interpolation for resizing frames (**default: cubic**)              |
 | `--loopDelay LOOPDELAY`                             | Delay (in seconds) between videos (**default: 1 sec**)                  |
 | `--playSpeed PLAYSPEED`                             | Set playback speed (`0.5 - 5.0`, **default: 1.0**)                      |
+| `--dispTitle {all, portrait, landscape}`            | Display mp4 title (**default: None**)                                   |
 | `--enableOSDcurpos`                                 | Enable on-screen display (OSD) position counter (**default: disabled**) |
 
 ### 🔊 **<span style="color:HotPink">Audio Settings</span>**
@@ -189,11 +190,12 @@ There are a number of keyboard commands available while a video is playing:
 - ░**l**░ = Loop the currently playing video indefinately. This is a toggle.
 - ░**m**░ = Toggle mute video.
 - ░**n**░ = Advance to next video.
-- ░**o**░ = Toggle OSD views.
+- ░**o**░ = Toggle OSD views. (3 states)
 - ░**p**░ or **Space Bar** = Pause video.
 - ░**q**░ or **ESC** = Quit the program
 - ░**r**░ = Restart the currently playing video back to the beginning.
 - ░**s**░ = Save Screenshot to ~/pyVidScreenShots
+- ░**t**░ = Toggle mp4 Title display. (3 states)
 - ░**w**░ = Save pyVid2s internal playlist to a file.
 - ░ **+** ░ = (keypad) Increase playback speed by 0.50  (*max is 5.0*)
 - ░ **-** ░ = (keypad) Decrease playback speed by 0.50  (*min is 0.50*)
@@ -229,6 +231,34 @@ There are three modes for the **On Screen Display**. Pressing the ░**o**░ ke
 
 In the *2nd* mode, the **HH:MM:SS** to the far left is the ***current play position***. The one to the far right is the ***total video duration*** time.
 The *3rd* mode behaves in a special manner.  When the ***current play position*** is approx. ***20 seconds*** from the video end, its default color will slowly fade to a much brighter one giving a visual indication the video is 20 seconds from completion.  Currently, the OSD timings are displayed in the color of **DodgerBlue**. When the color fading begins in *mode 3*, The OSD text color slowly fades until it reaches **HotPink** which denotes the end of the video had been reached. By default, the OSD is ***OFF*** when **pyVid2** is run. The command line argument ***--enableOSDcurpos*** enables OSD mode 3 at runtime.
+
+
+### 💻 <span style="color:DodgerBlue">Display Video Title</span>
+
+This command key (t) along with its command line interface counterpart **--dispTitle** deserves some explanation.
+pyVid2 has some very specific use cases that probably will not be of much use to most users.  In the world of video, there is no such thing as 'portrait' (where the image height > image width) or 'landscape' (where the image width > image height). In video, each displayed frame is *always* the same size. That having been said, pyVid2 is a *presentation* video player.  Consider the usage case
+of a photographer. He or she may wish to show-ase their work by rendering their photos into slideshow videos.  These videos will likely have different transition effects for each slide or photo.  In the world of photography, depending upon the subject, many photos will likely be taken in both portrait and landscape.  Thus, when these photos are rendered into a video slideshow, The resulting video will consist of photos representing both.  Other subjects might consist only of landscape photos or just portrait photos. **--dispTitle** can take one of three possible parameters.  These are:
+- **all**       =  Display metadata title tag text on all frames
+- **portrait**  =  Display metadata title tag text on detected portrait frames
+- **landscape** =  Display metadata title tag text on landscape frames (likely all frames) 
+
+The portrait detection algorithm is rather crude.  If it counts at least 1000 pixels of the color black from the left most position AND  at least 1000 pixels of black counting from the extreme right to the left in a frame, then the frame is considered to be a portrait, otherwise, it is considered to be a landscape.  There are so many cases where this will fail.  It is suggested to just use **all** and not worry about it.  The command key (t) will toggle between the various possible states: **None**->**all**->**portrait**->**landscape**->**None**    
+ 
+Note that the selection of any parameter other than **all* is likely not going to work as intended.  Customized metadata tags can be added to a mp4 video (and likely others) by using ffmpeg:
+```sh
+# The -c copy is very important as it will prevent having to transcode the entire video over again. 
+ffmpeg -loglevel quiet -i video.mp4 -c copy -movflags use_metadata_tags -metadata title="Nikki and the girls on vacation in the Outback!" output.mp4
+```
+The new tag called **title** can be verified by using ffprobe:
+```sh
+ffprobe -loglevel quiet -show_format output.mp4  | grep TAG:title | cut --delimiter='=' -f2
+Nikki and the girls on vacation in the Outback!
+$
+```
+
+
+
+
 
 ### 🔔 <span style="color:DodgerBlue">Ignore Files</span>
 

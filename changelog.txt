@@ -1,3 +1,24 @@
+09-Jun-2025     Added the ability to display a custom metadata tag called Title.
+
+08-Jun-2025     Reworked how screenshots are handled.  New version now uses vid.frame_surf instead of saving the
+                display surface.  This means that none of the GUI controls, boxes, etc will get saved.
+                Added ALT+s which is what I call saveMode.  All this really does is remaps the <SPACEBAR> key to
+                do a screenshot.  Pressing ALT+s again undoes the remap and the <SPACEBAR> reverts back to the pause video
+                function.
+
+                Added pygame dialog boxes along with better error handling. The screenshot function appears to be much faster
+                now, due to when the pygame dialog box is being shown.  Screen shots
+
+06-Jun-2025     The videoPlayBar class which consists of the video playback bar, should scale from WUXGA to 4KUHD (I think).
+                Still need to work out on how to easily test the scaling.  I'm not too keen on having to plug in the old
+                1920x1200 display to test with.
+
+03-Jun-2025     Added big-screen support 3840x2160.  Expect this to break just about everything that isn't 4K.  This
+                is definitely work in progress.  Scaling up from WUXGA through 4K_UHD in pygame isn't all that easy
+                mainly because pygame is all brand new for me.  Will have to develop some test methods to test scaling
+                at the lower resolutions.
+
+
 01-Jun-2025     Added a new Help window.  It is envoked from the keyboard by pressing 'h'.  Pretty much all the
                 keyboard and mouse functions are listed there and are available while the help is being displayed.
                 The two mouse long click buttons (left and right) which advance to the next or previous video are

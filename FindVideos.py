@@ -5,20 +5,44 @@
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
 # Class to generate the pyVid2 internal master playlist.
+
 import os
+import magic
+import subprocess
+from typing import Tuple
 
 class FindVideos:
+	"""
+	Class that searches for supported video files in user-specified directories or
+	within a provided playlist file.
+
+	The FindVideos class offers functionality to search for video files in directories
+	or from a playlist file specified by the user. It identifies supported video files,
+	ignores unwanted directories as directed, and provides the results in a manageable
+	list format. The class is designed to allow recursive search within directories
+	and gives the option to disable specific video file formats like GIFs.
+	"""
 	def __init__(self, opts: object) -> None:
 		"""
-		Class with methods that will search for supported videos
-		in the user supplied directories given on the command line.
-		All found media files are listed in self.videoList
-		:param opts: Contains our variable flags base on options given on the command line.
-		:type opts:
+		Represents a playlist manager object that handles loading and managing a list
+		of videos based on the options provided during initialization.
+
+		Attributes:
+		    opts (object): Contains configuration options and paths for the playlist.
+		    playListFile: Specifies the file path of the playlist to be loaded.
+		    pathList: A list of paths where the videos are located.
+		    videoList: A list that stores the video information after parsing.
+		    ignoreList: A list containing videos to be ignored during processing.
+		    numVideos: Holds the total number of videos loaded into the playlist.
+
+		Methods:
+		    __init__(opts: object) -> None
+		    getVideos() -> int
 		"""
 		self.opts = opts
 		self.playListFile = opts.loadPlayList
 		self.pathList = opts.Paths
+
 		self.videoList  = []
 		self.ignoreList = []
 
@@ -26,47 +50,96 @@ class FindVideos:
 
 	def getVideos(self):
 		"""
-		Method that either:
-		(A) Iterates through a list of user supplied paths looking for supported media to play.
-		(B) Iterates through a playListFile that was loaded on the command line.  The playListFile
-		already has the path/filenames of the media to play.
-		In both cases, the found media, or the loaded playListFile contents are appended to self.videoList.
-		This method is called by the class constructor.
+		Retrieves and processes a list of videos based on current configurations and user options.
 
-		:return: Returns the length of self.videoList
-		:rtype: int
+		Attributes:
+		    videoList (list): Stores the list of videos processed.
+
+		Parameters:
+		    None
+
+		Returns:
+		    int: The number of videos in the processed video list.
 		"""
-		# --loadPlayList takes priority
-		if not self.opts.loadPlayListFlag:
-			for videoDir in self.pathList:
-				# print(f"videoDirs: {videoDirs}"
-				self.recursive(
-							    videoDir,
-								recurse=False if self.opts.noRecurse is True else True,
-				                ignore=True if self.opts.noIgnore is True else False,
-								disableGIF=True if self.opts.disableGIF is True else False
+		if self.opts.loadFilesFlag:                    #  The cli argument --Files was used (resulting in self.opts.loadFilesFlag being set to True).
+			self.buildPlayList(self.opts.Files)        #  Build a playlist from the list of files provided by the cli argument --Files.
+		elif not self.opts.loadPlayListFlag:           #  Otherwise, if we are not loading a playlist,
+			for videoDir in self.pathList:             #  then --Paths was specified along with at least one subfolder.
+				self.recursive(                        #  Scan all user-supplied subfolders for supported video files.
+							    videoDir,                                                   #  Iterate over all subfolders in self.pathList,
+								recurse=False if self.opts.noRecurse is True else True,     #  if recurse into each subfolder unless --noRecurse was specified.
+				                ignore=True if self.opts.noIgnore is True else False,       #  Ignore .ignore files if --noIgnore was specified.
+								disableGIF=True if self.opts.disableGIF is True else False  #  Exclude GIF files if --disableGIF was specified.
 				              )
 		else:
-			self.loadPlayList(self.playListFile)
-		return len(self.videoList)
+			self.loadPlayList(self.playListFile)      # Otherwise, we are going to load a playlist from a file.
+		return len(self.videoList)                    # Always return the number of videos in the playlist.
+
+	def buildPlayList(self, Files):
+		"""
+		Build a playlist from a list of files.
+
+		The method processes a list of file paths, validates their extensions based on
+		a predefined list of supported video formats, and adds the valid ones to the
+		playlist. If the 'disableGIF' option in the object is set to True, '.gif' files
+		are excluded from the supported extensions.  Argparse in cmdLineOpts ensures that
+		the files exist.
+
+		Args:
+		    Files (list[str]): A list of file paths to be processed and added to
+		    the playlist.
+
+		Returns:
+		    None
+		"""
+		# Supported extensions.
+		ext = ['.vob', '.mp4', '.mkv', '.mov', '.avi', '.flv', '.wmv', '.webm', '.3gp', '.gif']
+		# Remove '.gif' from the ext list if the opts['disableGif_flag'] is set
+		if self.opts.disableGIF:
+			ext = [e for e in ext if e != '.gif']
+
+		# All files were validated by argparse, so no need to validate them again.
+		# Instead, make sure their extensions are supported.
+		Files.sort()
+		for file in Files:
+			file_lower = file.lower()
+			if file_lower.endswith(tuple(ext)):
+				result, result_str = FindVideos.is_video_file(file)
+				if result:
+					self.videoList.append(file)
 
 	def loadPlayList(self, playListFile):
+		"""
+		Loads a list of video files from a specified playlist file. The function
+		reads each line of the file, strips any leading or trailing whitespace, and
+		stores the resulting list of video names in the instance's `videoList`
+		attribute.
+
+		Args:
+		    playListFile: Path to the playlist file to be loaded
+
+		Raises:
+		    FileNotFoundError: If the specified playlist file does not exist
+		    IOError: If an error occurs while reading the file
+		"""
 		with open(os.path.expanduser(playListFile) ) as file:
 			self.videoList = [line.strip() for line in file]
 
 	def recursive(self, dpath: str, recurse: bool = False, ignore: bool = False, disableGIF: bool = False) -> None:
 		"""
-		A method that recurses into a directory structure looking for media files.
-		If a supported media file is found, the path/filename of this file is appended to a
-		list called 'self.videoList'. This list contains the master path/filenamess of
-		all videos that will be played.
+		This method processes a directory recursively, identifies video files, and '.ignore' files or directories
+		as specified. It manages video files with supported extensions and adds their paths to a list. The method
+		supports options to toggle recursion, ignore specific files and directories, and exclude GIF files.
 
-		:param str self, dpath:  Path containing the directory to recurse into.
-		:param bool recurse:    Flag to tell the function whether it should recurse into 'dpath' (recurse=True).
-		:param bool ignore:     Flag if set to True will ignore all directories containing .ignore files
-		:param bool disableGIF: Flag if set to True, disables GIF support.
-		:return:                None. However, it will append found and supported media path/filenames to self.videoList
-		:rtype: None
+		Parameters:
+		dpath: str
+		    The directory path to be processed.
+		recurse: bool, optional
+		    If set to True, enables recursive traversal of subdirectories. Defaults to False.
+		ignore: bool, optional
+		    If set to True, skips processing of directories containing files named ".ignore". Defaults to False.
+		disableGIF: bool, optional
+		    If set to True, excludes GIF files from the supported extensions list. Defaults to False.
 		"""
 		# Supported extensions.
 		ext = ['.vob', '.mp4', '.mkv', '.mov', '.avi', '.flv', '.wmv', '.webm', '.3gp', '.gif']
@@ -99,9 +172,28 @@ class FindVideos:
 						self.recursive(os.path.join(dpath, obj), recurse, ignore, disableGIF)
 
 	def videoList_size(self):
+		"""
+		Returns the size of the video list.
+
+		This method provides the size of the `videoList` attribute by returning the
+		number of elements stored in it. It allows users to determine how many videos
+		are contained within the list.
+
+		Returns:
+		    int: The number of elements in the `videoList`.
+		"""
 		return len(self.videoList)
 
 	def videoList_print(self):
+		"""
+		Prints the contents of the video list along with the total number of entries.
+
+		This method checks if the video list is empty. If it is not, it prints each video
+		contained in the list and the total count of the videos.
+
+		Raises:
+		    None
+		"""
 		if self.videoList_size() == 0:
 			return
 		else:
@@ -111,6 +203,17 @@ class FindVideos:
 			print(f"Total number of entries in the videoList: {len(self.videoList)}\n\n")
 
 	def print_ignores(self):
+		"""
+		Prints the contents of the `ignoreList` attribute if it is not empty.
+
+		This method provides the ability to print all entries currently stored in
+		the `ignoreList` attribute. It also displays the total count of entries
+		in the list. If `ignoreList` is empty, the method exits without performing
+		any actions.
+
+		Raises:
+		    None
+		"""
 		if len(self.ignoreList) == 0:
 			return
 		else:
@@ -119,3 +222,55 @@ class FindVideos:
 				print(entry)
 			print(f"Total number of entries in the ignoreList: {len(self.ignoreList)}\n\n")
 
+	@staticmethod
+	def is_video_file(file_path: str) -> Tuple[bool, str]:
+		"""
+		Determines if a file is a valid video file using multiple validation methods.
+
+		Args:
+			file_path: Path to the file to check
+
+		Returns:
+			Tuple[bool, str]: (is_valid, message)
+			- is_valid: True if the file is a valid video, False otherwise
+			- message: Description of why file is invalid, or mime type if valid
+		"""
+		'''
+		# First check if file exists and is readable
+		if not os.path.isfile(file_path):
+			return False, f"File does not exist: {file_path}"
+		'''
+
+		if not os.access(file_path, os.R_OK):
+			return False, f"File is not readable: {file_path}"
+
+		try:
+			# Use python-magic to get a MIME type
+			mime = magic.Magic(mime=True)
+			file_mime = mime.from_file(file_path)
+
+			# Check if the MIME type indicates video
+			if not file_mime.startswith('video/'):
+				return False, f"Not a video file (MIME type: {file_mime})"
+
+			# Additional validation using FFprobe
+			result = subprocess.run(
+				['ffprobe', '-v', 'error', '-show_entries',
+				 'stream=codec_type', '-of', 'default=noprint_wrappers=1:nokey=1',
+				 file_path],
+				capture_output=True,
+				text=True
+			)
+
+			# Check if FFprobe found any video streams
+			if 'video' not in result.stdout:
+				return False, "No video streams found in file"
+
+			return True, file_mime
+
+		except magic.MagicException as e:
+			return False, f"Error reading file magic: {str(e)}"
+		except subprocess.SubprocessError as e:
+			return False, f"Error running FFprobe: {str(e)}"
+		except Exception as e:
+			return False, f"Unexpected error: {str(e)}"

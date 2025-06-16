@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+: << 'COMMENT'
+
+file: pencil-sketch-1
+
+shell script to run pyVid2 with a subtle pencil-sketch post-processing effect.
+
+This shell script lives in the 'scripts' directory.  It will look for any possible
+media files to play in ../assets/video/
+
+OR just pass a path to your media files to this script.
+
+The following command will do the trick:
+./pencil-sketch-1 ~/SlideShows/
+
+
+--pencil-sketch parameters:
+
+1. '--sketch-block-size' : Controls the size of the neighborhood for edge detection
+   - Larger values (11, 13, 15) = smoother, less detailed edges
+   - Smaller values (7, 9) = more detailed edges
+   - Must be an odd number
+
+2. '--sketch-c-value' : Controls how easily edges are detected
+   - Higher values (3-5) = fewer, stronger edges
+   - Lower values (1-2) = more edges, including subtle ones
+
+3. '--sketch-intensity' : Controls the intensity of the base sketch
+   - Higher values (0.8-1.0) = stronger sketch effect
+   - Lower values (0.5-0.7) = more subtle sketch effect
+
+4. '--edge-weight' : Controls how prominent the edges are
+   - Higher values (0.4-0.5) = darker, more pronounced edges
+   - Lower values (0.2-0.3) = more subtle edges
+
+5. '--sketch-detail' :  Detail level for pencil sketch (odd number, higher = less detail)
+
+
+For darker lines, you might try:
+--sketch-c-value 1 --edge-weight 0.4 --sketch-intensity 0.8
+
+For more detailed but lighter lines:
+--sketch-block-size 7 --sketch-c-value 2 --edge-weight 0.3 --sketch-intensity 0.7
+
+1. '--sketch-block-size': Edge detection detail level
+2. '--sketch-c-value'   : Edge detection sensitivity
+3. '--sketch-intensity' : Base sketch intensity
+4. '--edge-weight'      : Edge darkness
+5. '--sketch-detail'    : Overall sketch softness (Gaussian blur kernel size)
+COMMENT
+
+clear
+
+numArgs="${#@}"
+
+if [[ $numArgs -eq 0 ]]; then
+	mediaPath='../assets/video/'
+else
+	mediaPath="$1"
+fi
+
+
+../pyv2 --loop --enableFFprobe --display=1 \
+--usePygameAudio --loopDelay=0 --playSpeed=1.5 \
+--interp cubic --shuffle --sharpen \
+--pencil-sketch --sketch-detail 41 \
+--sketch-block-size 5 \
+--sketch-c-value 5 \
+--sketch-intensity 0.841 \
+--edge-weight 1 \
+--adjust-video \
+--contrast 20  \
+--brightness 0 \
+--Paths "${mediaPath}"

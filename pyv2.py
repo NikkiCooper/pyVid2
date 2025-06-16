@@ -16,13 +16,36 @@ from FindVideos import FindVideos
 
 def listActiveMonitors():
 	"""
-	Helper function for --display cli
-	Lists to console all active monitors
+	Executes a system command to list active monitors and prints the result.
+
+	This function uses the `subprocess.run` method to execute the "xrandr --listactivemonitors"
+	command and captures its output. The output is then printed to the standard output. This
+	function is useful for retrieving information about currently active monitors on a system.
+
+	Returns:
+	    None
 	"""
 	result = subprocess.run(["xrandr", "--listactivemonitors"], capture_output=True, text=True)
 	print(result.stdout)
 
 def main():
+	"""
+	Main module for a Linux-based video player written in Python. The script initializes
+	console color settings, handles command-line options, discovers video files, and plays
+	media using specified configurations.
+
+	Functions:
+	    main: Entry point for the video player program.
+
+	Parameters:
+	    None
+
+	Raises:
+	    None
+
+	Returns:
+	    None
+	"""
 	# Create a Bcolors instance to give us colors in the console.
 	bcolors = Bcolors()
 	#bcolors.clear()

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# comic-sharp-1
+# Script to launch pyVid2 with a subtle cartoon post-processing effect
+
+numArgs="${#@}"
+
+# Path to playable media
+if [[ $numArgs -eq 0 ]]; then
+	mediaPath='../assets/video/'
+else
+	mediaPath="$1"
+fi
+
+../pyv2 --enableFFprobe --loopDelay=2 --playSpeed=1.5 --disableGIF --usePygameAudio \
+	--comic-sharp --comic-sharp-amount 0.3 --color-quant 15 \
+	--bilateral-color 40 \
+	--Paths "${mediaPath}"

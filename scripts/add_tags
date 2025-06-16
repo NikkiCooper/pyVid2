@@ -1,0 +1,21 @@
+#!/bin/bash
+
+curDir=`"pwd"`
+
+filename="$1"
+text="$2"
+
+
+ffmpeg -loglevel quiet -i "${filename}" -c copy -movflags use_metadata_tags -metadata title="${text}" -y output.mp4
+if [[ $? -ne 0 ]]; then
+    echo "An error has occurred adding title=${text} to file: ${filename}"
+
+else
+    ffprobe -show_format output.mp4 -loglevel quiet | grep TAG:title | cut --delimiter='=' -f2
+    if [[ $? -ne 0 ]]; then
+        echo "Could not verify addition of title=${text} to file: ${filename}"
+    else
+        mv -f output.mp4 "${filename}"
+        ffprobe -show_format "${filename}" -loglevel quiet | grep TAG:title | cut --delimiter='=' -f2
+    fi
+fi
