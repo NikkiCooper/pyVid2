@@ -61,7 +61,7 @@ else
 fi
 
 
-../pyv2 --loop --enableFFprobe --display=1 \
+../pyv2 --loop --enableFFprobe  \
 --usePygameAudio --loopDelay=0 --playSpeed=1.5 \
 --interp cubic --shuffle --sharpen \
 --pencil-sketch --sketch-detail 41 \
