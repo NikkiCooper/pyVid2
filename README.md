@@ -1,7 +1,7 @@
 # 🎬 PyVid2 – A Video Playback Application
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Python](https://img.shields.io/badge/python-3.8%2B-brightgreen)
+[![Python](https://img.shields.io/badge/python-3.10%2B-brightgreen)](https://www.python.org/downloads/release/python-3100/)
 
 ## 💋 <span style="color:DodgerBlue">Overview</span>
 
@@ -74,56 +74,188 @@ pip install -r requirements.txt
 # Sample invocation
 python pyvid2.py --loop --shuffle --Paths ~/Videos
 ```
+## 🎛️ <span style="color:DodgerBlue">Command-Line Argument Overview</span>
 
-## 📜 <span style="color:DodgerBlue">Command-Line Arguments</span>
 
-| **Option**                    | **Description**                                           |
-|-------------------------------|-----------------------------------------------------------|
-| `-h, --help`                  | Show help message and exit                                |
-| `--Paths PATHS [PATHS ...]`   | Directories to scan for playable media                    |
-| `--listActiveMonitors`        | Prints a list of detected active monitors to the console  |
-| `--loadPlayList LOADPLAYLIST` | Load a playlist from a file (`/path/PlaylistName`)        |
 
-### 📽️ **<span style="color:HotPink">Video Playback Options</span>**
+---
 
-| **Option**                                          | **Description**                                                         |
-|-----------------------------------------------------|-------------------------------------------------------------------------|
-| `--loop`                                            | Loop videos instead of exiting (**default: disabled**)                  |
-| `--shuffle`                                         | Play videos in random order (**default: disabled**)                     |
-| `--disableGIF`                                      | Disable playing `.GIF` files (**default: enabled**)                     |
-| `--enableFFprobe`                                   | Enable FFprobe when using OpenCV (**default: disabled**)                |
-| `--reader {auto, ffmpeg, opencv, imageio, dcord}`   | Select video reading backend (**default: auto**)                        |
-| `--interp {area, cubic, linear, nearest, lanczos4}` | Use interpolation for resizing frames (**default: cubic**)              |
-| `--loopDelay LOOPDELAY`                             | Delay (in seconds) between videos (**default: 1 sec**)                  |
-| `--playSpeed PLAYSPEED`                             | Set playback speed (`0.5 - 5.0`, **default: 1.0**)                      |
-| `--dispTitle {all, portrait, landscape}`            | Display mp4 title (**default: None**)                                   |
-| `--enableOSDcurpos`                                 | Enable on-screen display (OSD) position counter (**default: disabled**) |
+### 🎬 <span style="color:DodgerBlue">Required Input Options</span>
 
-### 🔊 **<span style="color:HotPink">Audio Settings</span>**
+| Argument                | Description                                                                 |
+|-------------------------|-----------------------------------------------------------------------------|
+| `--Paths <Path>...`     | Directories to scan for playable media                                      |
+| `--Files <File>...`     | Load and play supported media                                               |
+| `--loadPlayList`        | Load and play a playlist file (`/path/PlaylistName`)                        |
+| `--listActiveMonitors`  | Lists detected monitors, then exits (helper for `--display`)                |
 
-| **Option**         | **Description**                                                                    |
-|--------------------|------------------------------------------------------------------------------------|
-| `--mute`           | Mute all audio globally (**default: disabled**)                                    |
-| `--noAudio`        | Specify if videos have audio tracks (**default: assume videos might have audio**)  |
-| `--aTrack TRACK`   | Selects which audio track to use. (**default: 0**)                                 |
-| `--usePygameAudio` | Use **Pygame** or **Pyaudio** (**default: Pyaudio**)                               |
+---
 
-### ⚙️ **<span style="color:HotPink">System Settings</span>**
+### 🎞️ <span style="color:DodgerBlue">Video Playback Options</span>
 
-| **Option**                   | **Description** |
-|------------------------------|-----------------------------------------------------|
-| `--verbose`                  | Show detailed errors and exceptions (**default: disabled**) |
-| `--display DISPLAY`          | Output video on a specific display (**default: active display**) |
-| `--consoleStatusBar`         | Enable debug status bar in the console (**default: disabled**) |
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--loop`              | Loop videos instead of exiting                                               |
+| `--shuffle`           | Play videos in random order                                                  |
+| `--disableGIF`        | Disable `.gif` file playback                                                 |
+| `--enableFFprobe`     | Enable FFprobe metadata analysis with OpenCV                                |
+| `--reader`            | Choose video reader backend (`auto`, `ffmpeg`, `opencv`, `imageio`, `dcord`)|
+| `--interp`            | Interpolation method (`area`, `cubic`, `linear`, `nearest`, `lanczos4`)     |
+| `--loopDelay`         | Delay (in seconds) between videos. Default: `1`                             |
+| `--playSpeed`         | Playback speed multiplier (`0.5`–`5.0`). Default: `1.0`                     |
+| `--dispTitles`        | Show titles on: `all`, `portrait`, or `landscape` frames                    |
+| `--enableOSDcurpos`   | Enable current playback position on-screen overlay                          |
 
-### 📁 **<span style="color:HotPink">File Handling</span>**
+---
 
-| **Option**          | **Description**                                                                          |
-|---------------------|------------------------------------------------------------------------------------------|
-| `--noIgnore`        | Do not honor `.ignore` files (**default: honor .ignore files**)                          |
-| `--noRecurse`       | Do not recurse into subdirectories (**default: recurse into all specified directories**) |
-| `--printVideoList`  | Print a list of available videos                                                         |
-| `--printIgnoreList` | Search for `.ignore` files in specified directories                                      |
+### 🎛️ <span style="color:DodgerBlue">Brightness & Contrast Options</span>
+
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--adjust-video`      | Enables brightness/contrast controls (required for below)                  |
+| `--brightness`        | Brightness level `-100` to `100`. Default: `0`                              |
+| `--contrast`          | Contrast level `-127` to `127`. Default: `0`                                |
+
+---
+
+### 🔊 <span style="color:DodgerBlue">Audio Options</span>
+
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--mute`              | Mute all audio globally                                                     |
+| `--aTrack`            | Select audio track (integer index). Default: `0`                           |
+| `--usePygameAudio`    | Use Pygame instead of PyAudio backend                                      |
+
+---
+
+### 🖥️ <span style="color:DodgerBlue">System Options</span>
+
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--verbose`           | Enable verbose/debug output                                                 |
+| `--display`           | Target specific display by index                                            |
+| `--consoleStatusBar`  | Enables live status updates in terminal                                     |
+
+---
+
+### 🗂️ <span style="color:DodgerBlue">File Options</span>
+
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--noIgnore`          | Ignore `.ignore` files entirely                                             |
+| `--noRecurse`         | Prevent recursive scanning in `--Paths` subfolders                          |
+| `--printVideoList`    | Output list of all playable videos from scan                                |
+| `--printIgnoreList`   | Show `.ignore` file results from subfolders                                 |
+
+
+---
+
+### 🧪 <span style="color:DodgerBlue">Post-Processing Filter Options</span>
+
+| Argument              | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `--sharpen`           | Apply sharpening to video                                                   |
+| `--blur`              | Apply standard blur                                                         |
+| `--median-blur`       | Enable median blur filtering                                                |
+| `--gaussian-blur`     | Enable Gaussian blur                                                        |
+| `--noise`             | Add noise for stylistic grain                                               |
+| `--cel-shading`       | Enable cel (toon-style) shading                                             |
+| `--comic`             | Apply comic-book effect                                                     |
+| `--thermal`           | Simulate thermal/heat vision palette                                        |
+| `--emboss`            | Emboss the video                                                            |
+| `--dream`             | Apply dreamy, soft focus effect                                             |
+| `--pixelate`          | Pixelate the video (low-res aesthetic)                                      |
+| `--neon`              | Apply neon outlining effect                                                 |
+| `--fliplr`            | Flip horizontally (left ↔ right)                                            |
+| `--flipup`            | Flip vertically (up ↕ down)                                                 |
+
+---
+
+### 🌊 <span style="color:DodgerBlue">Watercolor Effect Options</span>
+
+| Argument                    | Description                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------|
+| `--watercolor`              | Enable watercolor-style post-processing effect                              |
+| `--watercolor-scale`        | Scale factor `0.25`–`1.0`. Lower = faster. Default: `0.5`                   |
+| `--watercolor-quality`      | Quality/speed tradeoff: `fast`, `medium`, `high`. Default: `medium`         |
+
+---
+
+### 🖼️ <span style="color:DodgerBlue">Oil Painting Effect Options</span>
+
+| Argument                    | Description                                                                 |
+|-----------------------------|-----------------------------------------------------------------------------|
+| `--oil-painting`            | Enable oil painting filter                                                  |
+| `--oil-size`                | Neighborhood size `5`–`15`. Default: `7`                                    |
+| `--oil-dynamics`            | Dynamic blending ratio `1`–`5`. Default: `1`                                |
+
+
+---
+
+### ✏️ <span style="color:DodgerBlue">Pencil Sketch Parameters</span>  
+(from `scripts/pencil-sketch-1`)
+
+| Parameter               | Description                                                                 | Default |
+|-------------------------|-----------------------------------------------------------------------------|---------|
+| `--sketch-detail`       | Detail level (odd number, higher = less detail)                             | `21`    |
+| `--sketch-block-size`   | Block size for edge detection (`7–15`, odd only)                            | `9`     |
+| `--sketch-c-value`      | Threshold sensitivity (`1–5`, higher = more edges)                          | `2`     |
+| `--sketch-intensity`    | Intensity of the sketch effect (`0.0–1.0`)                                  | `0.7`   |
+| `--edge-weight`         | Weight of edges in final image (`0.0–1.0`)                                  | `0.3`   |
+
+> 🧠 For context, see [`scripts/pencil-sketch-1`](scripts/pencil-sketch-1) for full heredoc documentation and sample CLI usage.
+
+---
+
+### 🎭 <span style="color:DodgerBlue">Color Effect Options (Mutually Exclusive)</span>
+
+| Argument             | Description                                                                 |
+|----------------------|-----------------------------------------------------------------------------|
+| `--greyscale`        | Convert video to greyscale                                                  |
+| `--sepia`            | Apply sepia tone effect                                                     |
+| `--vignette`         | Add vignette darkening around frame edges                                   |
+| `--saturation`       | Adjust color saturation (`0.0`–`2.0`). Default: N/A                         |
+
+---
+
+### ⚡ <span style="color:DodgerBlue">Edge Detection Options</span>
+
+| Argument               | Description                                                                |
+|------------------------|----------------------------------------------------------------------------|
+| `--edge-detect`        | Enable edge detection filter                                               |
+| `--edge-lower`         | Lower threshold (`0 <= value < upper`). Default: `100`                     |
+| `--edge-upper`         | Upper threshold (`value <= 255`). Default: `200`                           |
+
+---
+
+### 🗯️ <span style="color:DodgerBlue">Comic Sharpening Filter Options</span>
+
+| Argument                 | Description                                                              |
+|--------------------------|--------------------------------------------------------------------------|
+| `--comic-sharp`          | Enable comic-style sharpening pipeline                                  |
+| `--comic-sharp-amount`   | Sharpening amount (`0.0–1.0`)                                            |
+| `--bilateral-d`          | Bilateral filter diameter (`1–15`, odd only). Default: `5`              |
+| `--bilateral-color`      | Bilateral color sigma (`10–200`). Default: `60`                         |
+| `--bilateral-space`      | Bilateral space sigma (`10–200`). Default: `60`                         |
+| `--edge-low`             | Lower threshold for comic edges. Default: `40`                          |
+| `--edge-high`            | Upper threshold for comic edges. Default: `140`                         |
+| `--color-quant`          | Color quantization factor (`1–64`). Default: `20`                       |
+
+> 🎬 See example usage scripts in [`scripts/comic-sharp-1`](scripts/comic-sharp-1), [`-2`](scripts/comic-sharp-2), and [`-3`](scripts/comic-sharp-3)
+
+---
+
+### 🧪 <span style="color:DodgerBlue">Example Filter Demos</span>
+
+| Script Name         | Description                                                                 |
+|---------------------|-----------------------------------------------------------------------------|
+| `comic-sharp-1`     | Basic usage of `--comic-sharp` with default params                          |
+| `comic-sharp-2`     | Intermediate setup with custom bilateral/edge tweaks                       |
+| `comic-sharp-3`     | Advanced comic effect with color quant + sharpening                        |
+| `pencil-sketch-1`   | Heredoc example + full CLI usage for pencil sketch                         |
+
+---
+
 
 ### ✔️ <span style="color:DodgerBlue">Example Command-Line</span>
 
@@ -134,10 +266,11 @@ PyVid2 --loop --shuffle --enableFFprobe --Paths ~/SlideShows ~/MyVideos ~/mnt/Me
 ## 📚 <span style="color:DodgerBlue">Documentation</span>
 
 ### 🔖 <span style="color:DodgerBlue">Mutually exclusive arguments</span>
-There are currently three command line arguments whose use are mutually exclusive of each other:
+There are currently four command line arguments whose use are mutually exclusive of each other:
 1. --Paths PATHS [PATHS ...]
-2. --loadPlayList LOADPLAYLIST
-3. --listActiveMonitors
+2. --Files FILES [FILES ...] 
+3. --loadPlayList LOADPLAYLIST
+4. --listActiveMonitors
 
 Due to how _argparse_ handles mutually exclusive argument groups, **--listActiveMonitors** is shown as requiring a parameter.
 when using **--help** or **-h**.  Passing a parameter to **--listActiveMonitors** is not necesesary.
@@ -150,9 +283,9 @@ default path used for the saved playlist is **~**, however, this can be changed 
 See **Environment variables** below. 
 
 **NOTE:**
-For the moment, pyVid2 lacks the ability to specify specific videos on the command-line to play!  This is not by 
+~~For the moment, pyVid2 lacks the ability to specify specific videos on the command-line to play!  This is not by 
 accident but rather by design. pyVid2 was not designed for this purpose.  pyVid2 was designed as a presentation video player
-supporting huge playlists consisting of thousands of entries. 
+supporting huge playlists consisting of thousands of entries.~~ 
 
 ### 🔖 <span style="color:DodgerBlue">--noRecurse</span>
 **--noRecurse** applies to _all_ paths supplied to the **--Paths** argument.  
