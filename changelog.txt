@@ -1,3 +1,12 @@
+21-Jun-2025     Added opencv CUDA support.  Currerntly there is a bilaterial post-processing filter that will utualize CUDA if it
+                detects it, otherwise should go to CPU (untest).  Has almost completed GUI controls, SpinBoxes and Dropdown presets.
+                Press the 'f' key to make the filter panel visible, press it again to hide it.  The 'x' key  cycles through 10 filter presets
+                without showing the filter panel.  Of course, you can utualize both.  Still lots of bugs to work out.   Use at your own risk.
+
+15-Jun-2025     Added video post-processing filters.  There are so many I don't know where to start.  Try --help to get an idea.
+                There are also key press filters, Again,  haven't documented them yet.  See EventHandler.py  Note  that only one
+                filter (see above) the CUDABilaterialFilter is CUDA enabled.  None of the others are (yet).
+
 09-Jun-2025     Added the ability to display a custom metadata tag called Title.
 
 08-Jun-2025     Reworked how screenshots are handled.  New version now uses vid.frame_surf instead of saving the

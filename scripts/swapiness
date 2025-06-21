@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+: << 'COMMENT'
+vm.swappiness is a kernel parameter that controls the balance between evicting pages from RAM versus using swap space.
+It’s essentially a preference dial: how eager should the kernel be to move memory pages out of RAM and into swap?
+
+Its value ranges from 0 to 100:
+
+0 → Avoid swapping as much as possible. The kernel will try to keep things in RAM unless absolutely necessary.
+
+100 → Swap very aggressively. It’ll offload inactive pages to swap even when RAM is still available.
+
+Default (usually 60) → A middle ground that allows some background swapping to preserve more RAM for disk cache.
+
+COMMENT
+
+# Temporary setting
+sudo sysctl vm.swappiness=10

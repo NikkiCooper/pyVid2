@@ -14,7 +14,10 @@ import subprocess
 from typing import Optional
 import help_text as  _help_
 import upScale as up_scale
+import warnings
 
+warnings.filterwarnings('ignore', category=UserWarning,
+                       message='pkg_resources is deprecated as an API.*')
 
 # This must be called BEFORE importing pygame
 # else set it in ~/.bashrc
@@ -38,6 +41,7 @@ from DrawVideoInfo import DrawVideoInfo
 from VideoPlayBar import VideoPlayBar
 from ControlPanel import ControlPanel
 from edgeDetectPanel import edgeDetectPanel
+from CUDABilateralFilterPanel import CUDABilateralFilterPanel
 
 # Define colors
 WHITE = (255, 255, 255)
@@ -381,8 +385,28 @@ class PlayVideo:
         self.edge_panel = edgeDetectPanel(self.displayWidth, self.displayHeight, self)
         self.cb_panel_is_visible = False
 
-        #
+        # Frame processing buffers
+        self.original_frame_array = None
+        self.processed_frame_array = None
+        self.processed_frame_surf = None
 
+        # Check CUDA availability on video player startup
+        cuda_devices = cv2.cuda.getCudaEnabledDeviceCount()
+        print(f"🎬 Video Player: CUDA devices available: {cuda_devices}")
+        if cuda_devices > 0:
+            print("🚀 CUDA-accelerated bilateral filter ready!")
+        else:
+            print("⚠️  Using CPU bilateral filter")
+
+        #   CUDA bilateral
+        self.bilateral_filter_enabled = False
+        # Initialize bilateral filter panel with proper scaling
+        scaling_factor = up_scale.get_scaling_factor(self.displayHeight)
+        self.bilateral_panel = CUDABilateralFilterPanel(self.displayWidth,self.displayHeight)
+        self.bilateral_panel.opts_reference = opts
+
+        self.show_filter_panel = False
+        print(f"🖥️  Display: {self.displayType}, Resolution: {self.displayResolution}, Scaling: {scaling_factor:.2f}")
 
     '''
     Static methods
@@ -1394,8 +1418,8 @@ class PlayVideo:
                 self.vid.paused = False
             self.saveScreenShotFlag = False
             self.save_sshot_filename = None
-            print("self.vid.resume()")
-            self.vid.resume()
+            #print("self.vid.resume()")
+            #self.vid.resume()
 
     def saveModeDialogBox(self,Message, sleep=False):
         """
@@ -3039,9 +3063,10 @@ class PlayVideo:
         return button_rect
     '''
 
+    # brightness/contrast
     def render_frame(self):
         """
-        Renders the current video frame with optional effects if the control panel
+        Renders the current video frame with optional effects if the  brightness/contrast control panel
         is visible. This process involves locking the video surface, creating a copy
         of the frame, applying effects if needed, and unlocking the surface.
 
@@ -3068,6 +3093,7 @@ class PlayVideo:
 
         return frame
 
+    # brightness/contrast
     def draw(self, screen):
         """
         Draws the UI components on the provided screen.
@@ -3165,6 +3191,50 @@ class PlayVideo:
         ------
         None
         """
+
+        # Draw bilateral filter panel if it's visible
+        if hasattr(self, 'show_filter_panel') and self.show_filter_panel:
+            if hasattr(self, 'bilateral_panel'):
+                # Simple approach - let the panel handle everything
+                self.bilateral_panel.draw(self.win)
+
+        '''        
+        # Draw bilateral filter panel if it's visible
+        if hasattr(self, 'show_filter_panel') and self.show_filter_panel:
+            if hasattr(self, 'bilateral_panel'):
+                BOX_WIDTH = 365
+                BOX_HEIGHT = 220
+                # Create a scaled surface for 4K displays
+                scaling_factor = up_scale.get_scaling_factor(self.displayHeight)
+                if scaling_factor > 1.0:
+                    # Draw to a temporary surface, then scale it up
+                    temp_surface = pygame.Surface((BOX_WIDTH, BOX_HEIGHT), pygame.SRCALPHA)
+                    temp_surface.set_alpha(150)
+
+                    #temp_surface.fill((0, 255, 255))  # Fill with CYAN so you can see it!
+                    temp_surface.fill(DODGERBLUE4)
+                   # self.bilateral_panel.draw(temp_surface)
+
+                    # Scale up and blit to main screen
+                    #scaled_size = (int(400 * scaling_factor), int(300 * scaling_factor))
+                    scaled_size = (int(BOX_WIDTH * scaling_factor), int(BOX_HEIGHT * scaling_factor))
+                    scaled_surface = pygame.transform.scale(temp_surface, scaled_size)
+                    print(f"scaled display: width: {scaled_size[0]}, height: {scaled_size[1]}")
+                    PlayVideo.apply_gradient(
+                        scaled_surface,
+                        (0, 0, 100),
+                        (0, 0, 255),
+                        scaled_size[0],
+                        scaled_size[1],
+                        alpha_start=100,
+                        alpha_end=225
+                    )
+                    self.bilateral_panel.draw(scaled_surface)
+                    self.win.blit(scaled_surface, (self.displayWidth - scaled_size[0] - 20, 20))
+                else:
+                    self.bilateral_panel.draw(self.win)
+        '''
+
         if self.help_visible:
             self.help_button_rect = self.draw_help(self.is_hovered)
 
@@ -3592,7 +3662,6 @@ class PlayVideo:
         """Invert the image."""
         return cv2.bitwise_not(image)
 
-
     @staticmethod
     def artistic_filters(image):
         # Edge detection with different methods
@@ -3900,6 +3969,9 @@ class PlayVideo:
             effects.append(PlayVideo.apply_edges_sobel)
         if opts.apply_inverted:
             effects.append(PlayVideo.apply_inverted)
+        # Add bilateral filter to the effects chain
+        if hasattr(opts, 'apply_bilateral_filter') and opts.apply_bilateral_filter:
+            effects.append(lambda frame: self.apply_bilateral_filter_effect(frame))
 
         # ... add other effects as needed
         # If no effects are specified, return None or PostProcessing.none
@@ -3925,6 +3997,49 @@ class PlayVideo:
         self.save_frame_surf(file)
         frameCount += 1
         return frameCount
+
+    def apply_bilateral_filter_effect(self, frame):
+        """Apply bilateral filter effect using the dedicated panel"""
+        if frame is None:
+            return frame
+
+        # Check if bilateral filter should be applied
+        if not self.opts.apply_bilateral_filter or not self.bilateral_filter_enabled:
+            return frame
+
+        return self.bilateral_panel.apply_bilateral_filter(frame)
+
+    '''
+    def apply_bilateral_filter_effect(self, frame):
+        """Apply bilateral filter effect - integrates with your effects pipeline"""
+        if hasattr(self, 'bilateral_panel'):
+            return self.bilateral_panel.apply_bilateral_filter(frame)
+        return frame
+    '''
+
+    def process_frame(self, frame):
+        """Process video frame with bilateral filter if enabled"""
+        if self.bilateral_filter_enabled and frame is not None:
+            # Apply CUDA-accelerated bilateral filter
+            frame = self.bilateral_panel.apply_bilateral_filter(frame)
+
+        return frame
+
+    def update_video_frame(self):
+        """Your existing frame update method - modify this"""
+        # ... your existing frame reading code ...
+
+        # Get the current frame (however you're doing this)
+        frame = self.vid.frame_surf  # Replace with your actual method
+
+        if frame is not None:
+            # Process the frame with filters
+            frame = self.process_frame(frame)
+
+            # Convert and display (your existing code)
+            # ... your existing frame conversion and display code ...
+
+        return frame
 
     def playVideo(self, video):
         """
@@ -4204,7 +4319,6 @@ class PlayVideo:
                     pos_w, pos_h = self.getResolutions()
                     if self.vid.draw(self.win, (pos_w, pos_h),
                             force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
-
 
 
                         self.render_frame()

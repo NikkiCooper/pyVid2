@@ -13,6 +13,8 @@ from psutil import net_connections
 
 import constants as const
 
+import inspect
+
 # Mouse constants used in the pygame event loop.
 LEFT = 0
 MIDDLE = 1
@@ -27,6 +29,14 @@ RIGHT_BUTTON_SHORT = 3
 
 WHEEL_UP = 1
 WHEEL_DOWN = -1
+
+
+def bilateral_debug(msg):
+    frame = inspect.currentframe().f_back
+    line_no = frame.f_lineno
+    func_name = frame.f_code.co_name
+    print(f"BILATERAL_DEBUG [{func_name}:{line_no}] {msg}")
+
 
 
 class EventHandler:
@@ -75,7 +85,7 @@ class EventHandler:
             mouse_press_times (dict): Dictionary to track the timestamps of mouse press events.
             short_click_threshold (float): Time threshold in seconds for detecting short clicks.
             long_click_threshold (float): Time threshold in seconds for detecting long clicks.
-            threshold_ratio (float): Ratio of screen height used to calculate threshold for gesture detection.
+            threshold_ratio (float): Ratio of screen height used to calculate the threshold for gesture detection.
             threshold (int): Absolute threshold value derived from the display height and threshold ratio.
             current_video (int): Index of the currently loaded video in a playlist or collection.
 
@@ -110,6 +120,7 @@ class EventHandler:
 
         # initialization code for the various single argument post-processing functions.
         self.pp_args = None
+        self.debug = False
 
     @property
     def opts(self):
@@ -130,6 +141,14 @@ class EventHandler:
         None
         """
         for event in pygame.event.get():
+            # Handle GUI events for the bilateral filter panel FIRST
+            if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
+                if self.PlayVideoInstance.bilateral_panel.handle_event(event):
+                    # Parameters changed - no need to reinit, just updates the effect
+                    params = self.PlayVideoInstance.bilateral_panel.get_params()
+                    print(f"🎛️  Filter params updated: d={params['d']}, σ_color={params['sigma_color']:.1f}, σ_space={params['sigma_space']:.1f}, intensity={params['intensity']:.1f}")
+                    continue  # Skip to next event - this one was handled by the panel
+
             match event.type:
                 case pygame.QUIT:
                     self.running = False
@@ -313,7 +332,7 @@ class EventHandler:
     def handle_mouse_wheel(self, seek, event):
         """
         if event.y > 0, this is a MOUSEWHEEL UP EVENT.
-        if event.y < 0, this as a MOUSEWHEEL DOWN EVENT.
+        if event.y < 0, this is a MOUSEWHEEL DOWN EVENT.
         event.y == 0 is not possible here because we filter it out before calling this method.
         """
         seek_fwd  = True if event.y > 0 else False
@@ -398,9 +417,21 @@ class EventHandler:
                 case const.KEY_SHUFFLE:
                     self.PlayVideoInstance.shuffleVideoList()
                     self.PlayVideoInstance.shuffleSplashFlag = True
-                case const.KEY_APPLY_CONTRAST_ENH:
-                    print("Pressed f key")
-                    self.reInitVideo('apply_contrast_enhancement', self.PlayVideoInstance.vid.frame)
+
+
+                case const.KEY_BILATERAL_FILTER_PANEL:
+                    #print("Pressed bilateral filter panel key (f)")
+
+                    print("Pressed f key: Toggle Bilateral filter panel.")
+                    self.reInitVideo('apply_bilateral_filter_panel', self.PlayVideoInstance.vid.frame)
+                    #bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
+
+                    #print(f"Filter panel: {'shown' if self.PlayVideoInstance.show_filter_panel else 'hidden'}")
+
+            #case const.KEY_APPLY_CONTRAST_ENH:
+                    #print("Pressed f key")
+                    #self.reInitVideo('apply_contrast_enhancement', self.PlayVideoInstance.vid.frame)
+
                 case const.KEY_HELP:
                     if self.PlayVideoInstance.video_info_box:
                         self.PlayVideoInstance.video_info_box = False
@@ -421,6 +452,15 @@ class EventHandler:
                 case const.KEY_GREY_SCALE:
                     print("Pressed greyscale key")
                     self.reInitVideo('greyscale', self.PlayVideoInstance.vid.frame)
+
+                case const.KEY_X_KEY:
+                    print("Pressed x key: Toggle Bilateral filter PRESETS.")
+                    self.reInitVideo('apply_bilateral_filter', self.PlayVideoInstance.vid.frame)
+                    bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
+
+                case pygame.K_INSERT if event.mod & pygame.KMOD_SHIFT:
+                    print("Pressed sepia key (Shift-g)")
+                    self.reInitVideo('apply_sepia', self.PlayVideoInstance.vid.frame)
                 case const.KEY_LOOP:
                     self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
                 case const.KEY_MUTE:
@@ -524,6 +564,8 @@ class EventHandler:
                 case const.KEY_SEEK_BACK:
                     self.handle_key_seek(-20)
                 case const.KEY_PREV_VID:
+                    if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
+                        return
                     # Disable video loop for current video before going back to the previous one.
                     if self.PlayVideoInstance.opts.loop_flag:
                         self.PlayVideoInstance.opts.loop_flag = False
@@ -554,7 +596,7 @@ class EventHandler:
                         self.PlayVideoInstance.vid = self.PlayVideoInstance.playVideo(
                             self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx]
                         )
-                        # Seek to the last frame played prior to changing the playback speed
+                        # Seek to the last frame played before changing the playback speed
                         self.PlayVideoInstance.vid.seek_frame(currFrame)
                         # Update vid internals
                         self.PlayVideoInstance.vid.update()
@@ -573,54 +615,79 @@ class EventHandler:
                         self.PlayVideoInstance.vid.update()
                     except Exception as e:
                         pass
+                case const.KEY_F1:
+                    pass
                 case const.KEY_F2:
-                    self.PlayVideoInstance.print_frame_surf()
-                case pygame.K_1 if event.mod & pygame.KMOD_SHIFT:       # ! = sharpen
+                    print("Pressed bilateral filter key")
+                    self.reInitVideo('bilateral_filter', self.PlayVideoInstance.vid.frame)
+
+                case const.KEY_F3:
+                    pass
+                case const.KEY_F4:
+                    pass
+                case const.KEY_F5:
+                    pass
+                case const.KEY_F6:
+                    pass
+                case const.KEY_F7:
+                    pass
+                case const.KEY_F8:
+                    pass
+                case const.KEY_F9:
+                    pass
+                case const.KEY_F10:
+                    pass
+                case const.KEY_F11:
+                    pass
+                case const.KEY_F12:
+                    pass
+                case const.KEY_EXCLAIM if event.mod & pygame.KMOD_SHIFT:       # ! = sharpen
                     print("Pressed Sharpen key")
                     self.reInitVideo('sharpen', self.PlayVideoInstance.vid.frame)
-                case pygame.K_2 if event.mod & pygame.KMOD_SHIFT:       # @ = blur
+                case const.KEY_AT if event.mod & pygame.KMOD_SHIFT:       # @ = blur
                     print("Pressed blur key")
                     self.reInitVideo('blur', self.PlayVideoInstance.vid.frame)
-                case pygame.K_3 if event.mod & pygame.KMOD_SHIFT:       # # = edge_detect
+                case const.KEY_HASH if event.mod & pygame.KMOD_SHIFT:       # # = edge_detect
                     print("Pressed edge_detect key")
                     if self.opts.emboss or self.opts.greyscale or self.opts.sepia:
                         return
                     else:
                         self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
-                case pygame.K_4 if event.mod & pygame.KMOD_SHIFT:       # $ = emboss
+                case const.KEY_DOLLAR if event.mod & pygame.KMOD_SHIFT:       # $ = emboss
                     print("Pressed emboss key")
                     self.reInitVideo('emboss', self.PlayVideoInstance.vid.frame)
-                case pygame.K_5 if event.mod & pygame.KMOD_SHIFT:       # % = thermal
+                case const.KEY_PERCENT if event.mod & pygame.KMOD_SHIFT:       # % = thermal
                     print("Pressed thermal key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('thermal', self.PlayVideoInstance.vid.frame)
-                case pygame.K_6 if event.mod & pygame.KMOD_SHIFT:       # ^ = dream
+                case const.KEY_CARET if event.mod & pygame.KMOD_SHIFT:       # ^ = dream
                     print("Pressed dream key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('dream', self.PlayVideoInstance.vid.frame)
-                case pygame.K_7 if event.mod & pygame.KMOD_SHIFT:       # & = comic
+                case const.KEY_AMPERSAND if event.mod & pygame.KMOD_SHIFT:       # & = comic
                     print("Pressed comic key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('comic', self.PlayVideoInstance.vid.frame)
-                case pygame.K_8 if event.mod & pygame.KMOD_SHIFT:       # * = sepia
+                case const.KEY_ASTERISK if event.mod & pygame.KMOD_SHIFT:       # * = sepia
                     print("Pressed sepia key")
-                    if self.opts.sepia:
-                        self.reInitVideo('sepia', self.PlayVideoInstance.vid.frame)
-
-                    if self.opts.greyscale:
-                        self.opts.greyscale = False
-
+                    if self.opts.greyscale \
+                            or self.opts.emboss \
+                            or self.opts.thermal \
+                            or self.opts.dream \
+                            or self.opts.neon:
+                        return
                     self.reInitVideo('sepia', self.PlayVideoInstance.vid.frame)
-                case pygame .K_9 if event.mod & pygame.KMOD_SHIFT:      # ( = None
+
+                case const.KEY_LEFT_PAREN if event.mod & pygame.KMOD_SHIFT:      # ( = None
                     print("Pressed None")
                     self.reInitVideo('None', self.PlayVideoInstance.vid.frame)
-                case pygame.K_0 if event.mod & pygame.KMOD_SHIFT:       # ) = gaussian_blur
+                case const.KEY_RIGHT_PAREN if event.mod & pygame.KMOD_SHIFT:       # ) = gaussian_blur
                     print("Pressed gaussian_blur key")
                     self.reInitVideo('gaussian_blur', self.PlayVideoInstance.vid.frame)
 
@@ -791,8 +858,8 @@ class EventHandler:
             self.PlayVideoInstance.saveModeDialogBox(self.PlayVideoInstance.message, sleep=True)
             return
 
-        self.PlayVideoInstance.vid.pause()
-        print("self.PlayVideoInstance.vid.pause()")
+        #self.PlayVideoInstance.vid.pause()
+        #print("self.PlayVideoInstance.vid.pause()")
         # Queue the screenshot operation instead of doing it immediately
         self.PlayVideoInstance.save_sshot_filename = sshot_name
         self.PlayVideoInstance.saveScreenShotFlag = True
@@ -829,7 +896,7 @@ class EventHandler:
                 # Start a new instance of the video
             try:
                 self.PlayVideoInstance.vid = self.PlayVideoInstance.playVideo( videoFile )
-                # Seek to the last frame played prior to changing the playback speed
+                # Seek to the last frame played before changing the playback speed
                 self.PlayVideoInstance.vid.seek_frame(currFrame)
                 # Update vid internals
                 self.PlayVideoInstance.vid.update()
@@ -899,13 +966,13 @@ class EventHandler:
 
     def update_videoPlayBarVolume(self, Event, mouse_x, mouse_y):
         """
-        Updates the volume of the video play bar based on user interaction.
+        updates the volume of the video play bar based on user interaction.
 
         This function handles the event of adjusting the volume of the video play bar
         when the user interacts with it using the mouse and buttons. It updates the
         volume level by detecting mouse position and button clicks and modifies the
         corresponding attributes in the video player instance. Additionally, it handles
-        muting when the volume is set to zero, and updates the muted status
+        muting when the volume is set to zero and updates the muted status
         appropriately.
 
         Parameters:
@@ -1134,10 +1201,30 @@ class EventHandler:
                         self.PlayVideoInstance.drawVideoPlayBarToolTip = False
 
     def reInitVideo(self, flag, frame_num):
+        """
+        reinitializes video processing options based on a specified flag and frame number.
+
+        This method toggles various video processing options according to the provided flag.
+        upon successfully toggling an option, the `reinit_video` method is called to reinitialize
+        the video with the given frame number. If no option is toggled, certain flags and settings
+        are set to their default values.  The string identifier 'None' is a special case where ALL
+        post-processing filters are disabled.
+
+        Parameters:
+            flag (str): A string identifier representing the video processing option to toggle.
+                        Accepted values include 'apply_denoising', 'apply_sharpening',
+                        'apply_edges_sobel', 'apply_inverted', 'apply_contrast_enhancement',
+                        'greyscale', 'sharpen', 'blur', 'gaussian_blur', 'sepia', 'edge_detect',
+                        'emboss', 'neon', 'dream', 'thermal', 'comic', or 'None'.
+            frame_num (int): The video frame number to seek to upon the video being reinitialized for video processing.
+
+        Raises:
+            None
+        """
         pp_flag = None
         last_frame = frame_num
 
-        match(flag):
+        match flag:
             case 'apply_denoising':
                 self.opts.apply_denoising = not self.opts.apply_denoising
                 print(f"apply_denoising: {'True' if self.opts.apply_denoising else 'False'}")
@@ -1202,6 +1289,90 @@ class EventHandler:
                 self.opts.comic = not self.opts.comic
                 print(f"comic: {'True' if self.opts.comic else 'False'}")
                 pp_flag = self.opts.comic
+
+            case 'apply_bilateral_filter':
+                # Check if bilateral panel exists for preset cycling
+                if hasattr(self.PlayVideoInstance, 'bilateral_panel'):
+                    # Use the panel's cycling functionality
+                    filter_active = self.PlayVideoInstance.bilateral_panel.cycle_preset()
+
+                    # Update opts to match the panel state - this is crucial for build_effects_chain()
+                    self.opts.apply_bilateral_filter = filter_active
+
+                    # Also update PlayVideo's bilateral_filter_enabled for consistency
+                    self.PlayVideoInstance.bilateral_filter_enabled = filter_active
+
+                    if filter_active:
+                        preset_name = self.PlayVideoInstance.bilateral_panel.get_current_preset_name()
+                        if self.debug:
+                            print(f"Bilateral Filter: {preset_name}")
+                    else:
+                        if self.debug:
+                            print("Bilateral Filter: OFF")
+                        else:
+                            pass
+
+                    pp_flag = filter_active
+                else:
+                    # Fallback to original toggle behavior if panel doesn't exist
+                    self.opts.apply_bilateral_filter = not self.opts.apply_bilateral_filter
+                    print(f"bilateral filter: {'True' if self.opts.apply_bilateral_filter else 'False'}")
+
+                    pp_flag = self.opts.apply_bilateral_filter
+
+            case 'apply_bilateral_filter_panel':
+                self.debug = True
+                self.PlayVideoInstance.show_filter_panel = not self.PlayVideoInstance.show_filter_panel
+
+                if not self.PlayVideoInstance.show_filter_panel:
+                    print(f"Bilateral Filter Panel: Hidden (filter remains {'ON' if self.opts.apply_bilateral_filter else 'OFF'})")
+                    return
+
+                    # Panel is now visible - make sure everything is synchronized
+                panel = self.PlayVideoInstance.bilateral_panel
+                panel.opts_reference = self.opts  # Set up opts reference
+
+                # Set up references so panel can trigger video reinitialization
+                self.opts._play_video_instance = self.PlayVideoInstance
+                self.PlayVideoInstance._event_handler = self
+
+
+                    # If filter is currently OFF, enable it with default preset
+                if not self.opts.apply_bilateral_filter:
+                    print("Bilateral Filter Panel: Enabling filter with default preset")
+
+                    # Apply default preset (this will set filter_enabled=True)
+                    panel.apply_preset('default')
+                    panel.preset_dropdown.set_selected_option('default')
+
+                    # Update all the flags to be consistent
+                    self.opts.apply_bilateral_filter = True
+                    self.PlayVideoInstance.bilateral_filter_enabled = True
+
+                    # CRITICAL: Set pp_flag to trigger video reinitialization
+                    pp_flag = True
+
+                else:
+                    # Filter is already active - make sure panel reflects current state
+                    print(f"Bilateral Filter Panel: Shown - Filter already active")
+
+                    # Make sure panel's filter_enabled matches opts
+                    panel.filter_enabled = True
+
+                    # Sync the dropdown to current preset
+                    current_preset = panel.current_preset
+                    panel.preset_dropdown.set_selected_option(current_preset)
+
+                    # No need to reinit video if filter was already active
+                    pp_flag = None
+
+            case 'bilateral_filter_dropdown_change':
+                # This case is triggered when the dropdown selection changes the filter state
+                # The panel has already updated self.opts.apply_bilateral_filter
+                # We just need to set pp_flag to trigger video reinitialization
+                pp_flag = True  # Always reinit when dropdown changes filter state
+                print(f"Bilateral filter dropdown change - filter now {'ON' if self.opts.apply_bilateral_filter else 'OFF'}")
+
             case 'None':
                 self.opts.comic = False
                 self.opts.thermal = False
@@ -1213,7 +1384,6 @@ class EventHandler:
                 self.opts.blur = False
                 self.opts.neon = False
                 self.opts.dream = False
-                self.opts.sharpen = False
                 self.opts.adjust_video = False
                 self.opts.brightness  = 0
                 self.opts.contrast    = 0
@@ -1222,14 +1392,27 @@ class EventHandler:
                 self.opts.apply_denoising = False
                 self.opts.apply_edges_sobel = False
                 self.opts.apply_sharpening = False
+                self.opts.apply_bilateral_filter = False
                 self.opts.apply_contrast_enhancement = False
+                self.opts.apply_bilateral_filter_panel = False
+                pp_flag = False
                 print("None")
-
 
         if pp_flag is not None:
             self.reinit_video(last_frame)
 
     def reinit_video(self, lastFrame):
+        """
+        Reinitializes the video playback instance using the provided last frame.
+
+        This method updates the video effects for the current video playback instance.
+        It stops and closes the current video playback object, then reinitializes it
+        with the appropriate video from the playlist at the current index. The playback
+        is resumed starting from the specified last frame.
+
+        Args:
+            lastFrame (int): The frame to resume playback from, provided as an integer.
+        """
         self.PlayVideoInstance.update_video_effects()
         self.PlayVideoInstance.vid.stop()
         self.PlayVideoInstance.vid.close()

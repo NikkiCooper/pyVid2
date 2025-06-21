@@ -48,7 +48,8 @@ DEBUG CONTROLS
 
 MOUSE CONTROLS
 Left (Long) = Next video
+Middle (Short) = Pause video
 Right (Long) = Prev video
-Middle (Long) = Pause video
+Left + Right = Quit
 """
 

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+numArgs="${#@}"
+
+if [[ $numArgs -ne 2 ]]; then
+	echo "Error. Improper number of arguments."
+	echo "Usage:  convert_video <input filename> <output filename>"
+	echo -n "where: "
+	echo "<input filename> = The name of the video file to convert."
+	echo "<output filename> = The name of the resulting video."
+	echo
+	exit 100
+fi
+
+infile="$1"
+outfile="$2"
+
+# Download and convert to exactly 1920x1080
+ffmpeg -i "${infile}" \
+	-vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black" \
+	-c:v hevc_nvenc \
+	-preset p7 \
+	-rc vbr \
+	-cq 19 \
+	-y "${outfile}"

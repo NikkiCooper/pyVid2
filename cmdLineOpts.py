@@ -208,6 +208,8 @@ def cmdLineOptions():
     args.apply_edges_sobel = False
     args.apply_inverted = False
 
+    args.apply_bilateral_filter = False
+
     # --loadPlayList
     if args.loadPlayList is None:
         args.loadPlayListFlag = False
