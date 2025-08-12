@@ -68,7 +68,7 @@ def cmdLineOptions():
         "ffmpeg":  1,
         "opencv":  2,
         "imageio": 3,
-        "dcord":   4
+        "decord":  4
     }
 
     parser = argparse.ArgumentParser(
@@ -121,12 +121,13 @@ def cmdLineOptions():
     file_group = parser.add_argument_group(chl.group["file_group"])
     file_group.add_argument("--noIgnore", action="store_true", help=chl.help["noIgnore"])
     file_group.add_argument("--noRecurse", action="store_true", help=chl.help["noRecurse"])
+    file_group.add_argument("--separateDirs", action="store_true", help=chl.help["separateDirs"])
     file_group.add_argument("--printVideoList", action="store_true", help=chl.help["printVideoList"])
     file_group.add_argument("--printIgnoreList", action="store_true", help=chl.help["printIgnoreList"])
 
     # Post-Processing Group
     pp_group =  parser.add_argument_group(chl.group["pp_group"])
-    pp_group.add_argument("--sharpen", action="store_true", help=chl.help["sharpen"])
+    pp_group.add_argument("--laplacian", action="store_true", help=chl.help["sharpen"])
     pp_group.add_argument("--blur", action="store_true", help=chl.help["blur"])
     pp_group.add_argument("--median-blur", action="store_true", help=chl.help["median"])
     pp_group.add_argument("--gaussian-blur", action="store_true", help=chl.help["gaussian"])
@@ -205,10 +206,36 @@ def cmdLineOptions():
     args.apply_contrast_enhancement = False
     args.apply_sharpening = False
 
+    # Sepia arguments
+    #sepia presets 'classic', 'warm', 'cool', 'vintage'
+    args.SepiaPresetList = ['classic', 'warm','cool','vintage']
+    args.sepia_preset = args.SepiaPresetList[2]
+    #intensity from 0.0 to 1.0
+    args.sepia_intensity = 1.0
+    args.apply_sepia = False
+
+    # laplacian Boost
+    # args.sharpen = the actuall cli argument
+    args.apply_laplacian = False
+    # 1 to 5
+    args.laplacian_kernel_size = 1
+    # 1 to 10 (divide by ten, its really 0.1 to 1.0)
+    args.laplacian_boost_strength = 9.5
+
+    args.apply_artistic_filters = False
+    args.apply_oil_painting = False
+
     args.apply_edges_sobel = False
+    args.apply_edge_detect = False
     args.apply_inverted = False
 
+    args.apply_adjust_video = False
+
+    # args.last_preset is the last bilateral filter preset used that wasnt 'OFF'
+    args.last_bilateral_preset = None
     args.apply_bilateral_filter = False
+    args.CUDA_bilateral_filter = False
+    args.show_bilateral_filter = False
 
     # --loadPlayList
     if args.loadPlayList is None:

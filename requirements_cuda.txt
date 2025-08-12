@@ -2,6 +2,8 @@ setuptools~=75.8.2
 pygame~=2.6.1
 pyvidplayer2~=0.9.26
 cachetools~=5.5.2
+opencv-python==4.13.0.dev0
+opencv-contrib-python==4.13.0.dev0
 python-magic~=0.4.27
 psutil~=7.0.0
 numpy~=2.3.1

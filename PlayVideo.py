@@ -9,10 +9,8 @@
 import os
 import json
 import datetime
-import cachetools
 import subprocess
 from typing import Optional
-import help_text as  _help_
 import upScale as up_scale
 import warnings
 
@@ -22,25 +20,29 @@ warnings.filterwarnings('ignore', category=UserWarning,
 # This must be called BEFORE importing pygame
 # else set it in ~/.bashrc
 # Or run it from the command line:
-# PYGAME_HIDE_SUPPORT_PROMPT=1 pyvid [options] (more trouble than what its worth)
+# PYGAME_HIDE_SUPPORT_PROMPT=1 pyvid [options] (more trouble than what it's worth)
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
-import sys
 import time
-import psutil
 import random
 import pygame
-from pygame.locals import *
 from fractions import Fraction
 import cv2
 import numpy as np
 import numpy
 from pyvidplayer2.video_pygame import VideoPygame
 from pyvidplayer2 import Video, PostProcessing
-import pyvidplayer2
+from ThumbNailMaint import ThumbNailMaint
+from DrawHelpInfo import DrawHelpInfo
+from DrawFilterHelpInfo import DrawFilterHelpInfo
 from DrawVideoInfo import DrawVideoInfo
+from DrawFilterInfo import DrawFilterInfo
+from FilterCheckboxPanel import FilterCheckboxPanel
 from VideoPlayBar import VideoPlayBar
+from sepiaPanel import sepiaPanel
 from ControlPanel import ControlPanel
 from edgeDetectPanel import edgeDetectPanel
+from oilPaintingPanel import oilPaintingPanel
+from laplacianBoostPanel import laplacianBoostPanel
 from CUDABilateralFilterPanel import CUDABilateralFilterPanel
 
 # Define colors
@@ -53,123 +55,173 @@ DODGERBLUE4 = (16, 78, 139)
 
 class PlayVideo:
     """
-    A class to manage video playback including various controls, settings, and graphical user
-    interface operations.
+    Class for managing video playback and interactive UI elements in a video player application.
 
-    This class provides functionality for managing video files, configuring application settings,
-    and rendering video playback with graphical elements such as on-screen display (OSD) icons,
-    text, and status bars. It initializes required resources, manages playback controls like play,
-    pause, forward, and rewind, and maintains video settings such as volume, playback speed, and
-    video information display. The class also includes functionality for scaling video resolution,
-    handling user preferences, and caching thumbnail images.
+    This class is responsible for initializing, configuring, and managing a video playback environment
+    using the Pygame library. It facilitates video rendering, playback controls, graphical user interface
+    elements, and video-related features such as volume control, video scaling, and display overlays.
+    The class supports handling video playlists, user preferences, and implements various playback
+    functionalities.
 
     Attributes:
-        opts (object): An object that contains all command-line argument flags for configuration.
-        bcolors (object): An object to enable colored output in the terminal.
-        vid (object): A reference to the current video object being played.
-        reader (object): A reference to the video reader used for decoding and processing videos.
-        videoList (list): A list of file paths or filenames of videos to be played.
-        USER_HOME (str): Directory path to the user's home folder for resource and cache management.
-        drawVidInfo (object): Stores information related to video rendering.
-        video_info_box (bool): Flag to indicate if the video information overlay box is displayed.
-        video_info_temp (bool): Temporary toggle flag for video information display.
-        video_info_box_tooltip (bool): Flag to determine if the video info overlay tooltip is displayed.
-        video_info_box_tooltip_mouse_x (int): Mouse X-coordinate for tooltip positioning.
-        video_info_box_tooltip_mouse_y (int): Mouse Y-coordinate for tooltip positioning.
-        video_info_box_path_tooltip (bool): Boolean indicating path-tooltip rendering.
-        video_info_box_path_tooltip_mouse_x (int): X-coordinate for path-tooltip positional reference.
-        video_info_box_path_tooltip_mouse_y (int): Y-coordinate for path-tooltip positional reference.
-        currVidIndx (int): Index of the current video being played from the video list.
-        backwardsFlag (bool): Flag indicating intention to play a previously played video.
-        forwardsFlag (bool): Flag indicating intention to play the next video in the list.
-        vol (float): Default playback volume.
-        volume (float): Playback volume setting.
-        vol_rect (object): Graphical object representing the volume icon or bar.
-        play_speed_rect (object): Graphical object representing the playback speed slider.
-        fileNum (int): Counter to track the current file being processed.
-        pause (bool): State indicator for playback pause functionality.
-        muted (bool): Determines if the playback volume is muted.
-        key_mute_flag (bool): Command-line derived flag for keyboard mute functionality.
-        mute_flag (bool): Command-line derived flag for muting audio output.
-        savePlayListFlag (bool): Indicates if the current playlist is being saved.
-        savePlayListPath (str): File path for saving the active playlist.
-        smoothscaleBackend (str): Pygame backend for smooth scaling of video resolution.
-        progress_active (bool): Toggles the progress bar or seek functionality.
-        progress_percentage (float): Percentage completion of the current video's playback.
-        last_update_time (float): Timestamp marker for the last progress update.
-        progress_timeout (int): Timeout threshold for progress-related tasks in seconds.
-        progress_value (float): Current progress value or position.
-        current_position (float): Current playback elapsed time or position in the video.
-        total_duration (float): Total duration of the currently played video.
-        status_bar_visible (bool): Flag to toggle the visibility of the playback status bar.
-        disableSplash (bool): Disable the initial splash screen or startup message.
-        Splash_Width_Base (int): Horizontal width for rendering the splash screen.
-        Splash_Height_Base (int): Vertical height for rendering the splash screen.
-        image_surface (object): Pygame surface object for rendering images or thumbnails.
-        shuffleSplashFlag (bool): Randomizes the splash screen if set to True.
-        filePath (str): Path to the current video or media resource being played.
-        saveScreenShotFlag (bool): Toggles the screenshot functionality for video playback.
-        save_sshot_filename (str): Filename for saving a captured screenshot.
-        save_sshot_error (exception): Exception details for screenshot save error, if any.
-        SCREEN_SHOT_DIR (str): Directory path for storing video screenshots.
-        dFlags (int): Pygame display flags used to set up the video renderer.
-        win (object): Pygame display window used for rendering video output.
-        clock (object): Pygame clock for managing frame rate and gameplay loops.
-        RESOURCES_DIR (str): Directory for storing OSD resources or asset files.
-        playIcon (object): Icon for the playback play state.
-        pauseIcon (object): Icon for the playback pause state.
-        forwardIcon (object): Icon for fast forward functionality.
-        rewindIcon (object): Icon for rewind functionality.
-        check_icon (object): Checkmark icon for visual confirmations.
-        OSD_ICON_X (int): X-coordinate for positioning OSD icons.
-        OSD_ICON_Y (int): Y-coordinate for OSD icon positioning.
-        OSD_ICON_WIDTH (int): The width of OSD icons.
-        OSD_ICON_HEIGHT (int): The height of OSD icons.
-        OSD_TEXT_X (int): X-coordinate for on-screen text position.
-        OSD_TEXT_Y (int): Top margin or Y-axis reference for OSD text rendering.
-        OSD_FILENAME_Y (int): Vertical Y-coordinate for the current filename's OSD text.
-        osd_text_width (int): Width of the last rendered OSD text.
-        osd_text_height (int): Height of the last rendered OSD text.
-        draw_OSD_active (bool): Toggles OSD visibility and rendering state.
-        OSD_curPos_flag (bool): Determines the current playback position for OSD updates.
-        seek_flag (bool): Toggles status bar seek functionality.
-        last_osd_position (float): Playback time or position correlating with the last OSD update.
-        seekFwd_flag (bool): Fast-forward operation toggling flag.
-        seekRewind_flag (bool): Toggles the rewind operation state.
-        FONT_DIR (str): Directory path containing font resources for text rendering.
-        font_italic (object): Italic font style.
-        font_bold_italic (object): Bold italic font style.
-        font_regular (object): Regular font style.
-        font_regular_big (object): Large regular font style.
-        font_regular_big_bold (object): Large bold font style.
-        font_CPOS_bold (object): Large centered-position bold font style.
-        font_bold_regular (object): Bold regular font style.
-        font_regular_28 (object): Regular font style with size 28.
-        font_regular_32 (object): Regular font style with size 32.
-        font_regular_36 (object): Regular font style with size 36.
-        font_regular_50 (object): Regular font style with size 50.
-        font_bold_regular_75 (object): Bold regular font style with size 75.
-        font_button (object): Font style for button labels.
-        font_help_bold (object): Bold font style for help-related text.
-        font_help (object): Font style for help text.
-        font (object): A general font object used for shadow effects.
-        CACHE_DIR (str): Cache directory path for thumbnail storage.
-        thumbnail_cache (object): An LRU cache for storing thumbnail image data.
+        opts (object): Options and configurations for the video player.
+        videoList (list): List of video file paths to be played.
+        bcolors (object): Object for handling colors used in the application.
+        vid: Reference to the current video object being played.
+        reader: Backend video reader for handling the video file.
+        volume (float): Volume level for playback, starting with a default value.
+        displayWidth (int): Width of the display window.
+        displayHeight (int): Height of the display window.
+        displayResolution (tuple): Resolution of the display in the format (width, height).
+        current_vid_width (int): Width of the currently playing video.
+        current_vid_height (int): Height of the currently playing video.
+
+    Parameters:
+        opts (object): Configurations and options for initializing the video player.
+        videoList (list): List of video file paths to be played.
+        bcolors (object): Object for managing terminal colors or user-defined color settings.
+
+    Raises:
+        SystemExit: If no playable video files are provided in the playlist.
     """
     def __init__(self, opts: object, videoList: list, bcolors: object) -> None:
         """
-        This constructor initializes the video playback application. It sets up the user environment, attributes,
-        and configures pygame for interactive video viewing. It also manages essential variables related to playback
-        such as options, video list, video settings, UI elements, and playback controls.
+        Initializes a video player instance.
+
+        This class handles the initialization and setup of a video player instance,
+        including video handling, user interface elements, font management,
+        environment variables, on-screen display (OSD) configurations, and caching.
+        It also prepares the video playback settings and manages the video playlist.
+
+        Attributes:
+        opts (object): Configuration options for the video player.
+        videoList (list): List of video file paths to be played.
+        bcolors (object): Utility object for managing terminal output colors.
+        vid: Current video being played.
+        reader: Reader instance to handle video files.
+        last_interp: Stores the initial interpolation setting from the options.
+        USER_HOME: User's home directory, used for initializing paths.
+        video_info_box (bool): Flag to decide if the video info box is displayed.
+        video_info_temp (bool): Temporary flag for video information display.
+        video_info_box_tooltip (bool): Flag for rendering the video info box tooltip.
+        video_info_box_tooltip_mouse_x (int): X coordinate for video info tooltip position.
+        video_info_box_tooltip_mouse_y (int): Y coordinate for video info tooltip position.
+        video_info_box_path_tooltip (bool): Flag for rendering path tooltip on video info.
+        video_info_box_path_tooltip_mouse_x (int): X coordinate for path tooltip position.
+        video_info_box_path_tooltip_mouse_y (int): Y coordinate for path tooltip position.
+        currVidIndx (int): Index of the current video in the playlist.
+        backwardsFlag (bool): Flag to indicate playback of a previously played video.
+        forwardsFlag (bool): Flag to indicate playback of the next video.
+        vol (float): Default playback volume.
+        volume: Current playback volume.
+        vol_rect: Rectangle area for managing volume controls.
+        play_speed_rect: Rectangle for controlling playback speed.
+        fileNum (int): Current file number being played.
+        pause: Pause state of the player.
+        muted (bool): Whether the player is muted.
+        key_mute_flag: Key-based mute control flag.
+        mute_flag: Mute control state from options.
+        savePlayListFlag (bool): Flag indicating if the playlist should be saved.
+        savePlayListPath (str): Path for saving the playlist.
+        smoothscaleBackend (str): Pygame smooth scaling backend.
+        progress_active (bool): Flag for active seek progress meter.
+        progress_percentage: Current progress percentage.
+        last_update_time: Last timestamp when progress was updated.
+        progress_timeout (int): Timeout for progress display.
+        progress_value: Value of the current progress.
+        current_position: Current playback position.
+        total_duration: Total duration of the current video.
+        status_bar_visible (bool): Status bar visibility flag.
+        seek_flag2 (bool): Secondary seek flag.
+        lastflag2 (bool): Secondary flag for status management.
+        last_vid_info_pos (float): Last position of video info.
+        disableSplash (bool): Flag to disable splash screen.
+        effects: Effects applied to the video playback.
+        Splash_Width_Base (int): Base width for splash screen.
+        Splash_Height_Base (int): Base height for splash screen.
+        image_surface: Pygame surface for video rendering.
+        shuffleSplashFlag (bool): Flag for shuffle splash functionality.
+        filePath: Path of the current video file.
+        saveScreenShotFlag (bool): Flag to save a screenshot.
+        save_sshot_filename: Filename for the saved screenshot.
+        save_sshot_error: Stores errors related to screenshot saving.
+        SCREEN_SHOT_DIR: Directory for saving screenshots.
+        dFlags: Pygame display flags for fullscreen and frameless mode.
+        win: Pygame display surface.
+        displayWidth (int): Screen width of display.
+        displayHeight (int): Screen height of display.
+        displayResolution: Tuple containing width and height of the display.
+        displayType: Type of display resolution.
+        width_multiplier: Multiplier for screen width scaling.
+        height_multiplier: Multiplier for screen height scaling.
+        current_vid_width (int): Width of the current video.
+        current_vid_height (int): Height of the current video.
+        original_vid_width (int): Original video width before scaling.
+        original_vid_height (int): Original video height before scaling.
+        clock: Pygame clock for managing frame timings.
+        RESOURCES_DIR: Directory path for resource files like icons.
+        playIcon: Play button icon as pygame surface.
+        pauseIcon: Pause button icon as pygame surface.
+        forwardIcon: Forward icon as pygame surface.
+        rewindIcon: Rewind icon as pygame surface.
+        check_icon: Checkmark icon for video-related actions.
+        OSD_ICON_X, OSD_ICON_Y (int): X and Y positions of OSD icons.
+        OSD_ICON_WIDTH, OSD_ICON_HEIGHT (int): Width and height of OSD icons.
+        OSD_TEXT_X, OSD_TEXT_Y (int): X and Y positions for OSD text.
+        OSD_FILENAME_Y (int): Y position of the displayed filename.
+        osd_text_width (int): Width of OSD text.
+        osd_text_height (int): Height of OSD text.
+        draw_OSD_active (bool): Flag for active OSD rendering.
+        OSD_curPos_flag (bool): Flag for OSD current position display.
+        seek_flag (bool): Seek flag state for OSD.
+        last_osd_position (float): Last OSD position relative to playback.
+        seekFwd_flag (bool): Flag for seeking forward.
+        seekRewind_flag (bool): Flag for seeking backward.
+        FONT_DIR: Directory path for font resources.
+        font_italic: Italic font style for OSD.
+        font_bold_italic: Bold italic font style for OSD.
+        font_regular: Regular font for OSD.
+        font_regular_big: Large regular font for OSD.
+        font_regular_big_bold: Large bold regular font for OSD.
+        font_CPOS_bold: Bold font for the current playback position.
+        font_bold_regular: Bold regular font style.
+        font_regular_28 (object): Regular 28-point font for OSD.
+        font_regular_32 (object): Regular 32-point font for OSD.
+        font_regular_36 (object): Regular 36-point font for OSD.
+        font_regular_50 (object): Regular 50-point font for large OSD text.
+        font_bold_regular_75 (object): Bold 75-point font for OSD elements.
+        font_button (object): Font for button labels.
+        font_help_bold (object): Bold font for help text.
+        font_help (object): Regular font for help text.
+        font: General font for text rendering in shadows.
+        CACHE_DIR: Directory path for video thumbnail caching.
+        thumbnail_cache: Cache for storing video thumbnails.
+        vidPlaybackSpeed (float): Playback speed of the video.
+        videoPlayBar: Playback bar object for video progress.
         """
         self.opts = opts
         self.bcolors = bcolors
         self.vid = None
         self.reader = None
+        self.play_video = self
+        # Sets the initial interpolation
+        self.last_interp = self.opts.interp
         # A list containing the path/filenames of each video to be played
         self.videoList = videoList
         self.USER_HOME = None
-
+        #
+        # Help and Filter Help
+        self.drawHelpInfo = None
+        self.help_button_rect = None
+        self.drawFilterHelpInfo = None
+        self.filter_help_button_rect = None
+        #
+        # FilterDialogBox
+        self.Filter_Dialog_Box_Visible = False
+        # DrawFilterInfo
+        self.drawFilterInfo = None
+        self.filter_info_box = False
+        #
         self.drawVidInfo = None
         #  flag to decide if we display the  video info box or not
         self.video_info_box = False
@@ -188,10 +240,10 @@ class PlayVideo:
         so no point in continuing.
         Just exit the program instead.
         '''
-
         if len(self.videoList) == 0:
             print("No playable media files were found.  Exiting.")
             exit(128)
+        #
         # index to access the video elements in self.vidoeList
         self.currVidIndx = -1
         # Flag that denotes we are wanting to play a previously played video.
@@ -219,28 +271,28 @@ class PlayVideo:
         self.progress_value = 0
         self.current_position = 0
         self.total_duration = 0
-
+        #
         # displayVideoInfo
         self.status_bar_visible = False
         self.seek_flag2 = False
         self.lastflag2 = False
         self.last_vid_info_pos = 0.0
-
         #
         self.disableSplash = False
-
+        #
+        self.effects = None
+        #
         # The Width and Height of the Video Splash
         self.Splash_Width_Base   = 800
         self.Splash_Height_Base  = 375
         self.image_surface = None
         self.shuffleSplashFlag = False
         self.filePath = None
-
+        #
         # screenshot splash
         self.saveScreenShotFlag = False
         self.save_sshot_filename = None
         self.save_sshot_error = None
-        #self.SCREEN_SHOT_DIR = self.USER_HOME + '/pyVidScreenShots'
         self.SCREEN_SHOT_DIR = None
         #
         # Set some environment variables BEFORE initializing pygame
@@ -260,13 +312,24 @@ class PlayVideo:
         self.width_multiplier, self.height_multiplier = up_scale.scale_resolution(self.displayType) \
                                     if self.displayType in up_scale.resolution_multipliers else (1, 1)
 
+        self.current_vid_width = 0
+        self.current_vid_height = 0
+        self.original_vid_width = 0
+        self.original_vid_height = 0
+
+        # bilaterial filter panel
+        #self.show_filter_panel = False
+        #self.bilateral_panel.set_visibility(False)
+        self.opts.show_bilateral_filter = False
+        self.last_preset = False
+
         # Might use this in the future
         pygame.transform.set_smoothscale_backend(self.smoothscaleBackend)
         self.clock = pygame.time.Clock()
 
         # OSD Icons.
         # The width and height of self.OSD_ICON_X & self.OSD_ICON_Y will be taken off the play icon.
-        # Therefore, ALL icons must have the same width and height and their backgrounds must be transparent.
+        # Therefore, ALL icons must have the same width and height, and their backgrounds must be transparent.
         self.RESOURCES_DIR = self.USER_HOME + "/.local/share/pyVid/Resources/"
         self.playIcon = pygame.image.load(self.RESOURCES_DIR + "play.png").convert_alpha()
         self.pauseIcon = pygame.image.load(self.RESOURCES_DIR + "pause.png").convert_alpha()
@@ -274,7 +337,7 @@ class PlayVideo:
         self.rewindIcon = pygame.image.load(self.RESOURCES_DIR + "rewind10s.png").convert_alpha()
         self.check_icon = pygame.image.load(self.RESOURCES_DIR + 'checkmark.png').convert_alpha()
         self.check_icon = pygame.transform.scale(self.check_icon, (32, 32))
-
+        #
         # x,y coordinates of the OSD play/pause icons
         self.OSD_ICON_X = 50
         self.OSD_ICON_Y = 28
@@ -284,7 +347,7 @@ class PlayVideo:
         self.OSD_TEXT_X = 100
         self.OSD_TEXT_Y = 0
         # y coordinate of the OSD filename
-        # Note that the x coordinate is centered onto the width of the screen so only the y coordinate needs to be specified.
+        # Note that the x coordinate is centered onto the width of the screen, so only the y coordinate needs to be specified.
         self.OSD_FILENAME_Y = self.displayHeight - 125
         # Other OSD vars and flags
         self.osd_text_width = 0
@@ -295,7 +358,7 @@ class PlayVideo:
         self.last_osd_position = 0.0
         self.seekFwd_flag = False
         self.seekRewind_flag = False
-
+        #
         ''' 
         Setup some fonts to be used by the status bar.
         ToDo:  Setup some default backup fonts incase my choice of fonts are not installed.
@@ -318,15 +381,13 @@ class PlayVideo:
         #self.font_help = pygame.font.Font(self.FONT_DIR + 'Arial.ttf', 16)
         self.font_help_bold = pygame.font.Font(self.FONT_DIR + 'Arial_Black.ttf', 18)
         self.font_help = pygame.font.Font(self.FONT_DIR + 'Arial_Bold.ttf', 17)
-
+        #
         # Referenced in addShadowEffect()
         self.font = None
-
-        # Location of the thumbnail cache directory
-        self.CACHE_DIR = self.USER_HOME + '/.local/share/pyVid/thumbs'
-        # Create a thumbnail cache with a maximum of 25 entries that reside in memory.
-        self.thumbnail_cache = cachetools.LRUCache(maxsize=25)
-
+        #
+        CACHE_DIR = self.USER_HOME + '/.local/share/pyVid/thumbs'
+        self.thunb_nail_maint = ThumbNailMaint(self.displayType, CACHE_DIR)
+        #
         #Initialize the video playback bar
         self.vidPlaybackSpeed = 1.0
         self.videoPlayBar = VideoPlayBar(self.win,
@@ -345,58 +406,86 @@ class PlayVideo:
         self.drawVideoPlayBarToolTipMouse_y = 0
         self.VideoPlayBarToolTipMouseLast_x = 0
         self.VideoPlayBarToolTipMouseLast_y = 0
-
+        #
         self.drawVideoPlayBarToolTipText = ""
         self.drawVideoPlayBarToolTipTextLast = ""
         self.drawVideoPlayBarToolTipLastIcon = None
-
+        #
         self.stopButtonClicked = False
         self.playButtonClicked = False
-
+        #
         # Help window
+        self.drawHelpInfo = DrawHelpInfo(self )
         self.help_visible = False
         self.is_hovered = False
         self.help_button_rect = None
-
+        #
+        # Filter help window
+        self.drawFilterHelpInfo = DrawFilterHelpInfo(self)
+        self.filter_help_visible = False
+        self.filter_is_hovered = False
+        self.filter_help_button_rect = None
+        #
         # saveMode
         self.saveMode = False
         self.saveModeVisible = False
         self.saveCount = 0
         self.message = ""
         self.saveSurfFrame = False
-
+        #
+        # FrameCapture
         self.frameSaveDir = None
         self.frameCount = 0
         self.counter  = 0
-
+        #
         # mp4 video title
         self.video_title = ""
-
+        #
         # simple_comic_effect
         self.frame_counter = 0
         self.last_comic_frame = None
         self.comic_effect_enabled = False
+        #
+        self.control_panel = ControlPanel(self)
 
-        self.opts.adjust_video = True
-        self.opts.brightness = 0
-        self.opts.contrast =  0
-        # adjust brightness and contrast
-        self.control_panel = ControlPanel(self.displayWidth, self.displayHeight, self)
-        self.edge_panel = edgeDetectPanel(self.displayWidth, self.displayHeight, self)
+        self.edge_panel = edgeDetectPanel(self)
         self.cb_panel_is_visible = False
-
+        #
+        self.oil_painting_panel = oilPaintingPanel(self)
+        self.oil_painting_panel_is_visible = False
+        #
+        self.laplacian_panel = laplacianBoostPanel(self)
+        self.laplacian_panel_is_visible = False
+        #
+        self.sepia_panel = sepiaPanel(self)
+        self.sepia_panel_is_visible = False
+        #
+        # FilterCheckboxPanel
+        self.filterCheckboxPanel = FilterCheckboxPanel(self)
+        self.filter_checkbox_panel = False
+        #
         # Frame processing buffers
         self.original_frame_array = None
         self.processed_frame_array = None
         self.processed_frame_surf = None
-
+        #
         # Check CUDA availability on video player startup
         cuda_devices = cv2.cuda.getCudaEnabledDeviceCount()
         print(f"🎬 Video Player: CUDA devices available: {cuda_devices}")
+        print()
         if cuda_devices > 0:
-            print("🚀 CUDA-accelerated bilateral filter ready!")
+            print("🎬 CUDA-accelerated Bilateral filter ready!")
+            print("🎬 CUDA-accelerated Laplacian Boost filter ready!")
+            print("🎬 CUDA-accelerated Greyscale filter ready!")
+            print("🎬 CUDA-accelerated Super-Sepia filter ready!")
+            print("🎬 CUDA-accelerated Gaussian-Blur filter ready!")
+            print("🎬 CUDA-accelerated Median-Blur filter ready!")
+            print("🎬 CUDA-accelerated Contrast Enhance filter ready!")
+            print("🎬 CUDA-accelerated Edge-Detect effect ready!")
+            print("🎬 CUDA-accelerated Edges-Sobel effect ready!")
         else:
-            print("⚠️  Using CPU bilateral filter")
+            print("⚠️  Using CPU for all effects and filters")
+
 
         #   CUDA bilateral
         self.bilateral_filter_enabled = False
@@ -405,8 +494,8 @@ class PlayVideo:
         self.bilateral_panel = CUDABilateralFilterPanel(self.displayWidth,self.displayHeight)
         self.bilateral_panel.opts_reference = opts
 
-        self.show_filter_panel = False
-        print(f"🖥️  Display: {self.displayType}, Resolution: {self.displayResolution}, Scaling: {scaling_factor:.2f}")
+
+        print(f"\n🖥️ Display: {self.displayType}, Resolution: {self.displayResolution}, Scaling: {scaling_factor:.2f}\n")
 
     '''
     Static methods
@@ -635,7 +724,7 @@ class PlayVideo:
             current_cpu (float): The current CPU usage percentage.
             target_time (float): The target processing time for an interpolation task.
             benchmark_threshold (float, optional): A benchmark threshold value to determine
-                suitability for specific interpolation methods. Default is 12.0.
+                suitability for specific interpolation methods. The default is 12.0.
 
         Returns:
             str: The selected interpolation method, which can be "lanczos4", "cubic", or "linear".
@@ -1214,37 +1303,32 @@ class PlayVideo:
             and timestamp.
         """
         timestamp = time.strftime("%m%d%y_%H_%M_%S")  # 24-hour format
-        return f"{save_dir}/{self.vid.name}_{timestamp}.png"
+        return f"{save_dir}/{self.vid.name}-{timestamp}.png"
 
     def check_SSHOT_dir(self, noImgType=False):
         """
-        Determines the appropriate directory for saving screenshots based on the type of image
-        (Portrait or Landscape) detected from the video and ensures the directory exists or is
-        created. In case of errors during directory creation, handles exceptions and provides
-        error feedback to the user.
+        Determines the directory for saving screenshots based on the video orientation and configuration.
+        It checks if the directory exists, creates it if necessary, and handles potential errors during
+        this process.
 
-        Returns the path to the screenshot directory if successful, and None in case of errors
-        with appropriate error management.
+        Parameters:
+            noImgType (bool, optional): Defines whether to include the image type (Portrait or Landscape) in
+                the directory structure when determining the save location. Defaults to False.
 
         Returns:
-            str or None: The directory path where screenshots will be saved if successful,
-            otherwise None in case of error.
+            str: The absolute path of the determined or newly created directory if successful.
+            None: If an error occurs during directory creation.
 
         Raises:
-            PermissionError: If the program does not have permissions to create the directory.
-            OSError: For unexpected operating-system-related errors that occur while creating
-            the directory.
+            PermissionError: If there is insufficient permission to create the directory.
+            OSError: If an unexpected operating system error occurs during directory creation.
         """
-        if not noImgType:
+        if noImgType:
             imageType = "Portrait" if PlayVideo.is_portrait(self.vid.frame_surf, self.displayWidth) else "Landscape"
-        '''
-        if imageType == "Portrait":
-            print("Detected image type is portrait")
+            # saveDir is the base directory + the video name + the imageType
+            saveDir = f"{self.SCREEN_SHOT_DIR}/{self.vid.name}/{imageType}"
         else:
-            print("Detected image type is landscape")
-        '''
-        # saveDir is the base directory + the video name + the imageType
-        saveDir = (f"{self.SCREEN_SHOT_DIR}/{self.vid.name}/{imageType}" if noImgType is False else f"/home/nikki/FrameData/{self.vid.name}")
+            saveDir = f"{self.SCREEN_SHOT_DIR}/{self.vid.name}"
         if not os.path.isdir(saveDir):
             try:
                 os.makedirs(saveDir, exist_ok=True)
@@ -1346,7 +1430,7 @@ class PlayVideo:
             Raised when the Pygame library encounters an issue while copying or saving
             the surface image.
         OSError
-            Raised in case of file system-related errors, such as insufficient permissions
+            Raised in case of file-system-related errors, such as insufficient permissions
             or lack of available disk space.
         Exception
             Raised for any unexpected errors that occur during the saving process.
@@ -1391,7 +1475,18 @@ class PlayVideo:
 
     def handle_queued_screenshot(self):
         """
-        Handles queued screenshot operations during the render loop.
+        Handles saving a queued screenshot if the saveScreenShotFlag is set. Displays
+        a splash screen and performs the save operation or error handling if
+        necessary.
+
+        Raises:
+            Exception: Propagates any exceptions raised during the save operation.
+
+        Parameters:
+            None
+
+        Returns:
+            None
         """
         if not self.saveScreenShotFlag:
             return
@@ -1406,20 +1501,18 @@ class PlayVideo:
 
             # Do the save operation
             if self.save_frame_surf(self.save_sshot_filename):
-                # Add delay AFTER saving is complete to ensure splash remains visible
+                # Add delay AFTER saving is complete to ensure the splash remains visible
                 pygame.time.wait(500)
             else:
                 self.message = self.save_sshot_error
                 self.saveModeDialogBox(self.message, sleep=True)
 
         finally:
-            # Restore previous playing state
+            # Restore the previous playing state
             if was_playing:
                 self.vid.paused = False
             self.saveScreenShotFlag = False
             self.save_sshot_filename = None
-            #print("self.vid.resume()")
-            #self.vid.resume()
 
     def saveModeDialogBox(self,Message, sleep=False):
         """
@@ -1578,6 +1671,70 @@ class PlayVideo:
             )
             self.win.blit(text_surface, text_rect)
         pygame.display.flip()
+
+    def FilterDialogBox(self, Message, sleep=False):
+        """
+        Displays a dialog box with a message at the center of the window.
+
+        This function renders a dialog box with a semi-transparent gradient background
+        and a custom message centered on the screen. The appearance of the box,
+        such as size, font, and padding, is scaled dynamically based on display
+        dimensions. The dialog box can be configured to remain on the screen for a
+        specified duration, specified by the `sleep` parameter.
+
+        Parameters:
+            Message (str): The text to display within the dialog box.
+            sleep (bool, optional): Whether to pause the execution for a longer
+                duration (5 seconds). Defaults to False (1 second pause).
+
+        Raises:
+            None
+        """
+        if self.Filter_Dialog_Box_Visible:
+            return
+
+        self.Filter_Dialog_Box_Visible = True
+
+        text_color = pygame.color.THECOLORS['white']
+        # Define box dimensions
+        box_width = int(300 * self.width_multiplier)
+        box_height = int(100 * self.height_multiplier)
+        baseFontSize = 22
+        scaled_font_size = up_scale.scale_font(baseFontSize, self.displayHeight)
+        font_bold_regular = pygame.font.Font(self.FONT_DIR + 'Roboto-Bold.ttf', scaled_font_size)  # 22
+        box_width, font_height = font_bold_regular.size(Message)
+        padding = int(25 * self.width_multiplier)  # Extra space around the text
+        box_width += padding
+        #font_height = font_bold_regular.get_height()
+        #padding = 50  # Extra space around the text
+        box_x = (self.displayWidth - box_width) // 2
+        box_y = (self.displayHeight - box_height) // 2
+        box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
+        box_surface_rect = box_surface.get_rect()
+        # box_surface.set_alpha(190)
+        box_surface.set_colorkey((0, 255, 0))
+        PlayVideo.apply_gradient(
+            box_surface, (0, 0, 200), (0, 0, 100),
+            box_width, box_height,
+            alpha_start=225, alpha_end=225
+        )
+        pygame.draw.rect(
+            box_surface,
+            WHITE,
+            (0, 0, box_width, box_height),
+            2, border_radius=10
+        )
+        # Blit semi-transparent box
+        self.win.blit(box_surface, (box_x, box_y))
+        text_surface = font_bold_regular.render(Message, True, text_color)
+        text_rect = text_surface.get_rect(center=(self.displayWidth // 2, box_y + font_height + 40))
+        self.win.blit(text_surface, text_rect)
+        pygame.display.flip()
+        if sleep:
+            time.sleep(5)
+        else:
+            time.sleep(1)
+        self.Filter_Dialog_Box_Visible = False
 
     def saveSplash(self, path, filename):
         """
@@ -2203,7 +2360,8 @@ class PlayVideo:
             #progress_surface.set_alpha(165)
             progress_surface.set_colorkey((0, 255, 0))
             progress_bar_rect = progress_surface.get_rect()
-            if not self.help_visible and not self.video_info_box:
+            #if not self.help_visible and not self.video_info_box:
+            if not self.help_visible and not self.filter_help_visible and not self.video_info_box:
                 PlayVideo.apply_gradient(progress_surface,
                                          DODGERBLUE,
                                          DODGERBLUE4,
@@ -2242,132 +2400,6 @@ class PlayVideo:
             self.win.blit(progress_surface,
                           ((self.displayWidth - progress_width) // 2, self.displayHeight // 2))
 
-    def create_thumbnail(self, video_path):
-        """
-        Creates a thumbnail image from a video file by utilizing the FFmpeg utility. The
-        method checks for valid input, scales the thumbnail based on the display type, and
-        ensures the thumbnail file is correctly generated and saved in the specified cache
-        directory.
-
-        Parameters
-        ----------
-        video_path : str
-            The file path of the video for which the thumbnail is to be created.
-
-        Returns
-        -------
-        str
-            The file path of the successfully created thumbnail image.
-
-        Raises
-        ------
-        ValueError
-            If the input video path is invalid or if there is an error related to the
-            configured display type.
-        OSError
-            If the FFmpeg utility fails to process the video or the thumbnail file is not
-            created successfully.
-        Exception
-            If an unexpected error occurs while creating the thumbnail.
-        """
-        try:
-            if not video_path or not os.path.exists(video_path):
-                raise ValueError(f"Invalid video path: {video_path}")
-
-            thumbnail_path = os.path.join(self.CACHE_DIR, os.path.splitext(os.path.basename(video_path))[0] + ".jpg")
-
-            try:
-                # Scale up based on display resolution
-                thumb_width, thumb_height = up_scale.scale_thumbnails(self.displayType) \
-                    if self.displayType in up_scale.thumbnails else (256, 144)
-                scale = f"scale={thumb_width}:{thumb_height}:flags=lanczos"
-
-                # **Check if the file is a GIF**
-                if video_path.lower().endswith(".gif"):
-                    ffmpeg_cmd = [
-                        "ffmpeg", "-hide_banner", "-loglevel", "error",
-                        "-i", video_path, "-vf", scale, "-q:v", "2",
-                        "-frames:v", "1", "-update", "1", thumbnail_path
-                    ]
-                else:
-                    # **For standard video files**
-                    ffmpeg_cmd = [
-                        "ffmpeg", "-hide_banner", "-loglevel", "error",
-                        "-i", video_path, "-ss", "00:00:05", "-vframes", "1",
-                        "-vf", scale, "-q:v", "2", "-update", "1", thumbnail_path
-                    ]
-
-                # ** Ensure cache directory exists **
-                os.makedirs(self.CACHE_DIR, exist_ok=True)
-
-                # Run ffmpeg and check return code
-                result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
-                if result.returncode != 0:
-                    raise OSError(f"FFmpeg failed: {result.stderr}")
-
-                # Verify thumbnail was created
-                if not os.path.exists(thumbnail_path):
-                    raise OSError("Thumbnail file was not created")
-
-                return thumbnail_path
-
-            except AttributeError as e:
-                raise ValueError(f"Invalid display type configuration: {str(e)}")
-            except subprocess.SubprocessError as e:
-                raise OSError(f"Error running ffmpeg: {str(e)}")
-
-        except (OSError, ValueError) as e:
-            # Re-raise these exceptions as they already have appropriate messages
-            raise
-        except Exception as e:
-            # Catch any other unexpected errors
-            raise Exception(f"Unexpected error creating thumbnail: {str(e)}") from e
-
-    def load_thumbnail(self, video_path):
-        """
-        Loads and caches a thumbnail for a given video file. The function retrieves the
-        thumbnail from a cache if available, otherwise generates a new thumbnail, scales
-        it to the appropriate size, and stores it in the cache for future use.
-
-        Arguments:
-            video_path: str
-                Path to the video file for which the thumbnail is to be loaded.
-
-        Returns:
-            pygame.Surface or None
-                The scaled thumbnail image as a pygame.Surface object if successfully
-                loaded. Returns None if thumbnail generation or loading fails.
-
-        Raises:
-            pygame.error
-                If an error occurs during loading or scaling of the thumbnail.
-
-        """
-        if video_path in self.thumbnail_cache:
-            return self.thumbnail_cache[video_path]  # ✅ Return cached thumbnail immediately
-
-        thumbnail_path = os.path.join(self.CACHE_DIR, os.path.splitext(os.path.basename(video_path))[0] + ".jpg")
-
-        # **Generate thumbnail if missing**
-        if not os.path.exists(thumbnail_path):
-            thumbnail_path = self.create_thumbnail(video_path)
-            if not os.path.exists(thumbnail_path):
-                print(f"Failed to create thumbnail: {thumbnail_path}")
-                return None
-
-        try:
-            # **Load the image**
-            image_surface = pygame.image.load(thumbnail_path)
-            thumb_width, thumb_height = up_scale.scale_thumbnails(self.displayType)  \
-                if self.displayType in  up_scale.thumbnails else (256, 144)
-            image_surface = pygame.transform.scale(image_surface, (thumb_width, thumb_height))
-        except pygame.error as e:
-            print(f"Error loading thumbnail: {e}")
-            return None
-        # **Store in cache for faster access**
-        self.thumbnail_cache[video_path] = image_surface
-        return image_surface
-
     def fade_in_out(self, video_info):
         """
         Handles fade-in and fade-out animation for the splash screen.
@@ -2395,7 +2427,7 @@ class PlayVideo:
                 to be displayed during the fade-in and fade-out animation.
         """
         self.vid.stop()
-        self.image_surface = self.load_thumbnail(self.videoList[self.currVidIndx])
+        self.image_surface =  self.thunb_nail_maint.load_thumbnail(self.videoList[self.currVidIndx])
         self.progress_timeout = 50
 
         DodgerBlue = pygame.color.THECOLORS['dodgerblue']
@@ -2491,7 +2523,7 @@ class PlayVideo:
     def draw_video_splash(self):
         """
         Draws a video splash screen with relevant details such as video title, duration, speed, file size, thumbnail,
-        playback order, and last access time. The splash screen includes gradient styling, text, and video thumbnail.
+        playback order and last access time. The splash screen includes gradient styling, text and video thumbnail.
 
         Parameters:
             None
@@ -2518,7 +2550,8 @@ class PlayVideo:
         Splash_Height = int(h_multi * self.Splash_Height_Base)
 
         self.vid.stop()
-        self.image_surface = self.load_thumbnail(self.videoList[self.currVidIndx])
+        #self.image_surface = self.load_thumbnail(self.videoList[self.currVidIndx])
+        self.image_surface =  self.thunb_nail_maint.load_thumbnail(self.videoList[self.currVidIndx])
         self.progress_timeout = 50
 
         splash_surface = pygame.Surface((Splash_Width, Splash_Height), pygame.SRCALPHA)
@@ -2634,7 +2667,7 @@ class PlayVideo:
 
         # Audio Settings
         mute = self.mute_flag
-        noAudio = self.opts.noAudio
+        #noAudio = self.opts.noAudio
         usePygameAudio = self.opts.usePygameAudio
 
         # System Settings
@@ -2670,7 +2703,7 @@ class PlayVideo:
         print()
         print(f"{self.bcolors.BOLD}{self.bcolors.Blue_f}Audio Settings:{self.bcolors.RESET}")
         print(f"{self.bcolors.BOLD}opts.mute: {(self.bcolors.BOOL_TRUE + 'True' if mute else self.bcolors.Yellow_f + 'False')}{self.bcolors.RESET}")
-        print(f"{self.bcolors.BOLD}opts.noAudio: {(self.bcolors.BOOL_TRUE + 'True' if noAudio else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        #print(f"{self.bcolors.BOLD}opts.noAudio: {(self.bcolors.BOOL_TRUE + 'True' if noAudio else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
         print(f"{self.bcolors.BOLD}opts.usePygameAudio: {(self.bcolors.BOOL_TRUE + 'True' if usePygameAudio else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
         print()
         print(f"{self.bcolors.BOLD}{self.bcolors.Blue_f}System Settings:{self.bcolors.RESET}")
@@ -2704,7 +2737,35 @@ class PlayVideo:
         """
         self.drawVidInfo = DrawVideoInfo(self.win, FilePath, Filename, self.USER_HOME)
         self.drawVidInfo.draw_info_box()
-        #pygame.display.flip()
+
+    def DrawFilterInfoBox(self):
+        """
+        Draws a filter information box in the specified window using the DrawFilterInfo
+        class.
+
+        Methods
+        -------
+        DrawFilterInfoBox(self)
+            Draws an information box for filters by initializing the DrawFilterInfo
+            instance with the current window, options, and user home directory.
+        """
+        self.drawFilterInfo = DrawFilterInfo(self.play_video)
+        self.drawFilterInfo.draw_info_box()
+
+    def  DrawFilterCheckboxPanel(self):
+        """
+        Draws and makes the filter checkbox panel visible.
+
+        This method is responsible for displaying the filter checkbox panel
+        on the window and ensuring its visibility. It sets the visibility
+        of the panel to True and renders it on the specified application
+        window.
+
+        Returns:
+            None
+        """
+        self.filterCheckboxPanel.set_visible(True)
+        self.filterCheckboxPanel.draw(self.win)
 
     def DrawVideoPlayBar(self):
         """
@@ -2735,189 +2796,6 @@ class PlayVideo:
             for key, value in metadata.items():
                 print(f"{key} : {value}")
             print()
-
-    def draw_help(self, is_hovered):
-        """
-        Draws the help overlay and returns the bounding rectangle of the help button.
-
-        Generates the rect object representing the help button area and draws the
-        overlay depending on the hover state. This function is frequently used to
-        interact with the UI and allow users to toggle help display.
-
-        Args:
-            is_hovered (bool): Specifies whether the help button is currently hovered.
-
-        Returns:
-            pygame.Rect: A rectangle object representing the boundary of the help
-            button for further interaction or positioning.
-        """
-        self.help_button_rect =  self.draw_help_overlay(is_hovered)
-        return self.help_button_rect
-
-    def draw_help_overlay(self, is_hovered):
-        """
-        Draws a help overlay window with explanatory text and a clickable button.
-
-        The help overlay is visually styled with a gradient background, formatted text
-        (headings and regular lines), and an "OK" button for interaction. The overlay
-        adapts its size, fonts, and layout dynamically based on the display resolution
-        and scaling factors. Text is split into left and right columns, with properly
-        formatted headings and body content. The "OK" button has hover effects and
-        can be clicked to perform an action.
-
-        Parameters:
-            is_hovered (bool): Determines if the mouse is hovering over the "OK" button.
-
-        Returns:
-            pygame.Rect: A rect object representing the clickable area of the "OK" button.
-        """
-        # Scale fonts
-        originalFontSizes = [18, 17, 24]
-        scaled_font_size = up_scale.get_scaled_fonts(originalFontSizes, self.displayHeight)
-        font_help_text = pygame.font.Font(self.FONT_DIR + 'Arial.ttf', scaled_font_size[0])
-        font_help_heading = pygame.font.Font(self.FONT_DIR + 'Arial_Bold.ttf', scaled_font_size[1])
-        font_button = pygame.font.Font(self.FONT_DIR + 'Montserrat-Bold.ttf', scaled_font_size[2])
-
-        # Scale box dimensions using display type multipliers
-        baseBoxWidth = 600
-        baseBoxHeight = 600
-        w_mult, h_mult = up_scale.resolution_multipliers[self.displayType]
-        BOX_WIDTH = int(baseBoxWidth * w_mult)
-        BOX_HEIGHT = int(baseBoxHeight * h_mult)
-        BOX_X = (self.displayWidth - BOX_WIDTH) // 2
-        BOX_Y = (self.displayHeight - BOX_HEIGHT) // 2
-
-        y_offset_heading = int(font_help_heading.get_height() * (h_mult + 0.1))
-        y_offset_text = int(font_help_text.get_height() * (h_mult - 0.6))
-
-        # Create and draw the gradient background
-        gradient_surface = pygame.Surface((BOX_WIDTH, BOX_HEIGHT), pygame.SRCALPHA)
-        gradient_surface.set_colorkey((0, 255, 0))
-        PlayVideo.apply_gradient(
-            gradient_surface,
-            (0, 0, 255),
-            (0, 0, 100),
-            BOX_WIDTH,
-            BOX_HEIGHT,
-            alpha_start=100,
-            alpha_end=200
-        )
-
-        pygame.draw.rect(
-            self.win,
-            DODGERBLUE,
-            (BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT),
-            4,
-            border_radius=8
-        )
-        #self.win.blit(gradient_surface, (BOX_X, BOX_Y))
-
-        y_constant_start = 20 / BOX_HEIGHT
-        y_constant_end = round((0.875/h_mult), 3)
-        # Draw a vertical separator line (this will always be drawn)
-        pygame.draw.line(
-            gradient_surface,
-            WHITE,
-            (BOX_WIDTH // 2, int(BOX_HEIGHT * y_constant_start)),
-            # (BOX_WIDTH // 2, int(BOX_HEIGHT * 0.875)),
-            (BOX_WIDTH // 2, int(BOX_HEIGHT * h_mult * y_constant_end)),
-            2
-        )
-
-        pygame.draw.rect(
-                         self.win,
-                         DODGERBLUE,
-                         (BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT),
-                         4,
-                         border_radius=8
-        )
-        # The rest of the drawing code remains the same until button dimensions...
-        LEFT_MARGIN = int(BOX_WIDTH * 0.05)     # 5% of box width
-        RIGHT_COLUMN_X = int(BOX_WIDTH * 0.55)  # Slightly right of center line
-
-        # Render left column text
-        y_start = 25
-        line_offset = font_help_text.get_height() + 5
-        y_offset = y_start
-        for line in _help_.HELP_TEXT_LEFT.split("\n"):
-            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
-            text_surface = (
-                font_help_text.render(line.strip(), True, color)) \
-                if not line.isupper() \
-                else \
-                font_help_heading.render(line.strip(),True, color)
-
-            gradient_surface.blit(text_surface, (LEFT_MARGIN, y_offset))    # left column
-            if line.isupper():
-                text_width, _ = font_help_heading.size(line.strip())
-                pygame.draw.aaline(
-                    gradient_surface,
-                    HEADING_COLOR,
-                    (LEFT_MARGIN, y_offset + line_offset),
-                    (LEFT_MARGIN + text_width, y_offset + line_offset)
-                )
-                #y_offset += int(font_help_heading.get_height() * 1.9)
-                y_offset += y_offset_heading
-            else:
-                #y_offset += int(font_help_text.get_height() * 1.2)
-                y_offset += y_offset_text
-
-        # Render right column text
-        y_offset = y_start
-        for line in _help_.HELP_TEXT_RIGHT.split("\n"):
-            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
-            text_surface = (
-                font_help_text.render(line.strip(), True, color)) \
-                if not line.isupper() \
-                else font_help_heading.render(line.strip(), True, color)
-
-            gradient_surface.blit(text_surface, (RIGHT_COLUMN_X, y_offset))       # Right column
-            if line.isupper():
-                text_width, _ = font_help_heading.size(line.strip())
-                pygame.draw.aaline(
-                    gradient_surface,
-                    HEADING_COLOR,
-                    (RIGHT_COLUMN_X, y_offset + line_offset),
-                    (RIGHT_COLUMN_X + text_width, y_offset + line_offset)
-                )
-
-                #y_offset += int(font_help_heading.get_height() * 1.9)
-                y_offset += y_offset_heading
-            else:
-                 #y_offset += int(font_help_text.get_height() * 1.2)
-                y_offset += y_offset_text
-
-        self.win.blit(gradient_surface, (BOX_X, BOX_Y))
-
-        # Scale button dimensions
-        buttonWidthBase = 120
-        buttonHeightBase = 40
-        button_width = int(buttonWidthBase * w_mult)
-        button_height = int(buttonHeightBase * h_mult)
-
-        # Scale button position
-        button_x = BOX_X + BOX_WIDTH // 2 - button_width // 2
-        button_y = BOX_Y + BOX_HEIGHT - int(61 * h_mult)  # Scale the offset too
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
-
-        # Draw the OK button with the hover effect
-        button_color = DODGERBLUE if is_hovered else DODGERBLUE4
-        pygame.draw.rect(self.win, button_color, button_rect, border_radius=8)
-        pygame.draw.rect(self.win, BLACK, button_rect, 1, border_radius=8)
-
-        # Scale icon position
-        icon_x_offset = int(20 * w_mult)
-        icon_y_offset = int(9 * h_mult)
-        text_x_offset = int(45 * w_mult)
-        text_y_offset = int(4 * h_mult)
-
-        # Draw check icon and button text
-        self.win.blit(self.check_icon, (button_x + icon_x_offset, button_y + icon_y_offset))
-        ok_surface = font_button.render("OK", True, WHITE)
-        self.win.blit(ok_surface, (button_x + text_x_offset, button_y + text_y_offset))
-
-        self.help_button_rect = button_rect
-        return button_rect
 
     def get_video_title(self, video_path: str) -> Optional[str]:
         """
@@ -2970,99 +2848,6 @@ class PlayVideo:
             print(f"Error reading video metadata: {str(e)}")
             return None
 
-    '''
-    def draw_help_overlay(self, is_hovered):
-
-        """
-        Redraws the entire help overlay, including the gradient background,
-        text, and OK button. The button color changes when hovered.
-        Returns a pygame.Rect representing the OK button.
-        """
-        BOX_HEIGHT = 570
-        BOX_WIDTH = 800
-        BOX_X = (self.displayWidth - BOX_WIDTH) // 2
-        BOX_Y = (self.displayHeight - BOX_HEIGHT) // 2
-
-        # Create and draw the gradient background
-        gradient_surface = pygame.Surface((BOX_WIDTH, BOX_HEIGHT), pygame.SRCALPHA)
-        gradient_surface.fill((0, 0, 0, 175))
-        gradient_surface.set_colorkey((0, 255, 0))
-        PlayVideo.apply_gradient(
-                                 gradient_surface,
-                                 DODGERBLUE,
-                                 DODGERBLUE4,
-                                 BOX_WIDTH,
-                                 BOX_HEIGHT,
-                                 alpha_start=165,
-                                 alpha_end=200
-        )
-        self.win.blit(gradient_surface, (BOX_X, BOX_Y))
-
-        # Draw a vertical separator line (this will always be drawn)
-        pygame.draw.line(gradient_surface, WHITE, (400, 20), (400, 500), 2)
-
-        pygame.draw.rect(self.win,
-                         WHITE,
-                        (BOX_X, BOX_Y, BOX_WIDTH, BOX_HEIGHT),
-                         3,
-                         border_radius=15
-                        )
-
-        # Render left column text
-        y_start = 20
-        line_offset = self.font_help.get_height() + 5
-        y_offset = y_start
-        for line in _help_.HELP_TEXT_LEFT.split("\n"):
-            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
-            text_surface = (self.font_help.render(line.strip(), True, color)) if not line.isupper() else self.font_help_bold.render(line.strip(), True, color )
-            gradient_surface.blit(text_surface, (50, y_offset))
-            if line.isupper():
-                text_width, _ = self.font_help_bold.size(line.strip())
-                pygame.draw.aaline(gradient_surface, HEADING_COLOR, (50, y_offset + line_offset),
-                                   (50 + text_width, y_offset + line_offset))
-                y_offset += 35
-            else:
-                y_offset += 25
-
-        # Render right column text
-        y_offset = y_start
-        for line in _help_.HELP_TEXT_RIGHT.split("\n"):
-            color = HEADING_COLOR if line.isupper() else TEXT_COLOR
-            #text_surface = self.font_help.render(line.strip(), True, color)
-            text_surface = (self.font_help.render(line.strip(), True,color)) if not line.isupper() else self.font_help_bold.render(line.strip(), True, color)
-            gradient_surface.blit(text_surface, (450, y_offset))
-            if line.isupper():
-                text_width, _ = self.font_help_bold.size(line.strip())
-                pygame.draw.aaline(gradient_surface, HEADING_COLOR, (450, y_offset + line_offset),
-                                   (450 + text_width, y_offset + line_offset))
-                y_offset += 35
-            else:
-                y_offset += 25
-
-        self.win.blit(gradient_surface, (BOX_X, BOX_Y))
-
-        # Define button geometry (OK button)blit(
-        button_x = BOX_X + BOX_WIDTH // 2 - 60
-        button_y = BOX_Y + BOX_HEIGHT - 60
-        button_width = 120
-        button_height = 40
-        button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
-
-        # Draw the OK button with hover effect
-        button_color = DODGERBLUE4 if is_hovered else DODGERBLUE
-        pygame.draw.rect(self.win, button_color, button_rect, border_radius=10)
-        pygame.draw.rect(self.win, BLACK, button_rect, 1, border_radius=10)
-
-        # Draw check icon and button text
-        self.win.blit(self.check_icon, (button_x + 10, button_y + 4))
-        ok_surface = self.font_button.render("OK", True, WHITE)
-        self.win.blit(ok_surface, (button_x + 50, button_y + 5))
-
-        # Update the full display (or you can update only portions if desired)
-        self.help_button_rect = button_rect
-        return button_rect
-    '''
-
     # brightness/contrast
     def render_frame(self):
         """
@@ -3093,7 +2878,7 @@ class PlayVideo:
 
         return frame
 
-    # brightness/contrast
+    # brightness/contrast & edge_panel & oil_painting_panel & laplacian_panel & sepia_panel
     def draw(self, screen):
         """
         Draws the UI components on the provided screen.
@@ -3107,9 +2892,11 @@ class PlayVideo:
             The graphical surface or canvas object where the UI components
             will be drawn.
         """
-        # ... other drawing code ...
         self.control_panel.draw(screen)
         self.edge_panel.draw(screen)
+        self.oil_painting_panel.draw(screen)
+        self.laplacian_panel.draw(screen)
+        self.sepia_panel.draw(screen)
 
     def blit_video_title(self):
         """
@@ -3170,73 +2957,55 @@ class PlayVideo:
             print(f"Error blitting title: {str(e)}")
 
     def print_frame_surf(self):
+        """
+        Prints details about the frame surface associated with the video.
+
+        This method outputs the size, bit depth, and flags of the frame surface
+        property tied to the video object. It is primarily a debugging tool for
+        retrieving crucial metadata about the frame surface.
+
+        Raises:
+            AttributeError: If the `vid.frame_surf` attribute is not properly
+            initialized or lacks the necessary methods (`get_size`, `get_bitsize`,
+            or `get_flags`).
+
+        Note:
+            Ensure that the `vid` attribute and `frame_surf` property are properly
+            initialized before calling this method.
+        """
         print(f"size:({self.vid.frame_surf.get_size()}x{self.vid.frame_surf.get_bitsize()}: flags: {self.vid.frame_surf.get_flags()})")
 
     def update_GUI_components(self):
         """
-        Updates and manages the GUI components based on the current state of the
-        application and provided flags. Responsible for rendering, interacting with
-        video controls, displaying video information, and handling other GUI-specific
-        tasks.
+        Updates various GUI components of the application, including video playback controls,
+        status bar, and other informational panels based on their visibility and current state.
 
-        Parameters
-        ----------
-        None
+        This method dynamically updates all visible graphical elements of the GUI during runtime.
+        This includes functionality such as drawing filter panels, help buttons, video playback bars,
+        status bar information, video information boxes, progress bars, and additional overlays. It
+        also handles specific user interactions like saving playlists, showing shuffle splash screens,
+        and updating the display of video titles based on user preferences.
 
-        Returns
-        -------
-        None
+        Raises:
+            None
 
-        Raises
-        ------
-        None
+        Parameters:
+            None
+
+        Returns:
+            None
         """
 
         # Draw bilateral filter panel if it's visible
-        if hasattr(self, 'show_filter_panel') and self.show_filter_panel:
+        if hasattr(self, 'bilateral_panel') and self.bilateral_panel.is_visible():
             if hasattr(self, 'bilateral_panel'):
                 # Simple approach - let the panel handle everything
                 self.bilateral_panel.draw(self.win)
 
-        '''        
-        # Draw bilateral filter panel if it's visible
-        if hasattr(self, 'show_filter_panel') and self.show_filter_panel:
-            if hasattr(self, 'bilateral_panel'):
-                BOX_WIDTH = 365
-                BOX_HEIGHT = 220
-                # Create a scaled surface for 4K displays
-                scaling_factor = up_scale.get_scaling_factor(self.displayHeight)
-                if scaling_factor > 1.0:
-                    # Draw to a temporary surface, then scale it up
-                    temp_surface = pygame.Surface((BOX_WIDTH, BOX_HEIGHT), pygame.SRCALPHA)
-                    temp_surface.set_alpha(150)
-
-                    #temp_surface.fill((0, 255, 255))  # Fill with CYAN so you can see it!
-                    temp_surface.fill(DODGERBLUE4)
-                   # self.bilateral_panel.draw(temp_surface)
-
-                    # Scale up and blit to main screen
-                    #scaled_size = (int(400 * scaling_factor), int(300 * scaling_factor))
-                    scaled_size = (int(BOX_WIDTH * scaling_factor), int(BOX_HEIGHT * scaling_factor))
-                    scaled_surface = pygame.transform.scale(temp_surface, scaled_size)
-                    print(f"scaled display: width: {scaled_size[0]}, height: {scaled_size[1]}")
-                    PlayVideo.apply_gradient(
-                        scaled_surface,
-                        (0, 0, 100),
-                        (0, 0, 255),
-                        scaled_size[0],
-                        scaled_size[1],
-                        alpha_start=100,
-                        alpha_end=225
-                    )
-                    self.bilateral_panel.draw(scaled_surface)
-                    self.win.blit(scaled_surface, (self.displayWidth - scaled_size[0] - 20, 20))
-                else:
-                    self.bilateral_panel.draw(self.win)
-        '''
-
-        if self.help_visible:
-            self.help_button_rect = self.draw_help(self.is_hovered)
+        if self.drawHelpInfo.is_visible():
+            self.help_button_rect = self.drawHelpInfo.draw_help(self.is_hovered)
+        elif self.drawFilterHelpInfo.is_visible():
+            self.filter_help_button_rect = self.drawFilterHelpInfo.draw_filter_help(self.is_hovered)
 
         if self.drawVideoPlayBarFlag:
             self.videoPlayBar.loop_flag = self.opts.loop_flag
@@ -3278,6 +3047,12 @@ class PlayVideo:
             self.video_info_temp = False
             self.video_info_box_tooltip = False
             self.video_info_box_path_tooltip = False
+
+        if self.filter_info_box:
+            self.drawFilterInfo.draw_info_box()
+
+        if self.filterCheckboxPanel.is_visible():
+            self.filterCheckboxPanel.draw(self.win)
 
         if self.video_info_box:
             self.drawVidInfo.draw_info_box()
@@ -3326,36 +3101,37 @@ class PlayVideo:
                         self.blit_video_title()
 
     @staticmethod
-    def median_blur(frame, kernel_size=5):
-        """
-        Apply a median blur to the given image frame using a specified kernel size.
+    def median_blur(image, kernel_size=3):
+        if not hasattr(PlayVideo, '_cuda_median_blur_available'):
+            PlayVideo._cuda_median_blur_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+            PlayVideo._cuda_median_blur_filter = None
+            if PlayVideo._cuda_median_blur_available:
+                print("CUDA Median-Blur Filter initialized")
 
-        Median blur is primarily used to reduce noise in an image while preserving edges,
-        by replacing each pixel's value with the median of the intensities of pixels in
-        a defined neighborhood. This helps maintain the sharpness of edges in the image.
+        if PlayVideo._cuda_median_blur_available:
+            try:
+                # Create filter only once
+                if PlayVideo._cuda_median_blur_filter is None:
+                    PlayVideo._cuda_median_blur_filter = cv2.cuda.createMedianFilter(cv2.CV_8UC3, kernel_size)
 
-        Arguments:
-            frame: numpy.ndarray
-                The input image frame to which the median blur will be applied. Must be
-                a valid 2D or 3D array representing a grayscale or colored image.
-            kernel_size: int, optional
-                The size of the kernel to be used for the blur. Must be a positive odd
-                integer greater than 1. Default value is 5.
+                gpu_image = cv2.cuda_GpuMat()
+                gpu_image.upload(image)
 
-        Returns:
-            numpy.ndarray
-                The blurred image frame, resulting from applying the median blur
-                operation.
-        """
-        return cv2.medianBlur(frame, kernel_size)
+                result = PlayVideo._cuda_median_blur_filter.apply(gpu_image)
+                return result.download()
+
+            except cv2.error:
+                # Fallback to CPU if CUDA fails
+                PlayVideo._cuda_median_blur_available = False
+                print("CUDA failed, falling back to CPU")
+                return cv2.medianBlur(frame, 5)
+
+        return cv2.medianBlur(frame, 5)
 
     @staticmethod
     def gaussian_blur(frame, kernel_size=(5, 5)):
         """
-        Apply Gaussian Blur to an image frame.
-
-        This method applies a Gaussian blur to the input image using a specified kernel
-        size. The Gaussian blur is used to reduce image noise and detail.
+        Apply Gaussian Blur to an image frame with CUDA acceleration if available.
 
         Args:
             frame: The input image frame to be blurred.
@@ -3365,69 +3141,33 @@ class PlayVideo:
         Returns:
             numpy.ndarray: The blurred image.
         """
+        # Initialize class variables if they don't exist
+        if not hasattr(PlayVideo, '_cuda_blur_available'):
+            PlayVideo._cuda_blur_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+            PlayVideo._cuda_blur_filter = None
+            if PlayVideo._cuda_blur_available:
+                print("CUDA Gaussian Filter initialized")
+
+        if PlayVideo._cuda_blur_available:
+            try:
+                # Create filter only once
+                if PlayVideo._cuda_blur_filter is None:
+                    PlayVideo._cuda_blur_filter = cv2.cuda.createGaussianFilter(
+                        cv2.CV_8UC3, cv2.CV_8UC3, kernel_size, 0
+                    )
+
+                gpu_frame = cv2.cuda_GpuMat()
+                gpu_frame.upload(frame)
+                result = PlayVideo._cuda_blur_filter.apply(gpu_frame)
+                return result.download()
+
+            except cv2.error:
+                # Fallback to CPU if CUDA fails
+                PlayVideo._cuda_blur_available = False
+                print("CUDA failed, falling back to CPU")
+                return cv2.GaussianBlur(frame, kernel_size, 0)
+
         return cv2.GaussianBlur(frame, kernel_size, 0)
-
-    @staticmethod
-    def sepia(frame):
-        """
-        Applies a sepia-tone effect to the given image frame.
-
-        This static method transforms the colors of an image frame using a predefined
-        sepia conversion matrix. The transformation alters the intensity of the
-        original pixels to create a classic sepia-tone effect, commonly used to give
-        images a vintage appearance.
-
-        Args:
-            frame (numpy.ndarray): A 2D or 3D numpy array representing the image frame
-            to which the sepia effect will be applied.
-
-        Returns:
-            numpy.ndarray: A new image frame with the sepia effect applied, having the
-            same dimensions as the input frame.
-
-        """
-        sepia_matrix = np.array([
-            [0.393, 0.769, 0.189],
-            [0.349, 0.686, 0.168],
-            [0.272, 0.534, 0.131]
-        ])
-        return cv2.transform(frame, sepia_matrix)
-
-    @staticmethod
-    def edge_detect(frame):
-        """
-        Performs edge detection on a given image frame using the Canny algorithm and
-        converts the resultant edges back to a 3-channel image.
-
-        Second parameter (100) = Lower threshold for edge detection
-        Third parameter (200) = Upper threshold for edge detection
-
-        Edges with intensity gradient above the upper threshold are sure edges
-        Edges with intensity gradient below the lower threshold are discarded
-        Edges between the thresholds are considered edges only if they're connected to sure edges
-
-        (50, 150): More sensitive, detects more edges including weaker ones
-        (100, 200): Balanced detection (default)
-        (150, 250): Less sensitive, only detects strong edges
-
-
-        Attributes:
-            None
-
-        Parameters:
-            frame: numpy.ndarray
-                The input image frame on which edge detection is to be applied. It
-                is assumed to be a single-channel grayscale image.
-
-        Returns:
-            numpy.ndarray: A 3-channel image containing the detected edges, with each
-            channel being identical.
-
-        Raises:
-            None
-        """
-        edges = cv2.Canny(frame, 100, 200)
-        return cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
     @staticmethod
     def vignette(frame):
@@ -3484,7 +3224,22 @@ class PlayVideo:
     @staticmethod
     def simple_comic_effect(frame):
         """
-        Very simple comic-style effect focusing just on edges and basic color reduction
+        Applies a simple comic effect to the given video frame. The effect involves
+        edge detection and color quantization, which are combined to create a distinct
+        comic-style appearance. If the input frame has an alpha channel, it will be
+        converted to a standard BGR format before processing.
+
+        Args:
+            frame: A numpy.ndarray representing the input frame, expected to be in
+                   BGR or BGRA format.
+
+        Returns:
+            A numpy.ndarray of the processed frame, in RGB color space, with the comic
+            effect applied. If an error occurs during processing, the original frame
+            is returned.
+
+        Raises:
+            None
         """
         try:
             if frame.shape[2] == 4:
@@ -3600,9 +3355,23 @@ class PlayVideo:
             print(f"Error in comic-sharp effect: {str(e)}")
             return frame
 
-
     # Part of comic_effect2
     def process_frames(self, frame):
+        """
+        Processes video frames and applies a comic effect based on the current settings.
+
+        This method processes incoming video frames and, if the comic effect is enabled,
+        applies the effect to every second frame. The processed or unprocessed frame
+        is then returned depending on the effect status and frame sequence.
+
+        Parameters:
+        frame:
+            The current video frame to be processed.
+
+        Returns:
+            The processed frame if the comic effect is enabled and conditions are met,
+            otherwise the original frame.
+        """
         if self.comic_effect_enabled:
             # Process every 2nd frame
             if self.frame_counter % 2 == 0:
@@ -3613,76 +3382,155 @@ class PlayVideo:
 
     @staticmethod
     def apply_denoising(image):
-        """Apply denoising to the image using fastNlMeansDenoisingColored."""
-        return cv2.fastNlMeansDenoisingColored(image)
+        # Use CPU implementation since CUDA non-local means is not available
+        return cv2.fastNlMeansDenoisingColored(image, None, h=3, hColor=3, templateWindowSize=7, searchWindowSize=13)
 
     @staticmethod
     def apply_contrast_enhancement(image):
-        """Enhance image contrast using CLAHE in LAB color space."""
-        # Convert to LAB color space
-        lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-        l, a, b = cv2.split(lab)
+        if not hasattr(PlayVideo, '_cuda_contrast_available'):
+            PlayVideo._cuda_contrast_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+            if PlayVideo._cuda_contrast_available:
+                print("CUDA Contrast Enhancement initialized")
 
-        # Apply CLAHE to L channel
-        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-        cl = clahe.apply(l)
+        if PlayVideo._cuda_contrast_available:
+            try:
+                # Upload to GPU
+                gpu_image = cv2.cuda_GpuMat()
+                gpu_image.upload(image)
 
-        # Merge channels and convert back to BGR
-        enhanced = cv2.merge((cl, a, b))
-        return cv2.cvtColor(enhanced, cv2.COLOR_LAB2BGR)
+                # Convert to grayscale for luminance analysis
+                gpu_gray = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
+                minVal, maxVal = cv2.cuda.minMax(gpu_gray)
 
-    @staticmethod
-    def apply_sharpening(image):
-        """Apply sharpening filter to the image."""
-        kernel = np.array([[-1, -1, -1],
-                           [-1, 9, -1],
-                           [-1, -1, -1]])
-        return cv2.filter2D(image, -1, kernel)
+                if maxVal - minVal > 0:
+                    # Create lookup table for contrast adjustment
+                    alpha = 255.0 / (maxVal - minVal)
+                    beta = -minVal * alpha
+
+                    # Apply contrast adjustment using addWeighted
+                    gpu_result = cv2.cuda.addWeighted(gpu_image, alpha, gpu_image, 0, beta)
+                    return gpu_result.download()
+                return image
+
+            except cv2.error as e:
+                # Fallback to CPU if CUDA fails
+                PlayVideo._cuda_contrast_available = False
+                print(f"CUDA failed, falling back to CPU: {str(e)}")
+                # Simple contrast stretching on CPU
+                min_val = image.min()
+                max_val = image.max()
+                if max_val - min_val > 0:
+                    return cv2.convertScaleAbs(image, alpha=255.0 / (max_val - min_val), beta=-min_val * 255.0 / (max_val - min_val))
+                return image
+
+        # CPU version - simple contrast stretching
+        min_val = image.min()
+        max_val = image.max()
+        if max_val - min_val > 0:
+            return cv2.convertScaleAbs(image, alpha=255.0 / (max_val - min_val), beta=-min_val * 255.0 / (max_val - min_val))
+        return image
 
     @staticmethod
     def enhancement_effects(image):
-        """Apply all enhancement effects to the image."""
-        denoised = apply_denoising(image)
-        enhanced = apply_contrast_enhancement(image)
-        sharpened = apply_sharpening(image)
+        """
+        Processes an input image to apply multiple enhancement effects including denoising,
+        contrast adjustment, and sharpening. Each enhancement is applied sequentially
+        to produce distinct modifications of the original image.
+
+        Args:
+            image: The input image to be processed.
+
+        Returns:
+            A tuple containing the processed images:
+            - denoised: The denoised version of the input image.
+            - enhanced: The contrast-enhanced version of the input image.
+            - sharpened: The sharpened version of the input image.
+        """
+        denoised = PlayVideo.apply_denoising(image)
+        enhanced = PlayVideo.apply_contrast_enhancement(image)
+        sharpened = PlayVideo.apply_sharpening(image)
         return denoised, enhanced, sharpened
 
     @staticmethod
     def apply_edges_sobel(image):
-        """Apply Sobel edge detection to the image."""
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-        sobel = np.uint8(np.absolute(sobel))
-        # Convert back to 3-channel format to match the expected buffer size
-        sobel = cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
-        return sobel
+        """
+        Applies the Sobel edge detection filter using CUDA if available.
+        """
+        cuda_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+        if not cuda_available:
+            print("No CUDA devices available")
+            return None
+        try:
+            # Upload to GPU
+            gpu_image = cv2.cuda_GpuMat()
+            gpu_image.upload(image)
+             # Convert to grayscale
+            gray_gpu = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
+            try:
+                sobel_filter = cv2.cuda.createSobelFilter(cv2.CV_8UC1, cv2.CV_8UC1, 1, 0, ksize=3)
+                sobel_gpu = sobel_filter.apply(gray_gpu)
+            except cv2.error as e:
+                print(f"Failed during Sobel filter creation/application: {str(e)}")
+                raise
+            # Convert back to BGR
+            result_bgr = cv2.cuda.cvtColor(sobel_gpu, cv2.COLOR_GRAY2BGR)
+            # Download result
+            result = result_bgr.download()
+            return result
+        except Exception as e:
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
+            sobel = np.uint8(np.absolute(sobel))
+            return cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
 
     @staticmethod
     def apply_inverted(image):
-        """Invert the image."""
+        """
+        Inverts the colors of an input image.
+
+        The method applies a bitwise NOT operation on the input image to invert its
+        pixel values. This results in a visual inversion of the image's colors.
+
+        Returns:
+            ndarray: The color-inverted image.
+        """
         return cv2.bitwise_not(image)
 
-    @staticmethod
-    def artistic_filters(image):
-        # Edge detection with different methods
-        edges_canny = cv2.Canny(image, 100, 200)
-        edges_sobel = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=5)
+    #@staticmethod
+    def artistic_filters(self, image):
+        """
+        Processes the input image by applying a series of artistic filters. The function computes edge
+        detection, applies Sobel filter, modifies the image using a kernel convolution, and finally
+        inverts the processed image to produce an artistic effect.
 
-        # Emboss effect
+        Args:
+            image: The input image to be processed.
+
+        Returns:
+            The image after applying artistic filters.
+        """
+        #image = PlayVideo.edge_detect(image)
+        #image = self.edge_panel.Apply_Effects(image)
+        image = PlayVideo.apply_edges_sobel(image)
         kernel = np.array([[-2, -1, 0],
                            [-1, 1, 1],
                            [0, 1, 2]])
-        emboss = cv2.filter2D(image, -1, kernel) + 128
-
-        # Invert colors
-        inverted = cv2.bitwise_not(image)
-
-        return edges_canny, edges_sobel, emboss, inverted
+        image = cv2.filter2D(image, -1, kernel) + 12
+        image = cv2.bitwise_not(image)
+        return image
 
     @staticmethod
     def comic_effect2(frame):
         """
-        Apply a comic-style effect to a video frame
+        Applies a comic effect to the given video frame. The method processes the input frame to enhance
+        edges and smooth colors, providing a cartoonish aesthetic. The effect includes edge detection,
+        color smoothing, and overlaying these onto the original frame.
+
+        Args:
+            frame (numpy.ndarray): Input frame in BGR format.
+
+        Returns:
+            numpy.ndarray: The processed frame with the comic effect applied.
         """
         try:
             # Ensure the frame is in BGR format (OpenCV default)
@@ -3715,6 +3563,20 @@ class PlayVideo:
         except Exception as e:
             print(f"Error in comic effect: {str(e)}")
             return frame
+
+    # Not used. Needs to be removed
+    @staticmethod
+    def adjust_edge_upper_lower(frame, edge_upper, edge_lower):
+
+        if not ( 0 <= edge_upper <= 255 ):
+            print(f"Warning: edge_upper value {edge_upper} is out of range [0, 255]. Clamping to valid range.")
+            edge_upper = max(0, min(255, edge_upper))
+
+        if not ( 0 <= edge_lower <= edge_upper ):
+            print(f"Warning: edge_lower value {edge_lower} is out of range [0, 254]. Clamping to valid range.")
+            edge_lower = max(0, min(edge_upper, edge_lower))
+
+        return(frame, edge_upper, edge_lower)
 
     @staticmethod
     def adjust_brightness_contrast(frame, brightness, contrast):
@@ -3754,89 +3616,226 @@ class PlayVideo:
 
             return np.clip(frame, 0, 255).astype(np.uint8)
 
+    # (#1)
     @staticmethod
-    def sharpen(image, strength=1.0):
-        # Create the sharpening kernel
-        kernel = np.array([
-            [0, -1, 0],
-            [-1, 4 + strength, -1],
-            [0, -1, 0]
-        ]) / (strength + 1)  # Normalize to preserve brightness
+    def apply_sharpening(image):
+        """
+        Applies a sharpening filter to the given image using a predefined kernel.
 
-        # Apply the filter
-        sharpened = cv2.filter2D(image, -1, kernel)
+        The method utilizes a static kernel that enhances the edges and details of the
+        image by applying a convolution operation. The kernel focuses on intensifying
+        the central pixel's value in relation to its neighbors to make the image
+        appear sharper. This method is useful for enhancing or pre-processing images
+        for further analysis or visualization.
+
+        Args:
+            image (numpy.ndarray): The input image to which sharpening is to be applied.
+
+        Returns:
+            numpy.ndarray: The sharpened image after applying the kernel.
+        """
+        kernel = np.array([[-1, -1, -1],
+                           [-1, 9, -1],
+                           [-1, -1, -1]])
+        return cv2.filter2D(image, -1, kernel)
+
+    @staticmethod
+    def custom_sharpen(image, alpha=1.0, strength=0.95, offset=0):
+        # Step 1: Apply Gaussian blur to remove low-frequency detail
+        blurred = cv2.GaussianBlur(image, (3, 3), 0)
+
+        # Step 2: Create a high-pass mask
+        highpass = cv2.subtract(image, blurred)
+
+        # Step 3: Add high-frequency detail back to original image
+        sharpened = cv2.addWeighted(image, 1.0, highpass, strength, offset)
+
         return sharpened
 
-    '''
     @staticmethod
-    def adjust_brightness_contrast(frame, brightness=0, contrast=0):
-        """
-        Adjust brightness and contrast of an image
-        :param frame: Input frame
-        :param brightness: Brightness adjustment (-100 to 100)
-        :param contrast: Contrast adjustment (-100 to 100)
-        """
-        brightness = float(brightness) / 100  # Convert to -1 to 1
-        contrast = float(contrast) / 100  # Convert to -1 to 1
+    def laplacian_boost(image):
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        lap = cv2.Laplacian(gray, cv2.CV_64F)
+        lap = cv2.convertScaleAbs(lap)
+        lap_bgr = cv2.cvtColor(lap, cv2.COLOR_GRAY2BGR)
+        #sharpened = cv2.addWeighted(image, 1.0, lap_bgr, 0.25, 0)
+        sharpened = cv2.addWeighted(image, 1.0, lap_bgr, 0.95, 0)
+        return sharpened
 
-        # Apply brightness
-        if brightness != 0:
-            if brightness > 0:
-                shadow = brightness
-                highlight = 255
-            else:
-                shadow = 0
-                highlight = 255 + brightness
-            alpha_b = (highlight - shadow) / 255
-            gamma_b = shadow
+    # (2)
+    @staticmethod
+    def sharpen(image):
+        kernel = np.array([[-1, -1, -1],
+                           [-1, 8.95, -1],
+                           [-1, -1, -1]]) / 1.06
+        return cv2.filter2D(image, -1, kernel)
 
-            frame = cv2.addWeighted(frame, alpha_b, frame, 0, gamma_b)
+    @staticmethod
+    def greyscale(image):
+        """Convert image to grayscale, maintaining 3-channel format for PyGame compatibility"""
+        if not hasattr(PlayVideo, '_cuda_grey_available'):
+            PlayVideo._cuda_grey_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+            if PlayVideo._cuda_grey_available:
+                #print(" CUDA Grayscale conversion available")
+                print( " Using CUDA grayscale conversion")
+        try:
+            if PlayVideo._cuda_grey_available:
+                gpu_frame = cv2.cuda_GpuMat()
+                gpu_frame.upload(image)
+                gray_gpu = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2GRAY)
+                # Convert back to 3 channels using CUDA
+                gray_3ch = cv2.cuda.cvtColor(gray_gpu, cv2.COLOR_GRAY2BGR)
+                return gray_3ch.download()
 
-        # Apply contrast
-        if contrast != 0:
-            f = 131 * (contrast + 127) / (127 * (131 - contrast))
-            alpha_c = f
-            gamma_c = 127 * (1 - f)
+            # CPU fallback
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-            frame = cv2.addWeighted(frame, alpha_c, frame, 0, gamma_c)
-
-        # Ensure output is valid
-        return np.clip(frame, 0, 255).astype(np.uint8)
-        '''
+        except cv2.error:
+            PlayVideo._cuda_grey_available = False
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def update_video_effects(self):
-        """Call this when you need to update the video effects"""
+        """
+        Updates the video effects for the current video instance. Ensures that the
+        new effects chain is applied to the video by invoking the effects processor.
+
+        Raises
+        ------
+        AttributeError
+            If the 'vid' attribute does not exist or is None.
+        """
         if hasattr(self, 'vid') and self.vid:
             # Rebuild video with new effects chain
             effects_processor = self.build_effects_chain(self.opts)
             self.vid.post_process = effects_processor
 
+    def debug_effects_chain(self):
+        """
+        Prints debug information about the current state of various video processing options.
+
+        This method outputs a formatted list of applied post-processing and video playback
+        effects, indicating whether each option is enabled or disabled. The formatting includes
+        color-coded text (if supported by the terminal) and bold emphasis to enhance readability.
+
+        Parameters
+        ----------
+        None
+
+        Raises
+        ------
+        None
+
+        Returns
+        -------
+        None
+        """
+        print()
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.apply_sharpening(1): {self.bcolors.White_f}self.opts.apply_sharpening: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_sharpening else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.sharpen(2): {self.bcolors.White_f}self.opts.sharpen: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.sharpen else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.greryscale: {self.bcolors.White_f}self.opts.greyscale: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.greyscale else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.blur: {self.bcolors.White_f}self.opts.blur: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.blur else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET} ")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostPRocessing.cel_shading: {self.bcolors.White_f}self.opts.cel_shading: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.cel_shading else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.noise: {self.bcolors.White_f}self.opts.noise: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.noise else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.denoising: {self.bcolors.White_f}self.opts.apply_denoising: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_denoising else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.fliplr: {self.bcolors.White_f}self.opts.fliplr: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.fliplr else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PostProcessing.flipup: {self.bcolors.White_f}self.opts.flipup: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.flipup else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print()
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.sepia: {self.bcolors.White_f}self.opts.sepia: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.sepia else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.edge_detect: {self.bcolors.White_f}self.opts.edge_detect: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.edge_detect else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.vignette: {self.bcolors.White_f}self.opts.vignette: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.vignette else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.adjust_saturation: {self.bcolors.White_f}self.opts.saturation: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.saturation else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.gaussian_blur: {self.bcolors.White_f}self.opts.gaussian_blur: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.gaussian_blur else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.median_blur: {self.bcolors.White_f}self.opts.median_blur: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.median_blur else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.process_frames: {self.bcolors.White_f}self.opts.comic: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.comic else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET},{self.bcolors.BOLD} self.comic_effect_enabled: {(self.bcolors.BOOL_TRUE + 'True'  if self.comic_effect_enabled else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.comic_sharp_effect: {self.bcolors.White_f}self.opts.comic_sharp: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.comic_sharp else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.emboss:  {self.bcolors.White_f}self.opts.emboss: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.emboss else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.dream_effect: {self.bcolors.White_f}self.opts.dream: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.dream else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print()
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.pixelate: {self.bcolors.White_f}self.opts.pixelate: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.pixelate else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.neon_effect: {self.bcolors.White_f}self.opts.neon: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.neon else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.pencil_effect: {self.bcolors.White_f}self.opts.pencil_sketch: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.pencil_sketch else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.oil_painting_effect: {self.bcolors.White_f}self.opts.pencil_sketch: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.pencil_sketch else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET} ")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.watercolor_effect: {self.bcolors.White_f}self.opts.watercolor: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.watercolor else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.apply_edges_sobel: {self.bcolors.White_f}self.opts.apply_edges_sobel: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_edges_sobel else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.apply_inverted: {self.bcolors.White_f}self.opts.apply_inverted: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_inverted else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}PlayVideo.apply_bilateral_filter: {self.bcolors.White_f}self.opt s.apply_bilateral_filter: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_bilateral_filter else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print()
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}cv2.applyColorMap: {self.bcolors.White_f}self.opts.thermal: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.thermal else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}self.opts.adjust_video: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.adjust_video else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}, {self.bcolors.White_f}self.opts.brightness: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.brightness else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}, "
+              f"{self.bcolors.BOLD + self.bcolors.Blue_f}self.opts.contrast: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.contrast else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+        print(f"{self.bcolors.BOLD + self.bcolors.Blue_f}self.opts.apply_contrast_enhancement: {(self.bcolors.BOOL_TRUE + 'True' if self.opts.apply_contrast_enhancement else self.bcolors.BOOL_FALSE + 'False')}{self.bcolors.RESET}")
+
+        print()
+        effectsLen = len(self.effects)
+        if effectsLen > 0:
+            print(f"{self.bcolors.BOLD}PostProcessing: {effectsLen} effects:")
+            for effect in self.effects:
+                print(f"{self.bcolors.BOLD} {self.bcolors.Blue_f}{effect}{self.bcolors.RESET}")
+        else:
+            print("PostProcessing: No effects")
+
     def build_effects_chain(self, opts):
+        """
+        Builds a chain of effects to process video frames based on specified options.
+
+        This method analyzes the provided options and dynamically constructs a list of
+        effects that will be applied to video frames. Each effect modifies the frame in
+        a specific way, such as applying filters, transformations, or artistic styles.
+        The resulting chain of effects is designed to process frames sequentially.
+
+        Attributes
+        ----------
+        effects : list
+            A list of functions representing the selected effects to be applied to
+            video frames.
+
+        Parameters
+        ----------
+        opts : object
+            A configuration object with boolean attributes representing whether
+            specific effects should be applied. It may also contain values for
+            configurable parameters for some effects (e.g., intensity or scale).
+
+        Returns
+        -------
+        function
+            A single function that applies all the selected effects sequentially to a
+            video frame. If no effects are selected, `PostProcessing.none` is returned.
+            If only one effect is selected, the corresponding function is returned.
+        """
         effects = []
         # Add effects based on command line arguments
-        if opts.sharpen:
-            effects.append(PostProcessing.sharpen)
-            #effects.append(PlayVideo.sharpen)
+        if opts.apply_artistic_filters:
+            effects.append(self.artistic_filters)
+        if opts.laplacian and opts.apply_laplacian:                                # Sharpen #2
+            effects.append(self.laplacian_panel.laplacian_boost)
+        if opts.apply_sharpening:                       # Sharpen #1
+            effects.append(PlayVideo.apply_sharpening)
         if opts.greyscale:
-            effects.append(PostProcessing.greyscale)
+            effects.append(PlayVideo.greyscale)
         if opts.blur:
             effects.append(PostProcessing.blur)
         if opts.cel_shading:
             effects.append(PostProcessing.cel_shading)
         if opts.noise:
             effects.append(PostProcessing.noise)
+        if opts.apply_denoising:
+            effects.append(PlayVideo.apply_denoising)
         if opts.fliplr:
             effects.append(PostProcessing.fliplr)
         if opts.flipup:
             effects.append(PostProcessing.flipup)
         if opts.sepia:
-            effects.append(PlayVideo.sepia)
-        if opts.edge_detect:
-            effects.append(PlayVideo.edge_detect)
+            effects.append(self.sepia_panel.super_sepia)
+        if opts.edge_detect or opts.apply_edge_detect:
+             effects.append(self.edge_panel.Apply_Effects)
         if opts.vignette:
             effects.append(PlayVideo.vignette)
         if opts.saturation:
-            # You might want to make the factor configurable
+            # Might want to make the factor configurable
             effects.append(lambda frame: PlayVideo.adjust_saturation(frame, factor=1.5))
         if opts.gaussian_blur:
             effects.append(PlayVideo.gaussian_blur)
@@ -3845,8 +3844,6 @@ class PlayVideo:
         if opts.comic:
             self.comic_effect_enabled = True
             effects.append(self.process_frames)
-        else:
-            self.comic_effect_enabled = False
         if opts.comic_sharp:
             effects.append(PlayVideo.comic_sharp_effect)
         if opts.thermal:
@@ -3880,14 +3877,11 @@ class PlayVideo:
             def pencil_effect(frame):
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 inverted = 255 - gray
-
                 # Use sketch-detail for Gaussian blur
                 kernel_size = opts.sketch_detail if hasattr(opts, 'sketch_detail') else 21
                 blurred = cv2.GaussianBlur(inverted, (kernel_size, kernel_size), 0)
-
                 # Create regular sketch
                 sketch = cv2.divide(gray, 255 - blurred, scale=256.0)
-
                 # Create edges using adaptive thresholding with configurable parameters
                 block_size = opts.sketch_block_size if hasattr(opts, 'sketch_block_size') else 9
                 c_value = opts.sketch_c_value if hasattr(opts, 'sketch_c_value') else 2
@@ -3901,32 +3895,22 @@ class PlayVideo:
                 edges = 255 - edges  # Invert edges
                 sketch_intensity = opts.sketch_intensity if hasattr(opts, 'sketch_intensity') else 0.7
                 edge_weight = opts.edge_weight if hasattr(opts, 'edge_weight') else 0.3
-
                 # Convert both to float32 for consistent types
                 sketch = sketch.astype(np.float32)
                 edges = edges.astype(np.float32) / 255.0
-
                 sketch = cv2.multiply(sketch, sketch_intensity)
                 combined = cv2.addWeighted(sketch, sketch_intensity, edges, edge_weight, 0)
-
                 # Convert back to uint8 for display
                 combined = np.clip(combined, 0, 255).astype(np.uint8)
                 return cv2.cvtColor(combined, cv2.COLOR_GRAY2BGR)
             effects.append(pencil_effect)
-        if opts.oil_painting:
-            def oil_painting_effect(frame):
-                # Parameters: size of neighborhood and dynamic ratio
-                # size: larger = more abstract (try 5-15)
-                # dyna: smaller = more abstract (try 1-5)
-                return cv2.xphoto.oilPainting(frame, size=7, dynRatio=1)
-            effects.append(oil_painting_effect)
+        if opts.oil_painting or opts.apply_oil_painting:
+            effects.append(self.oil_painting_panel.Apply_Effects)
         if opts.watercolor:
             from concurrent.futures import ThreadPoolExecutor
             executor = ThreadPoolExecutor(max_workers=2)
-
             def process_channel(channel, d, sigma):
                 return cv2.bilateralFilter(channel, d, sigma, sigma)
-
             def watercolor_effect(frame):
                 scale = opts.watercolor_scale if hasattr(opts, 'watercolor_scale') else 0.5
                 small = cv2.resize(frame, None, fx=scale, fy=scale)
@@ -3952,29 +3936,27 @@ class PlayVideo:
 
                 result = cv2.addWeighted(median, 0.7, edges, 0.3, 0)
                 return cv2.resize(result, (frame.shape[1], frame.shape[0]))
-
             effects.append(watercolor_effect)
-        if opts.adjust_video:
-            def adjust_effect(frame):
+        if opts.adjust_video or opts.apply_adjust_video:
+            def adj_bright_contrast_filter(frame):
                 brightness = opts.brightness if hasattr(opts, 'brightness') else 0
                 contrast = opts.contrast if hasattr(opts, 'contrast') else 0
                 # Pass the original contrast and brightness values
                 return PlayVideo.adjust_brightness_contrast(frame, brightness, contrast)
-            effects.append(adjust_effect)
+            effects.append(adj_bright_contrast_filter)
         if opts.apply_contrast_enhancement:
             effects.append(PlayVideo.apply_contrast_enhancement)
-        if opts.apply_sharpening:
-            effects.append(PlayVideo.apply_sharpening)
         if opts.apply_edges_sobel:
             effects.append(PlayVideo.apply_edges_sobel)
         if opts.apply_inverted:
             effects.append(PlayVideo.apply_inverted)
+
         # Add bilateral filter to the effects chain
         if hasattr(opts, 'apply_bilateral_filter') and opts.apply_bilateral_filter:
             effects.append(lambda frame: self.apply_bilateral_filter_effect(frame))
-
         # ... add other effects as needed
         # If no effects are specified, return None or PostProcessing.none
+        self.effects = effects
         if not effects:
             return PostProcessing.none
         # If only one effect, return it directly
@@ -3988,6 +3970,17 @@ class PlayVideo:
         return process_frame
 
     def FrameCapture(self, count):
+        """
+        Saves a video frame to a file in the specified directory, with a filename
+        formatted as "frame-XXXX.jpg", where XXXX represents the frame count.
+
+        Parameters:
+            count (int): The current frame count to be used for saving the frame
+            file name.
+
+        Returns:
+            int: The updated frame count after saving the frame.
+        """
         frameCount = count
         path = self.frameSaveDir
         #path = f"/home/nikki/FrameData/{self.vid.name}/"
@@ -3999,34 +3992,64 @@ class PlayVideo:
         return frameCount
 
     def apply_bilateral_filter_effect(self, frame):
-        """Apply bilateral filter effect using the dedicated panel"""
+        """
+        Applies a bilateral filter effect to the given video frame.
+
+        The method evaluates whether the bilateral filter should be applied based
+        on user options and internal filter state. If any criteria are not met,
+        the original frame is returned unchanged. Otherwise, the bilateral filter
+        effect is applied to the frame.
+
+        Args:
+            frame: The video frame to apply the bilateral filter on.
+
+        Returns:
+            The video frame post processing with the bilateral filter if enabled;
+            otherwise, returns the original frame.
+        """
         if frame is None:
             return frame
 
-        # Check if bilateral filter should be applied
+        # Check if the bilateral filter should be applied
         if not self.opts.apply_bilateral_filter or not self.bilateral_filter_enabled:
             return frame
 
         return self.bilateral_panel.apply_bilateral_filter(frame)
 
-    '''
-    def apply_bilateral_filter_effect(self, frame):
-        """Apply bilateral filter effect - integrates with your effects pipeline"""
-        if hasattr(self, 'bilateral_panel'):
-            return self.bilateral_panel.apply_bilateral_filter(frame)
-        return frame
-    '''
-
     def process_frame(self, frame):
-        """Process video frame with bilateral filter if enabled"""
+        """
+        Processes a single video frame and optionally applies a bilateral filter.
+
+        The function processes a given video frame. If the bilateral filter is enabled
+        and a valid frame is provided, the function applies a CUDA-accelerated bilateral
+        filter to the frame using the configuration settings from an external bilateral
+        filter panel.
+
+        Parameters:
+        frame: Any
+            The video frame to be processed. Can be None if no frame is available.
+
+        Returns:
+        Any
+            The processed video frame possibly modified by applying a bilateral filter,
+            or the original frame if no processing was applied.
+        """
         if self.bilateral_filter_enabled and frame is not None:
             # Apply CUDA-accelerated bilateral filter
             frame = self.bilateral_panel.apply_bilateral_filter(frame)
-
         return frame
 
     def update_video_frame(self):
-        """Your existing frame update method - modify this"""
+        """
+        Updates the current video frame by processing it through defined filters
+        and rendering it for display. This method ensures that each frame retrieved
+        is processed before being presented.
+
+        Returns the processed video frame, or none if no frame is available.
+
+        Returns:
+            frame: Processed video frame after applying filters.
+        """
         # ... your existing frame reading code ...
 
         # Get the current frame (however you're doing this)
@@ -4173,69 +4196,6 @@ class PlayVideo:
                     pass
             return None
 
-    '''
-    def playVideo(self, video):
-        """
-        Plays a video file using the specified options and settings.
-
-        The method initializes the video playback using the provided video path, sets up
-        parameters such as audio, resolution, and playback speed, and returns the video
-        object. If an error occurs during setup, it handles the exception and returns None.
-
-        Attributes
-        ----------
-        progress_active: bool
-            Tracks whether the video progress is active.
-        progress_value: int
-            Current value of the progress indicator.
-        progress_percentage: int
-            Percentage of the video progress.
-
-        Parameters
-        ----------
-        video: str
-            The path to the video file that will be played.
-
-        Returns
-        -------
-        VideoPygame or None
-            Returns a VideoPygame object initialized with the video file and settings, or
-            None if an error occurs during the setup.
-        """
-
-        self.progress_active = False
-        self.progress_value = 0
-        self.progress_percentage = 0
-        try:
-            self.vid: VideoPygame = Video(video,
-                                          use_pygame_audio=self.opts.usePygameAudio,
-                                          interp=self.opts.interp,
-                                          audio_track=self.opts.aTrack,
-                                          speed=self.opts.playSpeed,
-                                          no_audio=self.opts.noAudio,
-                                          subs=None,
-                                          reader=self.opts.reader_val_int
-                                          )
-
-            """
-            Uses FFprobe to find information about the video.  When using cv2 to read videos,
-            information such as frame count or frame rate are read through the file headers,
-            which is sometimes incorrect. For more accuracy, call this method to start a probe
-            and update the video information.
-            """
-            if self.opts.enableFFprobe:
-                self.vid.probe()
-
-            self.vid.change_resolution(self.displayHeight)
-            # Global variable needed to show the actual duration of the video in seconds.
-            self.opts.actualDuration = int(self.vid.duration / self.opts.playSpeed)
-        except Exception as e:
-            print(f"An Error occurred: {e}")
-            return None
-        self.vid.set_volume(self.volume)
-        return self.vid
-    '''
-
     def play(self, eventHandler):
         """
         Plays a sequence of videos in a custom player with specific playback controls and options.
@@ -4285,12 +4245,24 @@ class PlayVideo:
                 if self.vid is None:
                     continue
 
+                self.current_vid_width, self.current_vid_height = self.vid.current_size
+                self.original_vid_width, self.original_vid_height = self.vid.original_size
+
+                if self.current_vid_width < self.displayWidth or self.current_vid_height < self.displayHeight:
+                    if self.current_vid_width < self.displayWidth:
+                        print(f"original_vid_width -> current_vid_width: {self.original_vid_width} -> {self.current_vid_width}")
+                    else:
+                        print(f"original_vid_height -> current_vid_height: {self.original_vid_height} -> {self.current_vid_height}")
+
                 if self.opts.dispTitles is not None:
                     self.video_title = self.get_video_title(self.videoList[self.currVidIndx])
                     #print(self.video_title)
 
                 print(f"Playing {self.currVidIndx+1} of {len(self.videoList  )}: {self.vid.name}{self.vid.ext}")
                 # Setup video splash.
+                #print(f"original_vid_width: {self.original_vid_width}, original_vid_height: {self.original_vid_height}")
+                #print(f"current_vid_width: {self.current_vid_width}, current_vid_height: {self.current_vid_height}")
+
                 if not self.disableSplash:
                     self.draw_video_splash()
 
@@ -4302,6 +4274,10 @@ class PlayVideo:
 
                  # The event handler loop
                 while self.vid.active:
+                    if self.current_vid_width < self.displayWidth or self.current_vid_height < self.displayHeight:
+                        self.win.fill((0, 0, 0))
+                        #print(f"self.current_vid_width: {self.current_vid_width}, self.current_vid_height: {self.current_vid_height}")
+
                     eventHandler.handle_events()
 
                     if self.opts.enableOSDcurpos:
@@ -4320,10 +4296,10 @@ class PlayVideo:
                     if self.vid.draw(self.win, (pos_w, pos_h),
                             force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
 
-
+                        # Handles only control_panel
                         self.render_frame()
+                        # Handles both control_panel and edge_panel
                         self.draw(self.win)
-
 
                         '''
                         self.frameCount = self.counter
@@ -4348,3 +4324,345 @@ class PlayVideo:
                 break
         # End of the main loop
         self.quit()
+
+    def reInitVideo(self, flag, frame_num):
+        """
+        Toggles various video processing effects and updates the corresponding settings and state.
+
+        This method is responsible for enabling or disabling specific video processing filters based on
+        the provided flag. When toggling certain filters, additional behaviors, like interacting with
+        panels or updating video processing states, may occur. It includes special handling for bilateral
+        filters with panel interactions.
+
+        Attributes:
+            opts: Configurations or options controlling the video processing filters and states.
+            PlayVideoInstance: The instance managing video playback and filter panels.
+            debug: Boolean flag for enabling debug logs during bilateral filter panel activation.
+
+        Arguments:
+            flag (str): Identifier for the video processing effect to toggle. Specific flags correspond
+                to the filter or behavior being acted upon (e.g., 'apply_artistic_filters', 'fliplr', etc.).
+            frame_num (int): Current video frame number during the effect toggle.
+
+        Returns:
+            None
+        """
+        pp_flag = None
+        last_frame = frame_num
+        match flag:
+            case 'apply_adjust_video':
+                #self.opts.apply_adjust_video = not self.opts.apply_adjust_video
+                print(f"Apply Adjust Video Filter (Brightness/Contrast) is: {'Enabled' if self.opts.apply_adjust_video is True else 'Disabled'}")
+                if self.opts.apply_adjust_video:
+                    self.opts.adjust_video = True
+                    self.opts.brightness = 0
+                    self.opts.contrast = 0
+                else:
+                    self.opts.adjust_video = False
+                pp_flag = self.opts.apply_adjust_video
+            case 'apply_artistic_filters':
+                #self.opts.apply_artistic_filters = not self.opts.apply_artistic_filters
+                print(f"apply_artistic_filters: {'True' if self.opts.apply_artistic_filters else 'False'}")
+                pp_flag = self.opts.apply_artistic_filters
+            case 'fliplr':
+                #self.opts.fliplr = not self.opts.fliplr
+                print(f"fliplr: {'True' if self.opts.fliplr else 'False'}")
+                pp_flag = self.opts.fliplr
+            case 'pencil_sketch':
+                self.opts.sketch_detail = 41
+                self.opts.sketch_block_size = 5
+                self.opts.sketch_c_value = 5
+                self.opts.sketch_intensity = 0.841
+                self.opts.edge_weight = 1
+                pp_flag = self.opts.pencil_sketch
+            case 'flipup':
+                #self.opts.flipup = not self.opts.flipup
+                print(f"flipup: {'True' if self.opts.flipup else 'False'}")
+                pp_flag = self.opts.flipup
+            case 'pixelate':
+                #self.opts.pixelate = not self.opts.pixelate
+                #self.FilterDialogBox(f"Pixelate effect is now {'enabled' if self.opts.pixelate else 'disabled'}")
+                print(f"pixelate: {'True' if self.opts.pixelate else 'False'}")
+                pp_flag = self.opts.pixelate
+            case 'vignette':
+                #self.opts.vignette = not self.opts.vignette
+                #self.FilterDialogBox(f"Vignette effect is now {'enabled' if self.opts.vignette else 'disabled'}")
+                print(f"vignette: {'True' if self.opts.vignette else 'False'}")
+                pp_flag = self.opts.vignette
+            case 'cel_shading':
+                #self.opts.cel_shading = not self.opts.cel_shading
+                #self.FilterDialogBox(f"Cel-Shading effect is now {'enabled' if self.opts.cel_shading else 'disabled'}")
+                print(f"cel_shading {'True' if self.opts.cel_shading else 'False'}")
+                pp_flag = self.opts.cel_shading
+            case 'apply_noise':
+                #self.opts.noise = not self.opts.noise
+                #self.FilterDialogBox(f"Noise effect is now {'enabled' if self.opts.noise else 'disabled'}")
+                print(f"apply_noise: {'True' if self.opts.noise else 'False'}")
+                pp_flag = self.opts.noise
+            case 'apply_denoising':
+                #self.opts.apply_denoising = not self.opts.apply_denoising
+                #self.FilterDialogBox(f"Apply-Denoising  filter is now {'enabled' if self.opts.apply_denoising else 'disabled'}")
+                print(f"apply_denoising: {'True' if self.opts.apply_denoising else 'False'}")
+                pp_flag = self.opts.apply_denoising
+            case 'apply_sharpening':
+                #self.opts.apply_sharpening = not self.opts.apply_sharpening
+                #self.FilterDialogBox(f"U-Sharpen filter is now {'enabled' if self.opts.apply_sharpening else 'disabled'}")
+                print(f"apply_sharpening #1: {'True' if self.opts.apply_sharpening else 'False'}")
+                pp_flag = self.opts.apply_sharpening
+            case 'laplacian':
+                if self.opts.apply_laplacian:
+                    self.opts.laplacian = True
+                else:
+                    self.opts.laplacian = False
+                print(f"laplacian_boost: {'True' if self.opts.laplacian else 'False'}")
+                pp_flag = self.opts.laplacian
+            case 'apply_edges_sobel':
+                #self.opts.apply_edges_sobel =  not self.opts.apply_edges_sobel
+                #self.FilterDialogBox(f"Sobel Edge filter is now {'enabled' if self.opts.apply_edges_sobel else 'disabled'}")
+                print(f"apply_edges_sobel {'True' if self.opts.apply_edges_sobel else 'False'}")
+                pp_flag = self.opts.apply_edges_sobel
+            case 'apply_inverted':
+                #self.opts.apply_inverted = not self.opts.apply_inverted
+                #self.FilterDialogBox(f"Inversion filter is now {'enabled' if self.opts.apply_inverted else 'disabled'}")
+                print(f"apply_inverted: {'True' if self.opts.apply_inverted else 'False'}")
+                pp_flag = self.opts.apply_inverted
+            case 'apply_contrast_enhancement':
+                #self.opts.apply_contrast_enhancement = not self.opts.apply_contrast_enhancement
+                #self.FilterDialogBox(f"Apply-Contrast effect is now {'enabled' if self.opts.apply_contrast_enhancement else 'disabled'}")
+                print(f"apply_contrast_enhancement: {'True' if self.opts.apply_contrast_enhancement else 'False'}")
+                pp_flag = self.opts.apply_contrast_enhancement
+            case 'greyscale':
+                #self.opts.greyscale = not self.opts.greyscale
+                #self.FilterDialogBox(f"Greyscale filter is now {'enabled' if self.opts.greyscale else 'disabled'}")
+                print(f"greyscale: {'True' if self.opts.greyscale else 'False'}")
+                pp_flag = self.opts.greyscale
+            case 'blur':
+                #self.opts.blur = not self.opts.blur
+                #self.FilterDialogBox(f"Blur filter is now {'enabled' if self.opts.blur else 'disabled'}")
+                print(f"blur: {'True' if self.opts.blur else 'False'}")
+                pp_flag = self.opts.blur
+            case 'gaussian_blur':
+                #self.opts.gaussian_blur = not self.opts.gaussian_blur
+                #self.FilterDialogBox(f"Gaussian-Blur filter is now {'enabled' if self.opts.gaussian_blur else 'disabled'}")
+                print(f"gaussian_blur: {'True' if self.opts.gaussian_blur else 'False'}")
+                pp_flag = self.opts.gaussian_blur
+            case 'median_blur':
+                #self.opts.median_blur = not self.opts.median_blur
+                #self.FilterDialogBox(f"Median-Blur filter is now {'enabled' if self.opts.median_blur else 'disabled'}")
+                print(f"median_blur: {'True' if self.opts.median_blur else 'False'}")
+                pp_flag = self.opts.median_blur
+            case 'sepia':
+                if self.opts.apply_sepia:
+                    self.opts.sepia = True
+                else:
+                    self.opts.sepia = False
+                pp_flag = self.opts.sepia
+            case 'edge_detect':
+                if self.opts.apply_edge_detect:
+                    self.opts.edge_detect = True
+                else:
+                    self.opts.edge_detect = False
+               #self.FilterDialogBox(f"Edge-Detect effect is now {'enabled' if self.opts.apply_edge_detect else 'disabled'}")
+                print(f"edge_detect: {'True' if self.opts.edge_detect else 'False'}")
+                pp_flag = self.opts.edge_detect
+            case 'oil_painting':
+                if self.opts.apply_oil_painting:
+                    self.opts.oil_painting = True
+                else:
+                    self.opts.oil_painting = False
+                print(f"oil_painting: {'True' if self.opts.oil_painting else 'False'}")
+                pp_flag = self.opts.oil_painting
+            case 'emboss':
+                #self.opts.emboss = not self.opts.emboss
+                #self.FilterDialogBox(f"Emboss effect is now {'enabled' if self.opts.emboss else 'disabled'}")
+                print(f"emboss: {'True' if self.opts.emboss else 'False'}")
+                pp_flag = self.opts.emboss
+            case 'neon':
+                #self.opts.neon = not self.opts.neon
+                #self.FilterDialogBox(f"Neon effect is now {'enabled' if self.opts.neon else 'disabled'}")
+                print(f"neon: {'True' if self.opts.neon else 'False'}")
+                pp_flag = self.opts.neon
+            case 'dream':
+                #self.opts.dream = not self.opts.dream
+                #self.FilterDialogBox(f"Dream effect is now {'enabled' if self.opts.dream else 'disabled'}")
+                print(f"dream: {'True' if self.opts.dream else 'False'}")
+                pp_flag = self.opts.dream
+            case 'thermal':
+                #self.opts.thermal = not self.opts.thermal
+                #self.FilterDialogBox(f"Thermal effect is now {'enabled' if self.opts.thermal else 'disabled'}")
+                print(f"thermal: {'True' if self.opts.thermal else 'False'}")
+                pp_flag = self.opts.thermal
+            case 'watercolor':
+                self.opts.watercolor_scale = 0.5
+                self.opts.watercolor_quality = 'high'
+                pp_flag = self.opts.watercolor
+            case 'comic_sharp':
+                self.opts.comic_sharp_amount  = 0.3
+                self.opts.color_quant = 15
+                self.opts.bilateral_color = 40
+                pp_flag = self.opts.comic_sharp
+            case 'comic':
+                #self.opts.comic = not self.opts.comic
+                #self.FilterDialogBox(f"Comic effect is now {'enabled' if self.opts.comic else 'disabled'}")
+                print(f"comic: {'True' if self.opts.comic else 'False'}")
+                pp_flag = self.opts.comic
+            case 'apply_bilateral_filter':
+                self.debug = True
+                # Check if bilateral panel exists for preset cycling
+                if hasattr(self, 'bilateral_panel'):
+                    # Use the panel's cycling functionality
+                    filter_active = self.bilateral_panel.cycle_preset()
+
+                    # Update opts to match the panel state - this is crucial for build_effects_chain()
+                    self.opts.apply_bilateral_filter = filter_active
+
+                    # Also update PlayVideo's bilateral_filter_enabled for consistency
+                    self.bilateral_filter_enabled = filter_active
+
+                    if filter_active:
+                        self.opts.CUDA_bilateral_filter = True
+                        preset_name = self.bilateral_panel.get_current_preset_name()
+                        if self.debug:
+                            print(f"Bilateral Filter: {preset_name}")
+
+                        self.FilterDialogBox(f"CUDA-Bilateral preset: {preset_name}")
+                    else:
+                        self.FilterDialogBox(f"CUDA-Bilateral filter is disabled")
+                        self.opts.CUDA_bilateral_filter = False
+                        if self.debug:
+                            print("Bilateral Filter: OFF")
+
+                        else:
+                            pass
+
+                    pp_flag = filter_active
+                else:
+                    # Fallback to original toggle behavior if panel doesn't exist
+                    #self.opts.apply_bilateral_filter = not self.opts.apply_bilateral_filter
+                    self.FilterDialogBox(f"CUDA-Bilateral filter is {'enabled' if self.opts.apply_bilateral_filter else 'disabled'}")
+                    print(f"bilateral filter: {'True' if self.opts.apply_bilateral_filter else 'False'}")
+                    pp_flag = self.opts.apply_bilateral_filter
+            case 'apply_bilateral_filter_panel':
+                self.debug = True
+
+
+                #self.show_filter_panel = False
+                #self.bilateral_panel.is_visible = False
+                panel = self.bilateral_panel
+                #panel.opts_reference = self.opts  # Set up opts reference
+                if not self.opts.apply_bilateral_filter:
+                    print("Bilateral Filter Panel: Turning filter OFF")
+
+                    # Apply default preset (this will set filter_enabled=True)
+                    panel.apply_preset('OFF')
+                    panel.preset_dropdown.set_selected_option('OFF')
+                    self.bilateral_filter_enabled = False
+                    self.opts.CUDA_bilateral_filter = False
+                    #self.show_filter_panel = False
+                    self.bilateral_panel.set_visibility(False)
+                else:
+                    preset = self.opts.last_bilateral_preset
+                    if preset is None:
+                        preset = 'default'
+                        panel.apply_preset('default')
+                        panel.preset_dropdown.set_selected_option('default')
+                    else:
+                        panel.apply_preset(preset)
+                        panel.preset_dropdown.set_selected_option(preset)
+                    print(f"Bilateral Filter Panel: Turning filter ON.\nUsing preset: {preset}")
+                    # Update all the flags to be consistent
+                    self.opts.apply_bilateral_filter = True
+                    self.bilateral_filter_enabled = True
+                    self.opts.CUDA_bilateral_filter = True
+                    #self.show_filter_panel = True
+                    self.bilateral_panel.set_visibility(True)
+
+                # CRITICAL: Set pp_flag to trigger video reinitialization
+                pp_flag = True
+                self.debug = False
+            case 'bilateral_filter_dropdown_change':
+                # This case is triggered when the dropdown selection changes the filter state
+                # The panel has already updated self.opts.apply_bilateral_filter
+                # We just need to set pp_flag to trigger video reinitialization
+                pp_flag = True  # Always reinit when dropdown changes filter state
+                print(f"Bilateral filter dropdown change - filter now {'ON' if self.opts.apply_bilateral_filter else 'OFF'}")
+                if self.opts.apply_bilateral_filter:
+                    self.opts.CUDA_bilateral_filter = True
+                else:
+                    self.opts.CUDA_bilateral_filter = False
+            case 'None':
+                self.opts.fliplr = False
+                self.opts.flipud = False
+                self.opts.pixelate = False
+                self.opts.vignette = False
+                self.opts.cel_shading = False
+                self.opts.noise = False
+                self.opts.median_blur = False
+                self.opts.comic = False
+                self.opts.thermal = False
+                self.opts.emboss = False
+
+                self.opts.watercolor = False
+                self.opts.comic_sharp = False
+
+                self.opts.greyscale = False
+                self.opts.apply_sepia = False
+                self.opts.sepia = False
+                self.opts.apply_edge_detect = False
+                self.opts.edge_detect = False
+                self.opts.edge_lower = 100
+                self.opts.edge_upper = 200
+
+                self.opts.apply_oil_painting = False
+                self.opts.oil_painting = False
+                self.opts.oil_size = 7
+                self.opts.oil_dynamics = 1
+
+                self.opts.pencil_sketch = False
+                self.opts.apply_pencil_sketch = False
+
+                self.opts.apply_laplacian = False
+                self.opts.laplacian = False
+                self.opts.laplacian_kernel_size = 1
+                self.opts.laplacian_boost_strength = 9.5
+
+                self.opts.blur = False
+                self.opts.neon = False
+                self.opts.dream = False
+                self.opts.adjust_video = False
+                self.opts.apply_adjust_video = False
+                self.opts.brightness  = 0
+                self.opts.contrast    = 0
+                self.opts.apply_artistic_filters = False
+                self.opts.gaussian_blur = False
+                self.opts.apply_inverted = False
+                self.opts.apply_denoising = False
+                self.opts.apply_edges_sobel = False
+                self.opts.apply_sharpening = False
+                self.opts.apply_bilateral_filter = False
+                self.opts.apply_contrast_enhancement = False
+                self.opts.apply_bilateral_filter_panel = False
+                pp_flag = False
+                print("None")
+                self.FilterDialogBox("All post-processing filters are now disabled",sleep=True)
+
+        if pp_flag is not None:
+            self.reinit_video(last_frame)
+
+    def reinit_video(self, lastFrame):
+        """
+        Reinitializes the video playback instance using the provided last frame.
+
+        This method updates the video effects for the current video playback instance.
+        It stops and closes the current video playback object, then reinitializes it
+        with the appropriate video from the playlist at the current index. The playback
+        is resumed starting from the specified last frame.
+
+        Args:
+            lastFrame (int): The frame to resume playback from, provided as an integer.
+        """
+        self.update_video_effects()
+        self.vid.stop()
+        self.vid.close()
+        self.vid = self.playVideo(self.videoList[self.currVidIndx])
+        self.vid.seek_frame(lastFrame)

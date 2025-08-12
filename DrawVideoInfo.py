@@ -421,7 +421,7 @@ class DrawVideoInfo:
         pygame.draw.rect(self.display, button_color, self.button_rect, border_radius=8)
         pygame.draw.rect(self.display, BLACK, self.button_rect, 1, border_radius=8)
         self.display.blit(self.check_icon, (self.button_rect.x + 40, self.button_rect.y + 18))
-        ok_surface = self.font_button.render("OK", True, HEADING_COLOR)
+        ok_surface = self.font_button.render("OK", True, HEADING_COLOR if is_hovered else WHITE)
         self.display.blit(ok_surface, (self.button_rect.x + 90, self.button_rect.y + 8))
 
     @staticmethod

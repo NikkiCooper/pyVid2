@@ -7,12 +7,7 @@
 # Pygame event handler class
 import os
 import pygame
-import time
-
-from psutil import net_connections
-
 import constants as const
-
 import inspect
 
 # Mouse constants used in the pygame event loop.
@@ -35,62 +30,67 @@ def bilateral_debug(msg):
     frame = inspect.currentframe().f_back
     line_no = frame.f_lineno
     func_name = frame.f_code.co_name
-    print(f"BILATERAL_DEBUG [{func_name}:{line_no}] {msg}")
-
-
+    print(f"CUDA_BILATERAL_DEBUG [{func_name}:{line_no}] {msg}")
 
 class EventHandler:
     """
-    Handles the setup and management of pygame events for video playback functionality.
-
-    The EventHandler class is responsible for handling various pygame events such as mouse
-    motion, clicks, button presses, key presses, and custom-defined user events.
-    It interacts with the PlayVideoInstance class to provide functionalities like pausing,
-    navigation through videos, adjusting video speed and volume, or toggling visibility of
-    help and status bar features during video playback. The class also facilitates handling
-    short and long mouse clicks, mouse wheel scrolling, and video seek features.
-    Custom events for fast-forward and rewind are implemented using pygame timers.
+    Represents a controller for handling video playback and user interactions in a Pygame-based
+    application, providing features such as seek events, mouse click handling for user input, and
+    adjustment of playback properties.
 
     Attributes:
-        running (bool): Controls whether the video loop continues running or stops.
-        PlayVideoInstance: The instance of the PlayVideo class that manages video playback.
-        REWIND_SEEK_EVENT: Custom pygame user event for rewind functionality.
-        FWD_SEEK_EVENT: Custom pygame user event for fast-forward functionality.
-        FwdSeekCounter (int): Counter for fast-forward seek events.
-        RewindSeekCounter (int): Counter for rewind seek events.
-        elapsed_time (float): Duration of the mouse button press.
-        previous_speed (int): Stores the previously set playback speed.
-        mouse_press_times (dict): Dictionary to track mouse button press timestamps.
-        short_click_threshold (float): Threshold in seconds to differentiate short and long clicks.
-        long_click_threshold (float): Threshold in seconds for a long click.
-        threshold_ratio (float): Ratio used to determine the threshold for status bar visibility.
-        threshold (int): Height threshold, calculated using displayHeight and threshold_ratio.
-        current_video (int): Index of the currently playing video.
+        running (bool): Controls whether the video loop is active.
+        PlayVideoInstance: Reference to the active PlayVideo instance controlling video playback.
+        REWIND_SEEK_EVENT: User-defined Pygame event for rewinding the video.
+        FWD_SEEK_EVENT: User-defined Pygame event for fast-forwarding the video.
+        FwdSeekCounter (int): Counter for managing forward seek operations.
+        RewindSeekCounter (int): Counter for managing rewind seek operations.
+        elapsed_time: Tracks the elapsed time of video playback.
+        previous_speed (int): Stores the previous playback speed of the video.
+        mouse_press_times (dict): Maps mouse press events to their respective times for click threshold
+            management.
+        short_click_threshold (float): Time threshold (in seconds) for distinguishing short clicks.
+        long_click_threshold (float): Time threshold (in seconds) for distinguishing long clicks.
+        threshold_ratio (float): Ratio used for setting a threshold based on the screen height for
+            gesture or feature interactions.
+        threshold (int): Calculated threshold for input interactions based on threshold_ratio and
+            display height from PlayVideoInstance.
+        current_video (int): Index of the current video being played; initialized to -1.
+        slider_dragging: Tracks which slider is currently being dragged by the user.
+        slider_start_pos: Stores the starting position of a slider drag operation for use in
+            adjustments.
+        pp_args: Placeholder for storing optional arguments related to post-processing operations.
+        debug (bool): Flag used for enabling or disabling debug output.
     """
     def __init__(self, PlayVideoInstance):
         """
-        Handles initialization and configuration of a video playback controller, which manages playback
-        operations such as rewinding, forwarding, and click interpretation. This class sets up custom pygame
-        events, defines thresholds for detecting user input, and initializes other playback-related variables.
+        Represents a controller for handling video playback and user interactions in a Pygame-based
+        application, providing features such as seek events, mouse click handling for user input, and
+        adjustment of playback properties.
 
         Attributes:
-            running (bool): Indicates whether the video loop is active or not.
-            PlayVideoInstance: Instance of an external `PlayVideo` class managing video playback.
-            REWIND_SEEK_EVENT: Custom pygame user event for rewinding video playback.
-            FWD_SEEK_EVENT: Custom pygame user event for forwarding video playback.
-            FwdSeekCounter (int): Counter to track the number of forward seek operations.
-            RewindSeekCounter (int): Counter to track the number of rewind seek operations.
-            elapsed_time: Tracks elapsed time during video playback.
-            previous_speed (int): Stores the previous speed of video playback.
-            mouse_press_times (dict): Dictionary to track the timestamps of mouse press events.
-            short_click_threshold (float): Time threshold in seconds for detecting short clicks.
-            long_click_threshold (float): Time threshold in seconds for detecting long clicks.
-            threshold_ratio (float): Ratio of screen height used to calculate the threshold for gesture detection.
-            threshold (int): Absolute threshold value derived from the display height and threshold ratio.
-            current_video (int): Index of the currently loaded video in a playlist or collection.
-
-        Parameters:
-            PlayVideoInstance: Instance of an external `PlayVideo` class that needs to be controlled.
+            running (bool): Controls whether the video loop is active.
+            PlayVideoInstance: Reference to the active PlayVideo instance controlling video playback.
+            REWIND_SEEK_EVENT: User-defined Pygame event for rewinding the video.
+            FWD_SEEK_EVENT: User-defined Pygame event for fast-forwarding the video.
+            FwdSeekCounter (int): Counter for managing forward seek operations.
+            RewindSeekCounter (int): Counter for managing rewind seek operations.
+            elapsed_time: Tracks the elapsed time of video playback.
+            previous_speed (int): Stores the previous playback speed of the video.
+            mouse_press_times (dict): Maps mouse press events to their respective times for click threshold
+                management.
+            short_click_threshold (float): Time threshold (in seconds) for distinguishing short clicks.
+            long_click_threshold (float): Time threshold (in seconds) for distinguishing long clicks.
+            threshold_ratio (float): Ratio used for setting a threshold based on the screen height for
+                gesture or feature interactions.
+            threshold (int): Calculated threshold for input interactions based on threshold_ratio and
+                display height from PlayVideoInstance.
+            current_video (int): Index of the current video being played; initialized to -1.
+            slider_dragging: Tracks which slider is currently being dragged by the user.
+            slider_start_pos: Stores the starting position of a slider drag operation for use in
+                adjustments.
+            pp_args: Placeholder for storing optional arguments related to post-processing operations.
+            debug (bool): Flag used for enabling or disabling debug output.
         """
         self.running = True                                     # Control whether the video loop runs
         self.PlayVideoInstance = PlayVideoInstance              # Create a PlayVideo Instance.
@@ -124,6 +124,16 @@ class EventHandler:
 
     @property
     def opts(self):
+        """
+        Returns the options of the PlayVideoInstance.
+
+        Summary:
+        This property provides access to the current options of the PlayVideoInstance.
+        It retrieves the opts attribute from the underlying PlayVideoInstance object.
+
+        Returns:
+            Any: The opts attribute of the PlayVideoInstance.
+        """
         return self.PlayVideoInstance.opts
 
     def handle_events(self):
@@ -142,12 +152,14 @@ class EventHandler:
         """
         for event in pygame.event.get():
             # Handle GUI events for the bilateral filter panel FIRST
-            if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
-                if self.PlayVideoInstance.bilateral_panel.handle_event(event):
-                    # Parameters changed - no need to reinit, just updates the effect
-                    params = self.PlayVideoInstance.bilateral_panel.get_params()
-                    print(f"🎛️  Filter params updated: d={params['d']}, σ_color={params['sigma_color']:.1f}, σ_space={params['sigma_space']:.1f}, intensity={params['intensity']:.1f}")
-                    continue  # Skip to next event - this one was handled by the panel
+            #if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
+            if hasattr(self.PlayVideoInstance, 'bilateral_panel'):
+                if self.PlayVideoInstance.bilateral_panel.is_visible():
+                    if self.PlayVideoInstance.bilateral_panel.handle_event(event):
+                        # Parameters changed - no need to reinit, just updates the effect
+                        params = self.PlayVideoInstance.bilateral_panel.get_params()
+                        print(f"🎛️  Filter params updated: d={params['d']}, σ_color={params['sigma_color']:.1f}, σ_space={params['sigma_space']:.1f}, intensity={params['intensity']:.1f}")
+                        continue  # Skip to next event - this one was handled by the panel
 
             match event.type:
                 case pygame.QUIT:
@@ -158,17 +170,36 @@ class EventHandler:
                         continue
                     elif self.PlayVideoInstance.edge_panel.handle_mouse_motion(event.pos):
                         continue
+                    elif self.PlayVideoInstance.sepia_panel.handle_mouse_motion(event.pos):
+                        continue
+                    elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_motion(event.pos):
+                        continue
+                    elif self.PlayVideoInstance.laplacian_panel.handle_mouse_motion(event.pos):
+                        continue
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     self.handle_mouse_motion(mouse_x, mouse_y)
                 case pygame.MOUSEBUTTONDOWN:
                     if self.PlayVideoInstance.control_panel.handle_mouse_button_down(event.pos):
                         continue
+                    elif self.PlayVideoInstance.filterCheckboxPanel.handle_event(event):
+                        continue
                     elif self.PlayVideoInstance.edge_panel.handle_mouse_button_down(event.pos):
                         continue
+                    elif self.PlayVideoInstance.sepia_panel.handle_mouse_button_down(event.pos):
+                        continue
+                    elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_down(event.pos):
+                        continue
+                    elif self.PlayVideoInstance.laplacian_panel.handle_mouse_button_down(event.pos):
+                        continue
+                    elif self.PlayVideoInstance.bilateral_panel.handle_mouse_button_down(event.pos):
+                        self.PlayVideoInstance.bilateral_panel.set_visibility(False)
                     self.mouse_press_times[event.button] = pygame.time.get_ticks()
                 case pygame.MOUSEBUTTONUP:
                     self.PlayVideoInstance.control_panel.handle_mouse_button_up()
                     self.PlayVideoInstance.edge_panel.handle_mouse_button_up()
+                    self.PlayVideoInstance.sepia_panel.handle_mouse_button_up()
+                    self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_up()
+                    self.PlayVideoInstance.laplacian_panel.handle_mouse_button_up()
                     self.handle_mouse_button_up(event)
                 case pygame.KEYDOWN:
                     self.handle_keydown(event)
@@ -211,9 +242,37 @@ class EventHandler:
         if event.button in self.mouse_press_times:
             if event.button in self.mouse_press_times:
                 # Don't process long clicks if we're interacting with the control panel
-                if self.PlayVideoInstance.cb_panel_is_visible:
+                if self.PlayVideoInstance.control_panel.is_visible:
                     mouse_pos = pygame.mouse.get_pos()
-                    panel_rect = self.PlayVideoInstance.control_panel_rect
+                    panel_rect = self.PlayVideoInstance.control_panel.rect
+                    if panel_rect.collidepoint(mouse_pos):
+                        self.mouse_press_times.pop(event.button, None)
+                        return
+
+                if self.PlayVideoInstance.edge_panel.is_visible:
+                    mouse_pos = pygame.mouse.get_pos()
+                    panel_rect = self.PlayVideoInstance.edge_panel.rect
+                    if panel_rect.collidepoint(mouse_pos):
+                        self.mouse_press_times.pop(event.button, None)
+                        return
+
+                if self.PlayVideoInstance.sepia_panel.is_visible:
+                    mouse_pos = pygame.mouse.get_pos()
+                    panel_rect = self.PlayVideoInstance.sepia_panel.rect
+                    if panel_rect.collidepoint(mouse_pos):
+                        self.mouse_press_times.pop(event.button, None)
+                        return
+
+                if self.PlayVideoInstance.oil_painting_panel.is_visible:
+                    mouse_pos = pygame.mouse.get_pos()
+                    panel_rect = self.PlayVideoInstance.oil_painting_panel.rect
+                    if panel_rect.collidepoint(mouse_pos):
+                        self.mouse_press_times.pop(event.button, None)
+                        return
+
+                if self.PlayVideoInstance.laplacian_panel.is_visible:
+                    mouse_pos = pygame.mouse.get_pos()
+                    panel_rect = self.PlayVideoInstance.laplacian_panel.rect
                     if panel_rect.collidepoint(mouse_pos):
                         self.mouse_press_times.pop(event.button, None)
                         return
@@ -222,10 +281,10 @@ class EventHandler:
             if self.elapsed_time >= self.long_click_threshold:
                 if event.button == LEFT_BUTTON_LONG:
                     # Disable Long click if the Help or the Video metadata windows are displayed
-                    if not (self.PlayVideoInstance.video_info_box or self.PlayVideoInstance.help_visible):
+                    if not (self.PlayVideoInstance.video_info_box or self.PlayVideoInstance.drawHelpInfo.is_visible() or self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or self.PlayVideoInstance.filter_info_box):
                         self.PlayVideoInstance.next_video()
                 elif event.button == RIGHT_BUTTON_LONG:
-                    if not (self.PlayVideoInstance.video_info_box or self.PlayVideoInstance.help_visible):
+                    if not (self.PlayVideoInstance.video_info_box or self.PlayVideoInstance.drawHelpInfo.is_visible() or self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or self.PlayVideoInstance.filter_info_box):
                         self.PlayVideoInstance.previous_video()
             else:
                 if self.elapsed_time <= self.short_click_threshold:
@@ -239,9 +298,13 @@ class EventHandler:
                         mouse_x, mouse_y = pygame.mouse.get_pos()
                         mouse_pos = (mouse_x, mouse_y)
                         # Help
-                        if self.PlayVideoInstance.help_button_rect is not None:
+                        if hasattr(self.PlayVideoInstance, 'help_button_rect') and self.PlayVideoInstance.help_button_rect is not None:
                             if self.PlayVideoInstance.help_button_rect.collidepoint(mouse_pos):
-                                self.PlayVideoInstance.help_visible = False
+                                self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        # Filter Help
+                        if hasattr(self.PlayVideoInstance, 'filter_help_button_rect') and self.PlayVideoInstance.filter_help_button_rect is not None:
+                            if self.PlayVideoInstance.filter_help_button_rect.collidepoint(mouse_pos):
+                                self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
                         # volume
                         self.update_volume(mouse_x, mouse_y)
                         self.update_video_speed(mouse_x, mouse_y)
@@ -250,12 +313,17 @@ class EventHandler:
                         self.PlayVideoInstance.videoPlayBar.MOUSE_Y = mouse_y
                         self.update_videoPlayBarVolume(event, mouse_x, mouse_y)
                         self.videoPlayBarIconPress(event, mouse_x, mouse_y)
+
                         if self.PlayVideoInstance.video_info_box:
                             # self.update_video_info(mouse_x, mouse_y)
                             if self.PlayVideoInstance.drawVidInfo.button_rect.collidepoint(
                                     event.pos):  # process the OK button
                                 self.PlayVideoInstance.video_info_box = False
-                                # self.PlayVideoInstance.vid.play()
+
+                        if self.PlayVideoInstance.filter_info_box:
+                            if self.PlayVideoInstance.drawFilterInfo.button_rect.collidepoint(event.pos):
+                                self.PlayVideoInstance.filter_info_box = False
+
                     if self.mouse_press_times.get(LEFT_BUTTON_SHORT) and self.mouse_press_times.get(RIGHT_BUTTON_SHORT):
                         self.PlayVideoInstance.quit_video()
             self.mouse_press_times.pop(event.button, None)
@@ -276,13 +344,22 @@ class EventHandler:
             None
         """
         # Help dialog
-
-        if self.PlayVideoInstance.help_visible:
+        if self.PlayVideoInstance.drawHelpInfo.is_visible():
             mouse_pos = (mouse_x, mouse_y)
             if hasattr(self.PlayVideoInstance, 'help_button_rect') and self.PlayVideoInstance.help_button_rect is not None:
                 self.PlayVideoInstance.is_hovered = self.PlayVideoInstance.help_button_rect.collidepoint(mouse_pos)
             else:
                 self.PlayVideoInstance.is_hovered = False  # default value
+
+        if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
+            mouse_pos = (mouse_x, mouse_y)
+            if hasattr(self.PlayVideoInstance, 'filter_help_button_rect') and self.PlayVideoInstance.filter_help_button_rect is not None:
+                self.PlayVideoInstance.is_hovered = self.PlayVideoInstance.filter_help_button_rect.collidepoint(mouse_pos)
+            else:
+                self.PlayVideoInstance.is_hovered = False  # default value
+
+        if self.PlayVideoInstance.filter_info_box:
+            self.PlayVideoInstance.drawFilterInfo.is_hovered = self.PlayVideoInstance.drawFilterInfo.button_rect.collidepoint(mouse_x, mouse_y)
 
         if self.PlayVideoInstance.video_info_box:
             # render the tooltip
@@ -301,33 +378,6 @@ class EventHandler:
             self.PlayVideoInstance.status_bar_visible = self.PlayVideoInstance.drawVideoPlayBarFlag
             if self.PlayVideoInstance.drawVideoPlayBarToolTip:
                 self.PlayVideoInstance.drawVideoPlayBarToolTip = False
-
-    def handle_slider_events(self, event, mouse_pos):
-        """
-        Handles events specific to the brightness/contrast sliders
-        """
-        if not self.PlayVideoInstance.cb_panel_is_visible:
-            return False
-
-        # Adjust mouse position relative to control panel
-        relative_pos = (
-            mouse_pos[0] - self.PlayVideoInstance.control_panel_rect.x,
-            mouse_pos[1] - self.PlayVideoInstance.control_panel_rect.y
-        )
-
-        # Check for clicks on the brightness slider
-        if self.PlayVideoInstance.brightness_slider['knob'].collidepoint(*relative_pos):
-            self.slider_dragging = 'brightness'
-            self.slider_start_pos = mouse_pos[0]
-            return True
-
-        # Check for clicks on the contrast slider
-        elif self.PlayVideoInstance.contrast_slider['knob'].collidepoint(*relative_pos):
-            self.slider_dragging = 'contrast'
-            self.slider_start_pos = mouse_pos[0]
-            return True
-
-        return False
 
     def handle_mouse_wheel(self, seek, event):
         """
@@ -368,21 +418,17 @@ class EventHandler:
 
     def handle_keydown(self, event):
         """
-        Handles specific key-down events and triggers associated functionalities in the video player.
+        Handles key press events in the context of video playback and UI interaction.
 
-        This method processes keyboard input events and performs specific actions based on the key pressed.
-        Actions include toggling settings such as looping, muting, or displaying metadata, as well as other
-        operations such as saving frames, controlling playback, and interacting with on-screen displays (OSD).
-        It is designed to enhance user interaction and control over the video playback features.
+        The method processes various key events to manage functionalities like saving a
+        screenshot, seeking to specific positions in a video, toggling panels, applying
+        video effects, controlling playback options (e.g., mute, pause, shuffle), and
+        interfacing with video metadata and other UI components. The mapping of specific
+        keys to actions is defined within the logic of this method.
 
         Parameters:
-        event (pygame.event.Event): The event object containing the key-down event details.
-
-        Raises:
-        None
-
-        Returns:
-        None
+            event (pygame.Event): An event object representing the key press event that
+                                  triggers this handler.
         """
         if self.isKeyCombo(event, *const.KEY_SAVE):
             """
@@ -407,60 +453,153 @@ class EventHandler:
                 print("Leaving saveMode.")
         else:
             match event.key:
-                case const.KEY_PRINT_CLI:
+                case const.KEY_END:                                                     # END Key
+                    frame_count = self.PlayVideoInstance.vid.frame_count
+                    self.PlayVideoInstance.vid.stop()
+                    self.PlayVideoInstance.vid.seek_frame(frame_count - 700)
+                    self.PlayVideoInstance.vid.buffer_current()
+                    self.PlayVideoInstance.vid.play()
+                    print("Seeked to approx. the last 10 seconds of the video.")
+                case const.KEY_PRINT_CLI:                                               # d key
                     self.PlayVideoInstance.print_cli_options()
+                case const.KEY_CB_PANEL if event.mod & pygame.KMOD_SHIFT:
+                    self.reInitVideo('apply_adjust_video', self.PlayVideoInstance.vid.frame)
                 case const.KEY_CB_PANEL:
                     self.PlayVideoInstance.control_panel.toggle_visibility()
+                    if self.PlayVideoInstance.control_panel.is_visible:
+                        if self.PlayVideoInstance.edge_panel.is_visible:
+                            self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.sepia_panel.is_visible:
+                            self.PlayVideoInstance.sepia_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.oil_painting_panel.is_visible:
+                            self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.laplacian_panel.is_visible:
+                            self.PlayVideoInstance.laplacian_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.bilateral_panel.is_visible():
+                            self.PlayVideoInstance.show_filter_panel.toggle_visibility()
+                case const.KEY_EDGE_DETECT if event.mod & pygame.KMOD_SHIFT:
+                    self.opts.apply_edge_detect = not self.opts.apply_edge_detect
+                    self.PlayVideoInstance.FilterDialogBox(f"Apply Edge-Detect effect is {'enabled' if self.opts.apply_edge_detect else 'disabled'}")
+                    print(f"Apply Edge-Detect Filter is: {'Enabled' if self.opts.apply_edge_detect is True else 'Disabled'}")
+                    self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
                 case const.KEY_EDGE_DETECT:
-                    print("Pressed Edge Detect key")
                     self.PlayVideoInstance.edge_panel.toggle_visibility()
-                case const.KEY_SHUFFLE:
+                    if self.PlayVideoInstance.edge_panel.is_visible:
+                        if self.PlayVideoInstance.control_panel.is_visible:
+                            self.PlayVideoInstance.control_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.sepia_panel.is_visible:
+                            self.PlayVideoInstance.sepia_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.oil_painting_panel.is_visible:
+                            self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.laplacian_panel.is_visible:
+                            self.PlayVideoInstance.laplacian_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.bilateral_panel.is_visible():
+                            self.PlayVideoInstance.bilateral_panel.toggle_visibility()
+                    self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
+                case const.KEY_OIL_PAINTING_PANEL if event.mod & pygame.KMOD_SHIFT:
+                    self.opts.apply_oil_painting = not self.opts.apply_oil_painting
+                    self.PlayVideoInstance.FilterDialogBox(f"Apply Oil-Painting effect is {'enabled' if self.opts.apply_oil_painting else 'disabled'}")
+                    print(f"Apply Oil-Painting Filter is: {'Enabled' if self.opts.apply_oil_painting is True else 'Disabled'}")
+                    self.reInitVideo('oil_painting', self.PlayVideoInstance.vid.frame)
+                case const.KEY_OIL_PAINTING_PANEL:
+                    self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                    if self.PlayVideoInstance.oil_painting_panel.is_visible:
+                        if self.PlayVideoInstance.edge_panel.is_visible:
+                            self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.sepia_panel.is_visible:
+                            self.PlayVideoInstance.sepia_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.control_panel.is_visible:
+                            self.PlayVideoInstance.control_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.laplacian_panel.is_visible:
+                            self.PlayVideoInstance.laplacian_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.show_filter_panel:
+                            self.PlayVideoInstance.show_filter_panel = False
+                            self.PlayVideoInstance.bilateral_panel.is_visible = False
+                    self.reInitVideo('oil_painting', self.PlayVideoInstance.vid.frame)
+                case const.KEY_SHUFFLE:                                                                 # j key
                     self.PlayVideoInstance.shuffleVideoList()
                     self.PlayVideoInstance.shuffleSplashFlag = True
-
-
-                case const.KEY_BILATERAL_FILTER_PANEL:
-                    #print("Pressed bilateral filter panel key (f)")
-
+                case const.KEY_BILATERAL_FILTER_PANEL:                                                  # f key
                     print("Pressed f key: Toggle Bilateral filter panel.")
                     self.reInitVideo('apply_bilateral_filter_panel', self.PlayVideoInstance.vid.frame)
-                    #bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
+                case pygame.K_h if event.mod & pygame.KMOD_SHIFT:                   # shift-h  for filter help panel
+                    if (self.PlayVideoInstance.video_info_box or
+                            self.PlayVideoInstance.drawHelpInfo.is_visible() or
+                            self.PlayVideoInstance.filter_info_box or
+                            self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
 
-                    #print(f"Filter panel: {'shown' if self.PlayVideoInstance.show_filter_panel else 'hidden'}")
+                        if self.PlayVideoInstance.video_info_box:
+                            self.PlayVideoInstance.video_info_box = False
+                        if self.PlayVideoInstance.drawHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.filter_info_box:
+                            self.PlayVideoInstance.filter_info_box = False
+                        if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                            self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
+                    self.PlayVideoInstance.drawFilterHelpInfo.toggle_visibility()
+                case const.KEY_HELP:                                                # h key
+                    if self.PlayVideoInstance.video_info_box or \
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or \
+                            self.PlayVideoInstance.filter_info_box or \
+                            self.PlayVideoInstance.filterCheckboxPanel.is_visible():
 
-            #case const.KEY_APPLY_CONTRAST_ENH:
-                    #print("Pressed f key")
-                    #self.reInitVideo('apply_contrast_enhancement', self.PlayVideoInstance.vid.frame)
+                        if self.PlayVideoInstance.video_info_box:
+                            self.PlayVideoInstance.video_info_box = False
+                        if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.filter_info_box:
+                            self.PlayVideoInstance.filter_info_box = False
+                        if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                            self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
+                    self.PlayVideoInstance.drawHelpInfo.toggle_visibility()
+                    #self.PlayVideoInstance.help_visible = not self.PlayVideoInstance.help_visible
+                case const.KEY_META_DATA if event.mod & pygame.KMOD_SHIFT:              # Shift I
+                    self.PlayVideoInstance.last_interp = self.opts.interp
+                    # Sequence is linear->cubic->lanczos4->linear; rinse, lather, repeat
+                    match self.PlayVideoInstance.last_interp:
+                        case 'linear':
+                            self.opts.interp = 'cubic'
+                            print(f"Using interp={self.opts.interp}")
+                            self.PlayVideoInstance.vid.set_interp(self.opts.interp)
+                        case 'cubic':
+                            self.opts.interp = 'lanczos4'
+                            print(f"Using interp={self.opts.interp}")
+                            self.PlayVideoInstance.vid.set_interp(self.opts.interp)
+                        case 'lanczos4':
+                            self.opts.interp = 'linear'
+                            print(f"Using interp={self.opts.interp}")
+                            self.PlayVideoInstance.vid.set_interp(self.opts.interp)
 
-                case const.KEY_HELP:
-                    if self.PlayVideoInstance.video_info_box:
-                        self.PlayVideoInstance.video_info_box = False
-                    self.PlayVideoInstance.help_visible = not self.PlayVideoInstance.help_visible
-                case const.KEY_META_DATA:
+                    self.PlayVideoInstance.FilterDialogBox(f"Interpolation set to {self.opts.interp}")
+                case const.KEY_META_DATA:                                               # i key
                     # If the help box is visible, turn it off
-                    if self.PlayVideoInstance.help_visible:
-                        self.PlayVideoInstance.help_visible = False
-                    self.PlayVideoInstance.video_info_box = True
-                    filename = self.PlayVideoInstance.vid.name + self.PlayVideoInstance.vid.ext
-                    path = os.path.dirname(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
-                    filepath = os.path.join(path, "")
-                    self.PlayVideoInstance.filePath = filepath
-                    self.PlayVideoInstance.DrawVideoInfoBox(filepath, filename)
-                case const.KEY_APPLY_EDGES_SOBEL:
-                    print("Pressed k key")
+                    if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
+                            self.PlayVideoInstance.filter_info_box or
+                            self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
+
+                        self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        self.PlayVideoInstance.filter_info_box = False
+                        self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
+
+                    self.PlayVideoInstance.video_info_box = not self.PlayVideoInstance.video_info_box
+                    if self.PlayVideoInstance.video_info_box:
+                        filename = self.PlayVideoInstance.vid.name + self.PlayVideoInstance.vid.ext
+                        path = os.path.dirname(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
+                        filepath = os.path.join(path, "")
+                        self.PlayVideoInstance.filePath = filepath
+                        self.PlayVideoInstance.DrawVideoInfoBox(filepath, filename)
+                case const.KEY_APPLY_EDGES_SOBEL:                                                   # k key
+                    #print("Pressed k key")
                     self.reInitVideo('apply_edges_sobel', self.PlayVideoInstance.vid.frame)
-                case const.KEY_GREY_SCALE:
-                    print("Pressed greyscale key")
+                case const.KEY_GREY_SCALE:                                          # G key
+                    #print("Pressed greyscale key")
                     self.reInitVideo('greyscale', self.PlayVideoInstance.vid.frame)
-
                 case const.KEY_X_KEY:
-                    print("Pressed x key: Toggle Bilateral filter PRESETS.")
+                    #print("Pressed x key: Toggle Bilateral filter PRESETS.")
                     self.reInitVideo('apply_bilateral_filter', self.PlayVideoInstance.vid.frame)
-                    bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
-
-                case pygame.K_INSERT if event.mod & pygame.KMOD_SHIFT:
-                    print("Pressed sepia key (Shift-g)")
-                    self.reInitVideo('apply_sepia', self.PlayVideoInstance.vid.frame)
+                    #bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
                 case const.KEY_LOOP:
                     self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
                 case const.KEY_MUTE:
@@ -528,6 +667,21 @@ class EventHandler:
                     pygame.event.post(pygame.event.Event(pygame.QUIT))
                 case const.KEY_ESCAPE:
                     pygame.event.post(pygame.event.Event(pygame.QUIT))
+                case const.KEY_HOME:
+                    self.PlayVideoInstance.vid.restart()
+                    self.PlayVideoInstance.progress_value = 0
+                    self.PlayVideoInstance.progress_percentage = 0
+                    self.PlayVideoInstance.current_pos = 0
+                    pygame.time.wait(50)  # Small delay to allow state reset
+                    # **Step 1: Force OSD reset**
+                    self.PlayVideoInstance.last_osd_position = 0.0  # Reset position tracking
+                    self.PlayVideoInstance.seek_flag = False  # Reset seek state
+                    self.PlayVideoInstance.seek_flag2 = False
+                    self.PlayVideoInstance.last_vid_info_pos = 0.0
+                    # **Step 2: Force a seek to 0 immediately after restart**
+                    self.PlayVideoInstance.vid.seek(0)
+                    # **Step 3: Immediately refresh the display**
+                    self.PlayVideoInstance.draw_OSD()
                 case const.KEY_RESTART:
                     self.PlayVideoInstance.vid.restart()
                     self.PlayVideoInstance.progress_value = 0
@@ -552,20 +706,25 @@ class EventHandler:
                     fileName = 'VideoPlayList-' + str(len(self.PlayVideoInstance.videoList)) + '.txt'
                     self.PlayVideoInstance.savePlayList(fileName)
                 case const.KEY_APPLY_SHARPENING:
-                    print("Pressed u key")
+                    print("Apply Sharpening #1 (u-key)")
                     self.reInitVideo('apply_sharpening', self.PlayVideoInstance.vid.frame)
+                case const.KEY_APPLY_NOISE:                                 # v key
+                    #print("Pressed v key - Noise filter")
+                    self.reInitVideo('apply_noise', self.PlayVideoInstance.vid.frame)
                 case const.KEY_APPLY_DENOISING:
-                    print("Pressed v key")
                     self.reInitVideo('apply_denoising', self.PlayVideoInstance.vid.frame)
-                case const.KEY_PRT_META_CONSOLE:
-                    self.PlayVideoInstance.printMetaData()
+                #case const.KEY_PRT_META_CONSOLE:
+                #   self.PlayVideoInstance.printMetaData()
                 case const.KEY_SEEK_FWD:
                     self.handle_key_seek(20)
                 case const.KEY_SEEK_BACK:
                     self.handle_key_seek(-20)
                 case const.KEY_PREV_VID:
-                    if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
-                        return
+                    #if hasattr(self.PlayVideoInstance, 'show_filter_panel') and self.PlayVideoInstance.show_filter_panel:
+                    #    return
+                    if hasattr(self.PlayVideoInstance, 'bilateral_panel'):
+                        if self.PlayVideoInstance.bilateral_panel.is_visible():
+                            return
                     # Disable video loop for current video before going back to the previous one.
                     if self.PlayVideoInstance.opts.loop_flag:
                         self.PlayVideoInstance.opts.loop_flag = False
@@ -615,12 +774,44 @@ class EventHandler:
                         self.PlayVideoInstance.vid.update()
                     except Exception as e:
                         pass
+                case const.KEY_POST_PROCESSING:
+                    if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
+                            self.PlayVideoInstance.video_info_box or
+                            self.PlayVideoInstance.filter_info_box):
+
+                        if self.PlayVideoInstance.drawHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.video_info_box:
+                            self.PlayVideoInstance.video_info_box = False
+                        if self.PlayVideoInstance.filter_info_box:
+                            self.PlayVideoInstance.filter_info_box = False
+
+                    self.PlayVideoInstance.filter_checkbox_panel = not self.PlayVideoInstance.filter_checkbox_panel
+                    self.PlayVideoInstance.filterCheckboxPanel.toggle_visibility()
+                    if self.PlayVideoInstance.filter_checkbox_panel:
+                        self.PlayVideoInstance.DrawFilterCheckboxPanel()
+                case const.KEY_LIST_POST_PROCESSING:              # INS key
+                    # If the help box is visible, turn it off
+                    if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
+                            self.PlayVideoInstance.video_info_box or
+                            self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
+
+                        self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        self.PlayVideoInstance.video_info_box = False
+                        self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
+                    #
+                    self.PlayVideoInstance.filter_info_box = not self.PlayVideoInstance.filter_info_box
+                    if self.PlayVideoInstance.filter_info_box:
+                        self.PlayVideoInstance.DrawFilterInfoBox()
                 case const.KEY_F1:
                     pass
                 case const.KEY_F2:
-                    print("Pressed bilateral filter key")
-                    self.reInitVideo('bilateral_filter', self.PlayVideoInstance.vid.frame)
-
+                    pass
                 case const.KEY_F3:
                     pass
                 case const.KEY_F4:
@@ -641,55 +832,95 @@ class EventHandler:
                     pass
                 case const.KEY_F12:
                     pass
-                case const.KEY_EXCLAIM if event.mod & pygame.KMOD_SHIFT:       # ! = sharpen
-                    print("Pressed Sharpen key")
-                    self.reInitVideo('sharpen', self.PlayVideoInstance.vid.frame)
-                case const.KEY_AT if event.mod & pygame.KMOD_SHIFT:       # @ = blur
-                    print("Pressed blur key")
+                case pygame.K_SEMICOLON if event.mod & pygame.KMOD_SHIFT:
+                    self.reInitVideo('neon', self.PlayVideoInstance.vid.frame)
+                case pygame.K_SEMICOLON:
+                    self.reInitVideo('apply_contrast_enhancement', self.PlayVideoInstance.vid.frame)
+                case pygame.K_QUOTE if event.mod & pygame.KMOD_SHIFT:
+                    self.reInitVideo('pixelate', self.PlayVideoInstance.vid.frame)
+                case pygame.K_QUOTE:
+                    self.reInitVideo('vignette', self.PlayVideoInstance.vid.frame)
+                case pygame.K_COMMA if event.mod & pygame.KMOD_SHIFT:
+                    self.reInitVideo('cel_shading', self.PlayVideoInstance.vid.frame)
+                case const.KEY_FLIPLR:
+                    self.reInitVideo('fliplr', self.PlayVideoInstance.vid.frame)
+                case const.KEY_FLIPUP:
+                    self.reInitVideo('flipup', self.PlayVideoInstance.vid.frame)
+                case const.KEY_APPLY_ARTISTIC_FILTERS:
+                    self.reInitVideo('apply_artistic_filters', self.PlayVideoInstance.vid.frame)
+                case const.KEY_EXCLAIM if event.mod & pygame.KMOD_SHIFT:
+                    self.opts.apply_laplacian = not self.opts.apply_laplacian
+                    self.PlayVideoInstance.FilterDialogBox(f"Apply Laplacian Boost effect is {'enabled' if self.opts.apply_laplacian else 'disabled'}")
+                    print(f"Apply Laplacian Boost Filter is: {'Enabled' if self.opts.apply_laplacian is True else 'Disabled'}")
+                    self.reInitVideo('laplacian_boost', self.PlayVideoInstance.vid.frame)
+                case const.KEY_EXCLAIM:
+                    self.PlayVideoInstance.laplacian_panel.toggle_visibility()
+                    if self.PlayVideoInstance.laplacian_panel.is_visible:
+                        if self.PlayVideoInstance.edge_panel.is_visible:
+                            self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.sepia_panel.is_visible:
+                            self.PlayVideoInstance.sepia_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.control_panel.is_visible:
+                            self.PlayVideoInstance.control_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.oil_painting_panel.is_visible:
+                            self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                    self.reInitVideo('laplacian_boost', self.PlayVideoInstance.vid.frame)
+                case const.KEY_AT if event.mod & pygame.KMOD_SHIFT:                          # @ = blur
                     self.reInitVideo('blur', self.PlayVideoInstance.vid.frame)
                 case const.KEY_HASH if event.mod & pygame.KMOD_SHIFT:       # # = edge_detect
-                    print("Pressed edge_detect key")
                     if self.opts.emboss or self.opts.greyscale or self.opts.sepia:
                         return
                     else:
                         self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
                 case const.KEY_DOLLAR if event.mod & pygame.KMOD_SHIFT:       # $ = emboss
-                    print("Pressed emboss key")
+                    #print("Pressed emboss key")
                     self.reInitVideo('emboss', self.PlayVideoInstance.vid.frame)
                 case const.KEY_PERCENT if event.mod & pygame.KMOD_SHIFT:       # % = thermal
-                    print("Pressed thermal key")
+                    #print("Pressed thermal key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('thermal', self.PlayVideoInstance.vid.frame)
                 case const.KEY_CARET if event.mod & pygame.KMOD_SHIFT:       # ^ = dream
-                    print("Pressed dream key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('dream', self.PlayVideoInstance.vid.frame)
                 case const.KEY_AMPERSAND if event.mod & pygame.KMOD_SHIFT:       # & = comic
-                    print("Pressed comic key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
                     else:
                         self.reInitVideo('comic', self.PlayVideoInstance.vid.frame)
-                case const.KEY_ASTERISK if event.mod & pygame.KMOD_SHIFT:       # * = sepia
-                    print("Pressed sepia key")
+                case const.KEY_ASTERISK if event.mod & pygame.KMOD_SHIFT:
+                    self.opts.apply_sepia = not self.opts.apply_sepia
+                    self.PlayVideoInstance.FilterDialogBox(f"Apply Super-Sepia effect is {'enabled' if self.opts.apply_sepia else 'disabled'}")
+                    print(f"Apply Super-Sepia effect is: {'Enabled' if self.opts.apply_sepia is True else 'Disabled'}")
+                    self.reInitVideo('sepia', self.PlayVideoInstance.vid.frame)
+                case const.KEY_ASTERISK:       # * = sepia
                     if self.opts.greyscale \
                             or self.opts.emboss \
                             or self.opts.thermal \
                             or self.opts.dream \
                             or self.opts.neon:
                         return
+                    self.PlayVideoInstance.sepia_panel.toggle_visibility()
+                    if self.PlayVideoInstance.sepia_panel.is_visible:
+                        if self.PlayVideoInstance.edge_panel.is_visible:
+                            self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.control_panel.is_visible:
+                            self.PlayVideoInstance.control_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.oil_painting_panel.is_visible:
+                            self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.laplacian_panel.is_visible:
+                            self.PlayVideoInstance.laplacian_panel.toggle_visibility()
                     self.reInitVideo('sepia', self.PlayVideoInstance.vid.frame)
-
-                case const.KEY_LEFT_PAREN if event.mod & pygame.KMOD_SHIFT:      # ( = None
-                    print("Pressed None")
-                    self.reInitVideo('None', self.PlayVideoInstance.vid.frame)
-                case const.KEY_RIGHT_PAREN if event.mod & pygame.KMOD_SHIFT:       # ) = gaussian_blur
-                    print("Pressed gaussian_blur key")
+                case const.KEY_LEFT_PAREN if event.mod & pygame.KMOD_SHIFT:       # ( = gaussian_blur
                     self.reInitVideo('gaussian_blur', self.PlayVideoInstance.vid.frame)
+                case const.KEY_RIGHT_PAREN if event.mod & pygame.KMOD_SHIFT:
+                    self.reInitVideo('median_blur', self.PlayVideoInstance.vid.frame)
+                case pygame.K_LEFTBRACKET:                 # _ = None
+                    print("Set all filters to False")
+                    self.reInitVideo('None', self.PlayVideoInstance.vid.frame)
 
     def handle_key_seek(self, seek):
         """
@@ -830,13 +1061,26 @@ class EventHandler:
 
     def saveFrameShot(self):
         """
-        Queues a screenshot operation to be performed during the next frame render.
+        Handles the operation for saving a screenshot from the current video frame.
+
+        This method checks the state of the current frame, ensures that a screenshot directory exists,
+        and generates a unique filename for the screenshot. The screenshot save operation is queued
+        instead of being performed immediately.
+
+        Raises:
+            None
+
+        Parameters:
+            None
+
+        Returns:
+            None
         """
         # Early exit if no frame available
         if self.PlayVideoInstance.vid.frame_surf is None:
             return
 
-        saveDir = self.PlayVideoInstance.check_SSHOT_dir()
+        saveDir = self.PlayVideoInstance.check_SSHOT_dir(noImgType=(True if  self.opts.separateDirs is True else False))
         msg = self.PlayVideoInstance.save_sshot_error
         if msg is not None or saveDir is None:
             return
@@ -1202,94 +1446,235 @@ class EventHandler:
 
     def reInitVideo(self, flag, frame_num):
         """
-        reinitializes video processing options based on a specified flag and frame number.
+        Toggles various video processing effects and updates the corresponding settings and state.
 
-        This method toggles various video processing options according to the provided flag.
-        upon successfully toggling an option, the `reinit_video` method is called to reinitialize
-        the video with the given frame number. If no option is toggled, certain flags and settings
-        are set to their default values.  The string identifier 'None' is a special case where ALL
-        post-processing filters are disabled.
+        This method is responsible for enabling or disabling specific video processing filters based on
+        the provided flag. When toggling certain filters, additional behaviors, like interacting with
+        panels or updating video processing states, may occur. It includes special handling for bilateral
+        filters with panel interactions.
 
-        Parameters:
-            flag (str): A string identifier representing the video processing option to toggle.
-                        Accepted values include 'apply_denoising', 'apply_sharpening',
-                        'apply_edges_sobel', 'apply_inverted', 'apply_contrast_enhancement',
-                        'greyscale', 'sharpen', 'blur', 'gaussian_blur', 'sepia', 'edge_detect',
-                        'emboss', 'neon', 'dream', 'thermal', 'comic', or 'None'.
-            frame_num (int): The video frame number to seek to upon the video being reinitialized for video processing.
+        Attributes:
+            opts: Configurations or options controlling the video processing filters and states.
+            PlayVideoInstance: The instance managing video playback and filter panels.
+            debug: Boolean flag for enabling debug logs during bilateral filter panel activation.
 
-        Raises:
+        Arguments:
+            flag (str): Identifier for the video processing effect to toggle. Specific flags correspond
+                to the filter or behavior being acted upon (e.g., 'apply_artistic_filters', 'fliplr', etc.).
+            frame_num (int): Current video frame number during the effect toggle.
+
+        Returns:
             None
         """
         pp_flag = None
         last_frame = frame_num
 
         match flag:
+            case 'apply_adjust_video':
+                self.opts.apply_adjust_video = not self.opts.apply_adjust_video
+                self.PlayVideoInstance.FilterDialogBox(f"Brightness/Contrast filter is {'enabled' if self.opts.apply_adjust_video else 'disabled'}")
+                print(f"Apply Adjust Video Filter (Brightness/Contrast) is: {'Enabled' if self.opts.apply_adjust_video is True else 'Disabled'}")
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.opts.adjust_video = True
+                    self.opts.brightness = 0
+                    self.opts.contrast = 0
+                else:
+                    self.opts.adjust_video = False
+                pp_flag = self.opts.apply_adjust_video
+            case 'apply_artistic_filters':
+                self.opts.apply_artistic_filters = not self.opts.apply_artistic_filters
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Artistic filter is now {'enabled' if self.opts.apply_artistic_filters else 'disabled'}")
+                print(f"apply_artistic_filters: {'True' if self.opts.apply_artistic_filters else 'False'}")
+                pp_flag = self.opts.apply_artistic_filters
+            case 'fliplr':
+                self.opts.fliplr = not self.opts.fliplr
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                   self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Flip Left-Right effect is now {'enabled' if self.opts.fliplr else 'disabled'}")
+                print(f"fliplr: {'True' if self.opts.fliplr else 'False'}")
+                pp_flag = self.opts.fliplr
+            case 'flipup':
+                self.opts.flipup = not self.opts.flipup
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Flip Up-Down effect is now {'enabled' if self.opts.flipup else 'disabled'}")
+                print(f"flipup: {'True' if self.opts.flipup else 'False'}")
+                pp_flag = self.opts.flipup
+            case 'pixelate':
+                self.opts.pixelate = not self.opts.pixelate
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Pixelate effect is now {'enabled' if self.opts.pixelate else 'disabled'}")
+                print(f"pixelate: {'True' if self.opts.pixelate else 'False'}")
+                pp_flag = self.opts.pixelate
+            case 'vignette':
+                self.opts.vignette = not self.opts.vignette
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Vignette effect is now {'enabled' if self.opts.vignette else 'disabled'}")
+                print(f"vignette: {'True' if self.opts.vignette else 'False'}")
+                pp_flag = self.opts.vignette
+            case 'cel_shading':
+                self.opts.cel_shading = not self.PlayVideoInstance.opts.cel_shading
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Cel-Shading effect is now {'enabled' if self.opts.cel_shading else 'disabled'}")
+                print(f"cel_shading {'True' if self.opts.cel_shading else 'False'}")
+                pp_flag = self.opts.cel_shading
+            case 'apply_noise':
+                self.opts.noise = not self.opts.noise
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Noise effect is now {'enabled' if self.opts.noise else 'disabled'}")
+                print(f"apply_noise: {'True' if self.opts.noise else 'False'}")
+                pp_flag = self.opts.noise
             case 'apply_denoising':
                 self.opts.apply_denoising = not self.opts.apply_denoising
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Apply-Denoising  filter is now {'enabled' if self.opts.apply_denoising else 'disabled'}")
                 print(f"apply_denoising: {'True' if self.opts.apply_denoising else 'False'}")
                 pp_flag = self.opts.apply_denoising
             case 'apply_sharpening':
                 self.opts.apply_sharpening = not self.opts.apply_sharpening
-                print(f"apply_sharpening: {'True' if self.opts.apply_sharpening else 'False'}")
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"U-Sharpen filter is now {'enabled' if self.opts.apply_sharpening else 'disabled'}")
+                print(f"apply_sharpening #1: {'True' if self.opts.apply_sharpening else 'False'}")
                 pp_flag = self.opts.apply_sharpening
+            case 'laplacian':
+                self.opts.laplacian = not self.opts.laplacian
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Laplacian Boost filter is now {'enabled' if self.opts.laplacian else 'disabled'}")
+                print(f"Laplacian Boost: {'True' if self.opts.laplacian else 'False'}")
+                pp_flag = self.opts.laplacian
             case 'apply_edges_sobel':
                 self.opts.apply_edges_sobel =  not self.opts.apply_edges_sobel
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Sobel Edge filter is now {'enabled' if self.opts.apply_edges_sobel else 'disabled'}")
                 print(f"apply_edges_sobel {'True' if self.opts.apply_edges_sobel else 'False'}")
                 pp_flag = self.opts.apply_edges_sobel
             case 'apply_inverted':
                 self.opts.apply_inverted = not self.opts.apply_inverted
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Inversion filter is now {'enabled' if self.opts.apply_inverted else 'disabled'}")
                 print(f"apply_inverted: {'True' if self.opts.apply_inverted else 'False'}")
+                pp_flag = self.opts.apply_inverted
             case 'apply_contrast_enhancement':
                 self.opts.apply_contrast_enhancement = not self.opts.apply_contrast_enhancement
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Apply-Contrast effect is now {'enabled' if self.opts.apply_contrast_enhancement else 'disabled'}")
                 print(f"apply_contrast_enhancement: {'True' if self.opts.apply_contrast_enhancement else 'False'}")
                 pp_flag = self.opts.apply_contrast_enhancement
             case 'greyscale':
                 self.opts.greyscale = not self.opts.greyscale
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    # The filter checkbox is visible, so force as refresh of its checkbox status
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Greyscale filter is now {'enabled' if self.opts.greyscale else 'disabled'}")
                 print(f"greyscale: {'True' if self.opts.greyscale else 'False'}")
                 pp_flag = self.opts.greyscale
-            case 'sharpen':
-                self.opts.sharpen = not self.opts.sharpen
-                print(f"sharpen: {'True' if self.opts.sharpen else 'False'}")
-                pp_flag = self.opts.sharpen
-                print(f"sharpen: {'True' if pp_flag else 'False'}")
             case 'blur':
                 self.opts.blur = not self.opts.blur
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Blur filter is now {'enabled' if self.opts.blur else 'disabled'}")
                 print(f"blur: {'True' if self.opts.blur else 'False'}")
                 pp_flag = self.opts.blur
             case 'gaussian_blur':
                 self.opts.gaussian_blur = not self.opts.gaussian_blur
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Gaussian-Blur filter is now {'enabled' if self.opts.gaussian_blur else 'disabled'}")
                 print(f"gaussian_blur: {'True' if self.opts.gaussian_blur else 'False'}")
                 pp_flag = self.opts.gaussian_blur
+            case 'median_blur':
+                self.opts.median_blur = not self.opts.median_blur
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Median-Blur filter is now {'enabled' if self.opts.median_blur else 'disabled'}")
+                print(f"median_blur: {'True' if self.opts.median_blur else 'False'}")
+                pp_flag = self.opts.median_blur
             case 'sepia':
-                self.opts.sepia = not self.opts.sepia
+                if self.opts.apply_sepia:
+                    self.opts.sepia = True
+                else:
+                    self.opts.sepia = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                #self.PlayVideoInstance.FilterDialogBox(f"Super-Sepia filter is now {'enabled' if self.opts.sepia else 'disabled'}")
                 print(f"sepia: {'True' if self.opts.sepia else 'False'}")
                 pp_flag = self.opts.sepia
             case 'edge_detect':
-                self.opts.edge_detect = not self.opts.edge_detect
-                print(f"edge_detect: {'True' if self.opts.edge_detect else 'False'}")
-                pp_flag = self.opts.edge_detect
+                if self.opts.apply_edge_detect:
+                    self.opts.edge_detect = True
+                else:
+                    self.opts.edge_detect = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+               #self.PlayVideoInstance.FilterDialogBox(f"Edge-Detect effect is now {'enabled' if self.opts.apply_edge_detect else 'disabled'}")
+                print(f"edge_detect: {'True' if self.PlayVideoInstance.opts.edge_detect else 'False'}")
+                pp_flag = self.PlayVideoInstance.opts.edge_detect
+            case 'oil_painting':
+                if self.opts.apply_oil_painting:
+                    self.opts.oil_painting = True
+                else:
+                    self.opts.oil_painting = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                print(f"oil_painting: {'True' if self.PlayVideoInstance.opts.oil_painting else 'False'}")
+                pp_flag = self.PlayVideoInstance.opts.oil_painting
+            case 'laplacian_boost':
+                if self.opts.apply_laplacian:
+                    self.opts.laplacian = True
+                else:
+                    self.opts.laplacian = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                print(f"laplacian_boost: {'True' if self.PlayVideoInstance.opts.laplacian else 'False'}")
+                pp_flag = self.PlayVideoInstance.opts.laplacian
             case 'emboss':
                 self.opts.emboss = not self.opts.emboss
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Emboss effect is now {'enabled' if self.opts.emboss else 'disabled'}")
                 print(f"emboss: {'True' if self.opts.emboss else 'False'}")
                 pp_flag = self.opts.emboss
             case 'neon':
                 self.opts.neon = not self.opts.neon
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Neon effect is now {'enabled' if self.opts.neon else 'disabled'}")
                 print(f"neon: {'True' if self.opts.neon else 'False'}")
                 pp_flag = self.opts.neon
             case 'dream':
                 self.opts.dream = not self.opts.dream
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Dream effect is now {'enabled' if self.opts.dream else 'disabled'}")
                 print(f"dream: {'True' if self.opts.dream else 'False'}")
                 pp_flag = self.opts.dream
             case 'thermal':
                 self.opts.thermal = not self.opts.thermal
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Thermal effect is now {'enabled' if self.opts.thermal else 'disabled'}")
                 print(f"thermal: {'True' if self.opts.thermal else 'False'}")
                 pp_flag = self.opts.thermal
             case 'comic':
                 self.opts.comic = not self.opts.comic
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                self.PlayVideoInstance.FilterDialogBox(f"Comic effect is now {'enabled' if self.opts.comic else 'disabled'}")
                 print(f"comic: {'True' if self.opts.comic else 'False'}")
                 pp_flag = self.opts.comic
-
             case 'apply_bilateral_filter':
                 # Check if bilateral panel exists for preset cycling
                 if hasattr(self.PlayVideoInstance, 'bilateral_panel'):
@@ -1303,12 +1688,18 @@ class EventHandler:
                     self.PlayVideoInstance.bilateral_filter_enabled = filter_active
 
                     if filter_active:
+                        self.opts.CUDA_bilateral_filter = True
                         preset_name = self.PlayVideoInstance.bilateral_panel.get_current_preset_name()
                         if self.debug:
                             print(f"Bilateral Filter: {preset_name}")
+
+                        self.PlayVideoInstance.FilterDialogBox(f"CUDA-Bilateral preset: {preset_name}")
                     else:
+                        self.PlayVideoInstance.FilterDialogBox(f"CUDA-Bilateral filter is disabled")
+                        self.opts.CUDA_bilateral_filter = False
                         if self.debug:
                             print("Bilateral Filter: OFF")
+
                         else:
                             pass
 
@@ -1316,15 +1707,27 @@ class EventHandler:
                 else:
                     # Fallback to original toggle behavior if panel doesn't exist
                     self.opts.apply_bilateral_filter = not self.opts.apply_bilateral_filter
+                    if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                        self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.FilterDialogBox(f"CUDA-Bilateral filter is {'enabled' if self.opts.apply_bilateral_filter else 'disabled'}")
                     print(f"bilateral filter: {'True' if self.opts.apply_bilateral_filter else 'False'}")
-
                     pp_flag = self.opts.apply_bilateral_filter
-
             case 'apply_bilateral_filter_panel':
                 self.debug = True
-                self.PlayVideoInstance.show_filter_panel = not self.PlayVideoInstance.show_filter_panel
-
-                if not self.PlayVideoInstance.show_filter_panel:
+                #self.PlayVideoInstance.show_filter_panel = not self.PlayVideoInstance.show_filter_panel
+                #self.PlayVideoInstance.bilateral_panel.is_visible = not self.PlayVideoInstance.bilateral_panel.is_visible
+                self.PlayVideoInstance.bilateral_panel.toggle_visibility()
+                if self.PlayVideoInstance.bilateral_panel.is_visible():
+                    if self.PlayVideoInstance.edge_panel.is_visible:
+                        self.PlayVideoInstance.edge_panel.toggle_visibility()
+                    elif self.PlayVideoInstance.control_panel.is_visible:
+                        self.PlayVideoInstance.control_panel.toggle_visibility()
+                    elif self.PlayVideoInstance.laplacian_panel.is_visible:
+                        self.PlayVideoInstance.laplacian_panel.toggle_visibility()
+                    elif self.PlayVideoInstance.oil_painting_panel.is_visible:
+                        self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
+                if not self.PlayVideoInstance.bilateral_panel.is_visible():
+                    self.opts.CUDA_bilateral_filter = True if self.opts.apply_bilateral_filter else False
                     print(f"Bilateral Filter Panel: Hidden (filter remains {'ON' if self.opts.apply_bilateral_filter else 'OFF'})")
                     return
 
@@ -1336,18 +1739,17 @@ class EventHandler:
                 self.opts._play_video_instance = self.PlayVideoInstance
                 self.PlayVideoInstance._event_handler = self
 
-
                     # If filter is currently OFF, enable it with default preset
                 if not self.opts.apply_bilateral_filter:
                     print("Bilateral Filter Panel: Enabling filter with default preset")
 
                     # Apply default preset (this will set filter_enabled=True)
-                    panel.apply_preset('default')
                     panel.preset_dropdown.set_selected_option('default')
 
                     # Update all the flags to be consistent
                     self.opts.apply_bilateral_filter = True
                     self.PlayVideoInstance.bilateral_filter_enabled = True
+                    self.opts.CUDA_bilateral_filter = True
 
                     # CRITICAL: Set pp_flag to trigger video reinitialization
                     pp_flag = True
@@ -1363,30 +1765,64 @@ class EventHandler:
                     current_preset = panel.current_preset
                     panel.preset_dropdown.set_selected_option(current_preset)
 
+                    self.opts.CUDA_bilateral_filter = True
                     # No need to reinit video if filter was already active
+                    if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                        self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                     pp_flag = None
-
             case 'bilateral_filter_dropdown_change':
                 # This case is triggered when the dropdown selection changes the filter state
                 # The panel has already updated self.opts.apply_bilateral_filter
                 # We just need to set pp_flag to trigger video reinitialization
                 pp_flag = True  # Always reinit when dropdown changes filter state
                 print(f"Bilateral filter dropdown change - filter now {'ON' if self.opts.apply_bilateral_filter else 'OFF'}")
-
+                if self.opts.apply_bilateral_filter:
+                    self.opts.CUDA_bilateral_filter = True
+                else:
+                    self.opts.CUDA_bilateral_filter = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
             case 'None':
+                self.opts.fliplr = False
+                self.opts.flipud = False
+                self.opts.pixelate = False
+                self.opts.vignette = False
+                self.opts.cel_shading = False
+                self.opts.noise = False
+                self.opts.median_blur = False
                 self.opts.comic = False
                 self.opts.thermal = False
                 self.opts.emboss = False
-                self.opts.sharpen = False
+
                 self.opts.greyscale = False
                 self.opts.sepia = False
+                self.opts.apply_sepia = False
+                self.opts.apply_edge_detect = False
                 self.opts.edge_detect = False
+                self.opts.edge_lower = 100
+                self.opts.edge_upper = 200
+
+                self.opts.pencil_sketch = False
+                self.opts.apply_pencil_sketch = False
+
+                self.opts.apply_oil_painting = False
+                self.opts.oil_painting = False
+                self.opts.oil_size = 7
+                self.opts.oil_dynamics = 1
+
+                self.opts.apply_laplacian = False
+                self.opts.sharpen = False
+                self.opts.laplacian_kernel_size = 1
+                self.opts.laplacian_boost_strength = 9.5
+
                 self.opts.blur = False
                 self.opts.neon = False
                 self.opts.dream = False
                 self.opts.adjust_video = False
+                self.opts.apply_adjust_video = False
                 self.opts.brightness  = 0
                 self.opts.contrast    = 0
+                self.opts.apply_artistic_filters = False
                 self.opts.gaussian_blur = False
                 self.opts.apply_inverted = False
                 self.opts.apply_denoising = False
@@ -1395,8 +1831,11 @@ class EventHandler:
                 self.opts.apply_bilateral_filter = False
                 self.opts.apply_contrast_enhancement = False
                 self.opts.apply_bilateral_filter_panel = False
+                if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 pp_flag = False
                 print("None")
+                self.PlayVideoInstance.FilterDialogBox("All post-processing filters are now disabled",sleep=True)
 
         if pp_flag is not None:
             self.reinit_video(last_frame)
