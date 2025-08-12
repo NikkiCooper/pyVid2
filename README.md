@@ -140,12 +140,13 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 🗂️ <span style="color:DodgerBlue">File Options</span>
 
-| Argument              | Description                                                                 |
-|-----------------------|-----------------------------------------------------------------------------|
-| `--noIgnore`          | Ignore `.ignore` files entirely                                             |
-| `--noRecurse`         | Prevent recursive scanning in `--Paths` subfolders                          |
-| `--printVideoList`    | Output list of all playable videos from scan                                |
-| `--printIgnoreList`   | Show `.ignore` file results from subfolders                                 |
+| Argument               | Description                                                                 |
+|------------------------|-----------------------------------------------------------------------------|
+| `--noIgnore`           | Ignore `.ignore` files entirely                                             |
+| `--noRecurse`          | Prevent recursive scanning in `--Paths` subfolders                          |
+| `--separateDirs`       | Separate screen-shots into Landscape and Portrait sub-folders               |                              
+| `--printVideoList`     | Output list of all playable videos from scan                                |
+| `--printIgnoreList`    | Show `.ignore` file results from subfolders                                 |
 
 
 ---
@@ -297,6 +298,7 @@ nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, whic
 
 
 
+
 ### 🎬 <span style="color:DodgerBlue">Playback status bar</span>
 The playback status bar is work in progress. It is automatically displayed when the mouse cursor is in the lower 15% of
 the display. It accepts mouse button clicks too.  This includes the Playback speed and the Volume.  Left-clicking on the 
@@ -326,12 +328,13 @@ There are a number of keyboard commands available while a video is playing:
 - ░**o**░ = Toggle OSD views. (3 states)
 - ░**p**░ or **Space Bar** = Pause video.
 - ░**q**░ or **ESC** = Quit the program
-- ░**r**░ = Restart the currently playing video back to the beginning.
+- ░**r**░ or **HOME** = Restart the currently playing video back to the beginning.
 - ░**s**░ = Save Screenshot to ~/pyVidScreenShots
 - ░**t**░ = Toggle mp4 Title display. (3 states)
 - ░**w**░ = Save pyVid2s internal playlist to a file.
 - ░ **+** ░ = (keypad) Increase playback speed by 0.50  (*max is 5.0*)
 - ░ **-** ░ = (keypad) Decrease playback speed by 0.50  (*min is 0.50*)
+- ░**END**░ = Seek to the end of video minus about 10 seconds (video_duration - 10) sec.
 - ░**→**░ Seek *forward* 20 seconds.
 - ░**←**░ Seek *backward* 20 seconds.
 - ░**↑**░ Increase the volume by 10%.
@@ -366,6 +369,12 @@ In the *2nd* mode, the **HH:MM:SS** to the far left is the ***current play posit
 The *3rd* mode behaves in a special manner.  When the ***current play position*** is approx. ***20 seconds*** from the video end, its default color will slowly fade to a much brighter one giving a visual indication the video is 20 seconds from completion.  Currently, the OSD timings are displayed in the color of **DodgerBlue**. When the color fading begins in *mode 3*, The OSD text color slowly fades until it reaches **HotPink** which denotes the end of the video had been reached. By default, the OSD is ***OFF*** when **pyVid2** is run. The command line argument ***--enableOSDcurpos*** enables OSD mode 3 at runtime.
 
 
+### 💻 <span style="color:DodgerBlue">Portrait frame Detection</span>
+
+Portrait frame detection determines whether a given image surface represents a "portrait" orientation by analyzing its pixel data. The method inspects specific regions on the left and right edges of the
+image to verify if they contain predominantly black pixels (with a threshold applied for RGB channel values). The function relies on efficient pixel access and locks the input surface during processing. The portrait detection is based on specified areas and is useful for identifying images surrounded by black padding.  Note that this is highly experimental and is likely to not be useful to the vast majority of users.  In fact,it is likely to not even work at all!  Currently, **Display Video Title**,  **--dispTitle** and friends (see below), as well as screenshot saving when using the command line argument **--separateDirs** make use of this. When specifying **--separateDirs** on the command line and upon saving a screenshot, Portrait fame detection is enabled and saved screenshots will be placed in Landscape and Portrait subfolders.  This functionality has very limited usefulness and will likely **NOT** work for most people.   
+
+
 ### 💻 <span style="color:DodgerBlue">Display Video Title</span>
 
 This command key (t) along with its command line interface counterpart **--dispTitle** deserves some explanation.
@@ -375,8 +384,8 @@ of a photographer. He or she may wish to show-ase their work by rendering their 
 - **portrait**  =  Display metadata title tag text on detected portrait frames
 - **landscape** =  Display metadata title tag text on landscape frames (likely all frames) 
 
-The portrait detection algorithm is rather crude.  If it counts at least 1000 pixels of the color black from the left most position AND  at least 1000 pixels of black counting from the extreme right to the left in a frame, then the frame is considered to be a portrait, otherwise, it is considered to be a landscape.  There are so many cases where this will fail.  It is suggested to just use **all** and not worry about it.  The command key (t) will toggle between the various possible states: **None**->**all**->**portrait**->**landscape**->**None**    
- 
+The portrait detection algorithm is rather crude. There are so many cases where this will fail.  It is suggested to just use **all** and not worry about it. The command key (t) will toggle between the various possible states: **None**->**all**->**portrait**->**landscape**->**None**    
+
 Note that the selection of any parameter other than **all* is likely not going to work as intended.  Customized metadata tags can be added to a mp4 video (and likely others) by using ffmpeg:
 ```sh
 # The -c copy is very important as it will prevent having to transcode the entire video over again. 

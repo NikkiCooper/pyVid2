@@ -9,32 +9,28 @@
 
 # Help text
 HELP_TEXT_LEFT = """VIDEO CONTROLS
-[ g ] = Greyscale video
+[ H ] = Post-Processing help
+[ INS ] = Post-Processing flt status
 [ i ] = Show metadata info
-[ j ] = Randomize playlist
-[ l ] = Repeat video
-[ n ] = Next video
-[ o ] = Toggle OSD (3 states)
-[ q ] or [ ESC ] = Quit
-[ r ] = Restart video
-[ t ] = Toggle video title (3 states)
+[ I ] = Toggle Interpolation (3 states)
 
-Keypad [ + ] = Increase speed
-Keypad [ - ] = Decrease speed
-
-[ backspace ] = Previous video
 [ p ] or [ space ] = Pause video
-[ left arrow ] = Seek -20 sec
-[ right arrow ] = Seek +20 sec
+[ n ] = Next video
+[ backspace ] = Previous video
+[ L ] = Repeat video
 
-[ Mousewheel UP ]  =  Seek +4 sec
-[ Mousewheel DWN ] =  Seek -4 sec
+[ o ] = Toggle OSD (3 states)
+[ t ] = Toggle video title (3 states)
+[ r ] or [ HOME ] = Restart video
+[ q ] or [ ESC ] = Quit
+
+Keypad [ +/-] = Faster/Slower speed
+[ R/L arrow ] = Seek +/- 20 sec
 """
 
 HELP_TEXT_RIGHT = """AUDIO CONTROLS
 [ m ] = Mute audio
-[ up arrow ] = Volume Up
-[ down arrow ] = Volume Down
+[ Up/Dn arrow ] = Vol Up/Dn
 
 FILE CONTROLS
 [ s ] = Save screenshot
@@ -44,12 +40,11 @@ FILE CONTROLS
 DEBUG CONTROLS
 [ b ] = Print bar coordinates
 [ d ] = Print CLI vars
-[ z ] = Print metadata
 
 MOUSE CONTROLS
 Left (Long) = Next video
 Middle (Short) = Pause video
 Right (Long) = Prev video
-Left + Right = Quit
+[ M-Whl Up/Dn ]  =  Seek +/- 4 sec
 """
 

@@ -1,0 +1,2 @@
+# Copy  cuviddec.h  nvcuvid.h  nvEncodeAPI.h to /usr/local/cuda/include/
+sudo cp -v [~/Downloads/Video_Codec_Interface_13.0.19/Interface/* /usr/local/cuda/include/
