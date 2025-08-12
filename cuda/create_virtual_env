@@ -1,0 +1,7 @@
+
+python3 -m venv ~/venv-cv-cuda
+source ~/venv-cv-cuda/bin/activate
+
+pip install --upgrade pip
+pip install numpy
+

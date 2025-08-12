@@ -60,11 +60,16 @@ else
 	mediaPath="$1"
 fi
 
-
-../pyv2 --loop --enableFFprobe  \
---usePygameAudio --loopDelay=0 --playSpeed=1.5 \
---interp cubic --shuffle --sharpen \
---pencil-sketch --sketch-detail 41 \
+../pyv2 --loop \
+--enableFFprobe \
+--usePygameAudio \
+--loopDelay=0 \
+--playSpeed=1.5 \
+--interp cubic \
+--shuffle \
+--sharpen \
+--pencil-sketch \
+--sketch-detail 41 \
 --sketch-block-size 5 \
 --sketch-c-value 5 \
 --sketch-intensity 0.841 \
@@ -72,4 +77,5 @@ fi
 --adjust-video \
 --contrast 20  \
 --brightness 0 \
+--display 1 \
 --Paths "${mediaPath}"
