@@ -1,4 +1,4 @@
-# 🔥 The Ten Commandments of CUDA
+# 🔥 The Ten Commandments of CUDA 🔥 
 
 > *Thou shalt not dereference null pointers in device code, lest thy kernel be cast into the void.*
 
