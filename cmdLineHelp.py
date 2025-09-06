@@ -38,6 +38,7 @@ help = dict(
 	playSpeed=f"{bc.Light_Yellow_f}Set playback speed ({bc.Green_f}0.5{bc.Light_Yellow_f} - {bc.Green_f}5.0{bc.Light_Yellow_f})\n{bc.Magenta_f}Default: {bc.Green_f}1.0{bc.RESET}",
 	dispTitles=f"{bc.Light_Yellow_f}Where to display titles.{bc.RESET}",
 	enableOSDcurpos=f"{bc.Light_Yellow_f}Enable {bc.White_f}OSD{bc.Light_Yellow_f} current position counter on startup.{bc.RESET}",
+    showFilename=f"{bc.Light_Yellow_f}Enable {bc.White_f}OSD{bc.Light_Yellow_f} display of current video filename being played.{bc.RESET}",
 	#
 	sharpen=f"{bc.Light_Yellow_f}Enable {bc.White_f}Laplacian Boost{bc.Light_Yellow_f} filter.{bc.RESET}",
 	blur=f"{bc.Light_Yellow_f}Enable {bc.White_f}blurring{bc.Light_Yellow_f} filter.{bc.RESET}",

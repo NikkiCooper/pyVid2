@@ -242,12 +242,17 @@ class laplacianBoostPanel:
         if not isinstance(image, np.ndarray):
             raise TypeError("Input must be a NumPy ndarray")
 
+        self.cuda_devices = cv2.cuda.getCudaEnabledDeviceCount()
+        if not hasattr(laplacianBoostPanel, '_cuda_laplacianBoost_available'):
+            laplacianBoostPanel._cuda_laplacianBoost_available = self.cuda_devices > 0
+            if laplacianBoostPanel._cuda_laplacianBoost_available:
+                print(f"CUDA-based Laplacian boost initialized and available.")
+            else:
+                print(f"CUDA-based Laplacian boost is not available. Using CPU instead.")
+
         if self.cuda_devices > 0:
-            #print(f"Using CUDA to boost Laplacian effect.")
             return self.cuda_laplacian_boost(image)
-            #return self.enhanced_cuda_laplacian_boost(image)
         else:
-            #print(f"No CUDA devices found. Using CPU instead.")
             return self.cpu_laplacian_boost(image)
 
     def enhanced_cuda_laplacian_boost(self, image):
@@ -314,6 +319,7 @@ class laplacianBoostPanel:
         #boost_strength = round((self.laplacian_boost_strength_slider['value'] / 10.0) ** 2, 2)
         # maps  slider values 1-10 to 0.15-1.05  = linear scale
         boost_strength = 0.05 + self.laplacian_boost_strength_slider['value'] * 0.1
+
         # Upload to GPU
         gpu_image = cv2.cuda_GpuMat()
         gpu_image.upload(image)

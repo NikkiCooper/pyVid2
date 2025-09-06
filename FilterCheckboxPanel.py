@@ -7,9 +7,12 @@ DODGERBLUE4 = (16, 78, 139)
 HEADING_COLOR = (255, 200, 0)  # Yellow for headings
 FALSE_COLOR = HEADING_COLOR
 TRUE_COLOR = (50, 200, 0)
+CHECKBOX_CHECKED_COLOR = (80, 255, 0)
+LABEL_TEXT_COLOR = (0, 175, 255)
 
 import os
 import pygame
+import upScale as up_scale
 
 class Checkbox:
     """
@@ -74,7 +77,12 @@ class Checkbox:
         self.checked = False
         self.label = ""
         self.label_surface = None
+        self.label_rect = None
         self.font = pygame.font.Font(None, int(24 * 1.8))
+        USER_HOME = os.path.expanduser("~")
+        RESOURCES_DIR = USER_HOME + "/.local/share/pyVid/Resources/"
+        checked_icon = pygame.image.load(RESOURCES_DIR + "checkmark_white.png").convert_alpha()
+        self.checked_icon = pygame.transform.scale(checked_icon, (24, 24))
 
     def set_label(self, text):
         """
@@ -87,7 +95,7 @@ class Checkbox:
             text (str): The new text to set for the label.
         """
         self.label = text
-        self.label_surface = self.font.render(text, True, (0, 175, 255))  # DODGERBLUE
+        self.label_surface = self.font.render(text, True, LABEL_TEXT_COLOR)  # Bright Cyan
 
     def draw(self, screen):
         """
@@ -113,7 +121,11 @@ class Checkbox:
                 self.rect.width * 0.6,
                 self.rect.height * 0.6
             )
-            pygame.draw.rect(screen, (80, 255, 0), inner_rect, border_radius=1)
+            # Draw checkmark icon
+            pygame.draw.rect(screen, DODGERBLUE, inner_rect, border_radius=4)
+            check_icon_x = inner_rect.centerx - 5
+            check_icon_y = inner_rect.centery - 20
+            screen.blit(self.checked_icon, (check_icon_x, check_icon_y))
 
         # Draw label
         if self.label_surface:
@@ -121,6 +133,7 @@ class Checkbox:
                          self.rect.centery - self.label_surface.get_height() // 2)
             screen.blit(self.label_surface, label_pos)
             label_rect = self.label_surface.get_rect(topleft=label_pos)
+            self.label_rect = label_rect
 
             # Draw GPU icon if present
             if hasattr(self, 'gpu_icon'):
@@ -205,6 +218,10 @@ class FilterCheckboxPanel:
         self.filterCheckboxPanel_is_visible = False
         self.BOX_WIDTH_BASE = 800
 
+        # filter label tooltip
+        self.filter_label_tooltip = None
+        self.tooltip_surface = None
+
         # Calculate panel dimensions with 35% height reduction
         total_height = self.calculate_total_height()
         self.BOX_HEIGHT_BASE = int(total_height * 1)
@@ -213,8 +230,8 @@ class FilterCheckboxPanel:
         self.setup_scaling()
 
         # Define CUDA-enabled filters
-        self.cuda_filters = {'Bilateral', 'Laplacian', 'Gaussian-Blur',
-                             'Median-Blur' ,'Greyscale', 'Sepia',
+        self.cuda_filters = {'Bilateral', 'Laplacian', 'Gaussian-Blur', 'Emboss',
+                             'Median-Blur' ,'Greyscale', 'Sepia', 'Saturation',
                              'Edge Detect', 'Edges-Sobel', 'Contrast Enhance'
         }
         # Create checkboxes
@@ -509,6 +526,62 @@ class FilterCheckboxPanel:
         }
         return filter_map
 
+    def get_filter_tooltip(self, filter_name):
+        """
+        Retrieves a tooltip description for a specified filter.
+
+        The method matches a filter name to its corresponding
+        tooltip description from a predefined mapping. The tooltip
+        provides insight into the functionality and/or
+        characteristics of the filter.
+
+        Parameters:
+            filter_name (str): The name of the filter for which to
+            retrieve the tooltip description.
+
+        Returns:
+            str: The tooltip description associated with the filter
+            name.
+
+        Raises:
+            KeyError: If the specified filter_name does not exist in
+            the predefined filter map.
+        """
+        filter_map = {
+            'Laplacian': 'Laplacian Boost Filter.  CUDA-Accelerated',
+            'U-Sharp': 'U-Sharp Filter',
+            'Blur': 'Blur Filter',
+            'Median-Blur': 'Median-Blur Filter, Kernel Size: 3, CUDA-Accelerated',
+            'Gaussian-Blur': 'Gaussian-Blur Filter, Kernel Size: 5,5, SigmaX: 0, CUDA-Accelerated',
+            'Noise': 'Apply Noise to a video frame',
+            'Denoise': 'Remove noise from a video frame (S-L-O-W)',
+            'Greyscale': 'Convert video to greyscale. CUDA-Accelerated',
+            'Sepia': 'Apply sepia filter. Presets: Classic, Warm, Cool, Vintage. CUDA-Accelerated',
+            'Cel-Shading': 'Apply cel-shading filter',
+            'Saturation': 'Color Saturation Adjustment Filter.  CUDA-Accelerated',
+            'Contrast Enhance': 'Contrast Enhancement Filter. CUDA-Accelerated',
+            'Bright/Contrast': 'Apply Bright/Contrast Filter (Very Fast)',
+            'Vignette': 'Apply Vignette Filter',
+            'Thermal': 'Apply Thermal Filter',
+            'Emboss': 'Emboss Filter.  CUDA-Accelerated',
+            'Dream': 'Apply Dream Filter',
+            'Neon': 'Apply Neon Filter',
+            'Pixelate': 'Apply Pixelate Filter',
+            'Invert': 'Invert Filter',
+            'Flip-Left-Right': 'Flip Left-Right Filter',
+            'Flip-Up-Down': 'Flip Up-Down Filter',
+            'Comic': 'Comic Filter',
+            'Comic-Sharp': 'Comic-Sharp Filter',
+            'Oil Painting': 'Oil Painting Filter',
+            'Watercolor': 'Watercolor Filter',
+            'Pencil Sketch': 'Pencil Sketch Filter',
+            'Edges-Sobel': 'Apply Sobel Filter. CUDA-Accelerated',
+            'Edge Detect': 'Edge Detect Filter. CUDA-Accelerated',
+            'Artistic': 'Artistic Filter',
+            'Bilateral': 'Apply Bilateral Filter. CUDA-Accelerated'
+        }
+        return filter_map[filter_name]
+
     def draw(self, screen):
         """
         Draws the filter checkbox panel on the given screen.
@@ -589,6 +662,8 @@ class FilterCheckboxPanel:
                         if self.play_video.laplacian_panel.is_visible:
                             if self.play_video.edge_panel.is_visible:
                                 self.play_video.edge_panel.toggle_visibility()
+                            elif self.play_video.saturation_panel.is_visible:
+                                self.play_video.saturation_panel.toggle_visibility()
                             elif self.play_video.bilateral_panel.is_visible():
                                 self.play_video.bilateral_panel.toggle_visibility()
                             elif self.play_video.sepia_panel.is_visible:
@@ -617,13 +692,55 @@ class FilterCheckboxPanel:
                         setattr(self.play_video.opts, 'apply_denoising', checkbox.checked)
                         self.play_video.reInitVideo('apply_denoising',self.play_video.vid.frame)
                     case 'Greyscale':
-                        if self.play_video.opts.apply_sepia or self.play_video.opts.thermal or self.play_video.opts.emboss or self.play_video.opts.dream or self.play_video.opts.neon or self.play_video.opts.vignette:
+                        if self.play_video.opts.apply_sepia or self.play_video.opts.thermal or self.play_video.opts.emboss or self.play_video.opts.dream or self.play_video.opts.neon or self.play_video.opts.vignette or self.play_video.opts.saturation:
                             if self.play_video.opts.apply_sepia:  # is sepia enabled?
                                 cb = self.find_checkbox_by_label('Sepia')
                                 cb.checked = False
                                 self.play_video.apply_sepia = False
                                 self.play_video.opts.sepia = False
                                 self.play_video.sepia_panel.set_visible(False)
+
+                            if self.play_video.opts.saturation:
+                                cb = self.find_checkbox_by_label('Saturation')
+                                cb.checked = False
+                                self.play_video.opts.saturation = False
+                                self.play_video.opts.apply_saturation = False
+
+                            if self.play_video.opts.thermal:
+                                cb = self.find_checkbox_by_label('Thermal')
+                                cb.checked = False
+                                self.play_video.opts.thermal = False
+
+                            if self.play_video.opts.emboss:
+                                cb = self.find_checkbox_by_label('Emboss')
+                                cb.checked = False
+                                self.play_video.opts.emboss = False
+
+                            if self.play_video.opts.dream:
+                                cb = self.find_checkbox_by_label('Dream')
+                                cb.checked = False
+                                self.play_video.opts.dream = False
+
+                            if self.play_video.opts.neon:
+                                cb = self.find_checkbox_by_label('Neon')
+                                cb.checked = False
+                                self.play_video.opts.neon = False
+
+                            if self.play_video.opts.vignette:
+                                cb = self.find_checkbox_by_label('Vignette')
+                                cb.checked = False
+                                self.play_video.opts.vignette = False
+                            if self.play_video.opts.sepia:
+                                cb = self.find_checkbox_by_label('Sepia')
+                                cb.checked = False
+                                self.play_video.opts.sepia = False
+                                self.play_video.opts.apply_sepia = False
+
+                            if self.play_video.opts.saturation:
+                                cb = self.find_checkbox_by_label('Saturation')
+                                cb.checked = False
+                                self.play_video.opts.saturation = False
+                                self.play_video.opts.apply_saturation = False
 
                             if self.play_video.opts.thermal:
                                 cb = self.find_checkbox_by_label('Thermal')
@@ -651,13 +768,68 @@ class FilterCheckboxPanel:
                                 self.play_video.opts.vignette = False
 
                         setattr(self.play_video.opts, 'greyscale', checkbox.checked)        # enable greyscale
+                        if self.play_video.sepia_panel.is_visible:
+                            self.play_video.sepia_panel.toggle_visibility()
+                        elif self.play_video.edge_panel.is_visible:
+                            self.play_video.edge_panel.toggle_visibility()
+                        elif self.play_video.bilateral_panel.is_visible():
+                            self.play_video.bilateral_panel.toggle_visibility()
+                        elif self.play_video.saturation_panel.is_visible:
+                            self.play_video.saturation_panel.toggle_visibility()
+                        elif self.play_video.control_panel.is_visible:
+                            self.play_video.control_panel.toggle_visibility()
+                        elif self.play_video.oil_painting_panel.is_visible:
+                            self.play_video.oil_painting_panel.toggle_visibility()
+                        elif self.play_video.laplacian_panel.is_visible:
+                            self.play_video.laplacian_panel.toggle_visibility()
                         self.play_video.reInitVideo('greyscale',self.play_video.vid.frame)  # update the post-processing filter chain
                     case 'Sepia':
-                        if self.play_video.opts.greyscale or self.play_video.opts.thermal or self.play_video.opts.emboss or self.play_video.opts.dream or self.play_video.opts.neon or self.play_video.opts.vignette:
+                        if self.play_video.opts.greyscale or self.play_video.opts.thermal or self.play_video.opts.emboss or self.play_video.opts.dream or self.play_video.opts.neon or self.play_video.opts.vignette or self.play_video.opts.saturation:
                             if self.play_video.opts.greyscale:
                                 cb = self.find_checkbox_by_label('Greyscale')
                                 cb.checked = False
                                 self.play_video.opts.greyscale = False
+
+                            if self.play_video.opts.saturation:
+                                cb = self.find_checkbox_by_label('Saturation')
+                                cb.checked = False
+                                self.play_video.opts.saturation = False
+                                self.play_video.opts.apply_saturation = False
+
+                            if self.play_video.opts.thermal:
+                                cb = self.find_checkbox_by_label('Thermal')
+                                cb.checked = False
+                                self.play_video.opts.thermal = False
+
+                            if self.play_video.opts.emboss:
+                                cb = self.find_checkbox_by_label('Emboss')
+                                cb.checked = False
+                                self.play_video.opts.emboss = False
+
+                            if self.play_video.opts.dream:
+                                cb = self.find_checkbox_by_label('Dream')
+                                cb.checked = False
+                                self.play_video.opts.dream = False
+
+                            if self.play_video.opts.neon:
+                                cb = self.find_checkbox_by_label('Neon')
+                                cb.checked = False
+                                self.play_video.opts.neon = False
+
+                            if self.play_video.opts.vignette:
+                                cb = self.find_checkbox_by_label('Vignette')
+                                cb.checked = False
+                                self.play_video.opts.vignette = False
+                            if self.play_video.opts.greyscale:
+                                cb = self.find_checkbox_by_label('Greyscale')
+                                cb.checked = False
+                                self.play_video.opts.greyscale = False
+
+                            if self.play_video.opts.saturation:
+                                cb = self.find_checkbox_by_label('Saturation')
+                                cb.checked = False
+                                self.play_video.opts.saturation = False
+                                self.play_video.opts.apply_saturation = False
 
                             if self.play_video.opts.thermal:
                                 cb = self.find_checkbox_by_label('Thermal')
@@ -691,6 +863,8 @@ class FilterCheckboxPanel:
                                 self.play_video.edge_panel.toggle_visibility()
                             elif self.play_video.bilateral_panel.is_visible():
                                 self.play_video.bilateral_panel.toggle_visibility()
+                            elif self.play_video.saturation_panel.is_visible:
+                                self.play_video.saturation_panel.toggle_visibility()
                             elif self.play_video.control_panel.is_visible:
                                 self.play_video.control_panel.toggle_visibility()
                             elif self.play_video.oil_painting_panel.is_visible:
@@ -702,12 +876,55 @@ class FilterCheckboxPanel:
                         setattr(self.play_video.opts, 'cel_shading', checkbox.checked)
                         self.play_video.reInitVideo('cel_shading',self.play_video.vid.frame)
                     case 'Saturation':
-                        setattr(self.play_video.opts, 'saturation', checkbox.checked)
+                        if self.play_video.opts.apply_sepia or self.play_video.opts.vignette or self.play_video.opts.greyscale or self.play_video.opts.apply_adjust_video:
+
+                            if self.play_video.opts.apply_sepia:  # is sepia enabled?
+                                cb = self.find_checkbox_by_label('Sepia')
+                                cb.checked = False
+                                self.play_video.apply_sepia = False
+                                self.play_video.opts.sepia = False
+
+                            if self.play_video.opts.greyscale:
+                                cb = self.find_checkbox_by_label('Greyscale')
+                                cb.checked = False
+                                self.play_video.opts.greyscale = False
+
+                            if self.play_video.opts.vignette:
+                                cb = self.find_checkbox_by_label('Vignette')
+                                cb.checked = False
+                                self.play_video.opts.vignette = False
+
+                            if self.play_video.opts.apply_adjust_video:
+                                cb = self.find_checkbox_by_label('Bright/Contrast')
+                                cb.checked = False
+                                self.play_video.opts.apply_adjust_video = False
+
+                        setattr(self.play_video.opts, 'apply_saturation', checkbox.checked)
+                        self.play_video.saturation_panel.set_visible(checkbox.checked)
+                        if self.play_video.saturation_panel.is_visible:
+                            if self.play_video.edge_panel.is_visible:
+                                self.play_video.edge_panel.toggle_visibility()
+                            elif self.play_video.sepia_panel.is_visible:
+                                self.play_video.sepia_panel.toggle_visibility()
+                            elif self.play_video.bilateral_panel.is_visible():
+                                self.play_video.bilateral_panel.toggle_visibility()
+                            elif self.play_video.control_panel.is_visible:
+                                self.play_video.control_panel.toggle_visibility()
+                            elif self.play_video.oil_painting_panel.is_visible:
+                                self.play_video.oil_painting_panel.toggle_visibility()
+                            elif self.play_video.laplacian_panel.is_visible:
+                                self.play_video.laplacian_panel.toggle_visibility()
                         self.play_video.reInitVideo('saturation',self.play_video.vid.frame)
                     case 'Contrast Enhance':
                         setattr(self.play_video.opts, 'apply_contrast_enhancement', checkbox.checked)
                         self.play_video.reInitVideo('apply_contrast_enhancement',self.play_video.vid.frame)
                     case 'Bright/Contrast':
+                        if self.play_video.opts.saturation or self.play_video.opts.apply_saturation:
+                            cb = self.find_checkbox_by_label('Saturation')
+                            cb.checked = False
+                            self.play_video.opts.saturation = False
+                            self.play_video.opts.apply_saturation = False
+
                         setattr(self.play_video.opts, 'apply_adjust_video', checkbox.checked)
                         self.play_video.control_panel.set_visible(checkbox.checked)
                         if self.play_video.control_panel.is_visible:
@@ -715,6 +932,8 @@ class FilterCheckboxPanel:
                                 self.play_video.edge_panel.toggle_visibility()
                             elif self.play_video.bilateral_panel.is_visible():
                                 self.play_video.bilateral_panel.toggle_visibility()
+                            elif self.play_video.saturation_panel.is_visible:
+                                self.play_video.saturation_panel.toggle_visibility()
                             elif self.play_video.sepia_panel.is_visible:
                                 self.play_video.sepia_panel.toggle_visibility()
                             elif self.play_video.oil_painting_panel.is_visible:
@@ -723,6 +942,33 @@ class FilterCheckboxPanel:
                                 self.play_video.laplacian_panel.toggle_visibility()
                         self.play_video.reInitVideo('apply_adjust_video',self.play_video.vid.frame)
                     case 'Vignette':
+                        if self.play_video.opts.greyscale or self.play_video.opts.sepia or self.play_video.opts.apply_adjust_video or self.play_video.opts.saturation:
+                            if self.play_video.opts.greyscale:
+                                cb = self.find_checkbox_by_label('Greyscale')
+                                cb.checked = False
+                                self.play_video.opts.greyscale = False
+
+                            if self.play_video.opts.sepia:
+                                cb = self.find_checkbox_by_label('Sepia')
+                                cb.checked = False
+                                self.play_video.opts.sepia = False
+                                self.play_video.opts.apply_sepia = False
+                                self.play_video.sepia_panel.set_visible(False)
+
+                            if self.play_video.opts.apply_adjust_video:
+                                cb = self.find_checkbox_by_label('Bright/Contrast')
+                                cb.checked = False
+                                self.play_video.opts.apply_adjust_video = False
+                                self.play_video.control_panel.set_visible(False)
+
+                            if self.play_video.opts.saturation:
+                                cb = self.find_checkbox_by_label('Saturation')
+                                cb.checked = False
+                                self.play_video.opts.saturation = False
+                                self.play_video.saturation_panel.set_visible(False)
+                                self.play_video.opts.apply_saturation = False
+                                self.play_video.saturation_panel.set_visible(False)
+
                         setattr(self.play_video.opts, 'vignette', checkbox.checked)
                         self.play_video.reInitVideo('vignette',self.play_video.vid.frame)
                     case 'Thermal':
@@ -762,6 +1008,8 @@ class FilterCheckboxPanel:
                             self.play_video.edge_panel.toggle_visibility()
                         elif self.play_video.bilateral_panel.is_visible():
                             self.play_video.bilateral_panel.toggle_visibility()
+                        elif self.play_video.saturation_panel.is_visible:
+                            self.play_video.saturation_panel.toggle_visibility()
                         elif self.play_video.sepia_panel.is_visible:
                             self.play_video.sepia_panel.toggle_visibility()
                         elif self.play_video.control_panel.is_visible:
@@ -784,6 +1032,8 @@ class FilterCheckboxPanel:
                         if self.play_video.edge_panel.is_visible:
                             if self.play_video.control_panel.is_visible:
                                 self.play_video.control_panel.toggle_visibility()
+                            elif self.play_video.saturation_panel.is_visible:
+                                self.play_video.saturation_panel.toggle_visibility()
                             elif self.play_video.sepia_panel.is_visible:
                                 self.play_video.sepia_panel.toggle_visibility()
                             elif self.play_video.oil_painting_panel.is_visible:
@@ -800,6 +1050,8 @@ class FilterCheckboxPanel:
                             self.play_video.edge_panel.toggle_visibility()
                         elif self.play_video.sepia_panel.is_visible:
                             self.play_video.sepia_panel.toggle_visibility()
+                        elif self.play_video.saturation_panel.is_visible:
+                            self.play_video.saturation_panel.toggle_visibility()
                         elif self.play_video.control_panel.is_visible:
                             self.play_video.control_panel.toggle_visibility()
                         elif self.play_video.laplacian_panel.is_visible:
@@ -807,7 +1059,6 @@ class FilterCheckboxPanel:
                         self.play_video.reInitVideo('apply_bilateral_filter_panel',self.play_video.vid.frame)
                 return True
         return False
-
 
     def find_checkbox_by_label(self, label):
         """
@@ -827,3 +1078,43 @@ class FilterCheckboxPanel:
             if checkbox.label == label:
                 return checkbox
         return None
+
+        # Tooltip function
+
+    def draw_tooltip(self, disp_surface, text, x, y):
+        """
+        Draws a tooltip on the provided display surface at the specified coordinates with the given text. The tooltip
+        is styled with a blue background, a border, and displays the text in bold font. The tooltip size is adjusted
+        based on the scaled font size and the length of the text provided. This function ensures proper text
+        visibility on the user interface by rendering the tooltip dynamically.
+
+        Args:
+            disp_surface (pygame.Surface): The display surface where the tooltip will be drawn.
+            text (str): The textual content to display within the tooltip.
+            x (int): The x-coordinate of the tooltip's top-left corner on the display surface.
+            y (int): The y-coordinate of the tooltip's top-left corner on the display surface.
+        """
+
+        USER_HOME = os.path.expanduser("~")
+        FONT_DIR = USER_HOME + "/.local/share/pyVid/fonts/"
+        scaled_font_size = up_scale.scale_font(18, self.display_height)
+        tooltip_font = pygame.font.Font(FONT_DIR + "Montserrat-Bold.ttf", scaled_font_size)
+        self.tooltip_surface = tooltip_font.render(text, True, WHITE)
+        tooltip_width, tooltip_height = tooltip_surface.get_size()
+
+        pygame.draw.rect(
+            disp_surface,
+            DODGERBLUE,
+            (x, y, tooltip_width + 10, tooltip_height + 8),
+            border_radius=8
+        )
+
+        pygame.draw.rect(
+            disp_surface,
+            DODGERBLUE4,
+            (x, y, tooltip_width + 10, tooltip_height + 8),
+            1,
+            border_radius=8
+        )
+
+        disp_surface.blit(tooltip_surface, (x + 5, y + 3))

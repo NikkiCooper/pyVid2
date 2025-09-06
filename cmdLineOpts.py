@@ -97,6 +97,7 @@ def cmdLineOptions():
     video_group.add_argument("--playSpeed", type=restricted_float_or_int, default=1.0, help=chl.help["playSpeed"] )
     video_group.add_argument("--dispTitles", type=str, choices=["all", "portrait", "landscape"], default=None, help=chl.help["dispTitles"])
     video_group.add_argument("--enableOSDcurpos", action="store_true", help=chl.help["enableOSDcurpos"])
+    video_group.add_argument("--showFilename", action="store_true", help=chl.help["showFilename"])
 
     # Brightness & Contrast Group
     brightness_group = parser.add_argument_group(chl.group["brightness_group"])
@@ -205,6 +206,7 @@ def cmdLineOptions():
     args.apply_denoising = False
     args.apply_contrast_enhancement = False
     args.apply_sharpening = False
+    #
 
     # Sepia arguments
     #sepia presets 'classic', 'warm', 'cool', 'vintage'
@@ -237,6 +239,13 @@ def cmdLineOptions():
     args.CUDA_bilateral_filter = False
     args.show_bilateral_filter = False
 
+    # saturation
+    args.apply_saturation = False
+    args.saturation_factor = 1.0
+    #
+    # use with --playSpeed
+    args.playSpeed_last = 0
+    args.playSpeed_last_set = False
     # --loadPlayList
     if args.loadPlayList is None:
         args.loadPlayListFlag = False
@@ -333,6 +342,7 @@ def validate_user_files(FilePath):
 
     return expanded_path
 
+# --playSpeed
 # Create an argument parser
 def restricted_float_or_int(x):
     try:

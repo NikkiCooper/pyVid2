@@ -13,6 +13,7 @@ import subprocess
 from typing import Optional
 import upScale as up_scale
 import warnings
+from debug_utils import debug
 
 warnings.filterwarnings('ignore', category=UserWarning,
                        message='pkg_resources is deprecated as an API.*')
@@ -39,9 +40,15 @@ from DrawFilterInfo import DrawFilterInfo
 from FilterCheckboxPanel import FilterCheckboxPanel
 from VideoPlayBar import VideoPlayBar
 from sepiaPanel import sepiaPanel
+import edgesSobel
+import greyScale
+import blurFilters
+import embossFilter
 from ControlPanel import ControlPanel
+from saturationPanel import saturationPanel
 from edgeDetectPanel import edgeDetectPanel
 from oilPaintingPanel import oilPaintingPanel
+import applyContrastEnhancement
 from laplacianBoostPanel import laplacianBoostPanel
 from CUDABilateralFilterPanel import CUDABilateralFilterPanel
 
@@ -52,6 +59,8 @@ TEXT_COLOR = WHITE   # White for regular text
 BLACK = (0, 0, 0)
 DODGERBLUE = (30, 144, 255)
 DODGERBLUE4 = (16, 78, 139)
+PLAY_AT_1X_DIRS_DEBUG = False
+
 
 class PlayVideo:
     """
@@ -295,6 +304,11 @@ class PlayVideo:
         self.save_sshot_error = None
         self.SCREEN_SHOT_DIR = None
         #
+        # List containing the paths to play videos at 1x speed
+        # This overrides all other video playback speed settings.
+        self.PLAY_AT_1X_DIRS = None
+        self.USING_PLAY_AT_1X_DIRS = False
+        self.saved_opts_playback_speed = self.opts.playSpeed
         # Set some environment variables BEFORE initializing pygame
         self.__environmentSetup()
 
@@ -348,7 +362,7 @@ class PlayVideo:
         self.OSD_TEXT_Y = 0
         # y coordinate of the OSD filename
         # Note that the x coordinate is centered onto the width of the screen, so only the y coordinate needs to be specified.
-        self.OSD_FILENAME_Y = self.displayHeight - 125
+        self.OSD_FILENAME_Y = 0
         # Other OSD vars and flags
         self.osd_text_width = 0
         self.osd_text_height = 0
@@ -451,6 +465,9 @@ class PlayVideo:
         self.edge_panel = edgeDetectPanel(self)
         self.cb_panel_is_visible = False
         #
+        self.saturation_panel = saturationPanel(self)
+        self.saturation_panel_is_visible = False
+        #
         self.oil_painting_panel = oilPaintingPanel(self)
         self.oil_painting_panel_is_visible = False
         #
@@ -480,9 +497,10 @@ class PlayVideo:
             print("🎬 CUDA-accelerated Super-Sepia filter ready!")
             print("🎬 CUDA-accelerated Gaussian-Blur filter ready!")
             print("🎬 CUDA-accelerated Median-Blur filter ready!")
-            print("🎬 CUDA-accelerated Contrast Enhance filter ready!")
+            print("🎬 CUDA-accelerated Contrast-Enhance filter ready!")
             print("🎬 CUDA-accelerated Edge-Detect effect ready!")
             print("🎬 CUDA-accelerated Edges-Sobel effect ready!")
+            print("🎬 CUDA-accelerated Color-Saturation effect ready!")
         else:
             print("⚠️  Using CPU for all effects and filters")
 
@@ -1034,6 +1052,36 @@ class PlayVideo:
         else:
             # Default if no environment exists
             self.SCREEN_SHOT_DIR = self.USER_HOME + '/pyVidSShots'
+
+        '''
+        Play @ 1x speed - Directories containing videos which will play at 1x speed 
+        regardless of the playback speed (specified on cli or otherwise).  These paths are
+        separated by a colon.  This is useful for things like music videos, etc.
+        '''
+        self.PLAY_AT_1X_DIRS = [
+            os.path.expanduser(path.strip()) for path in os.environ.get("PLAY_AT_1X_DIRS", "").split(":")
+            if path.strip()
+        ] if "PLAY_AT_1X_DIRS" in os.environ else []
+
+    def should_play_at_1x(self, video_path):
+        """
+        Check if the video should be played at 1x speed based on its directory path.
+
+        Args:
+            video_path (str): The full path to the video file
+
+        Returns:
+            bool: True if the video should be played at 1x speed, False otherwise
+        """
+        if self.PLAY_AT_1X_DIRS is None:
+            return False
+
+        # Get just the directory portion of the video path
+        video_dir = os.path.dirname(os.path.expanduser(video_path))
+
+        # Check if the video's directory matches any of the 1x directories
+        return any(video_dir.startswith(os.path.expanduser(directory))
+                   for directory in self.PLAY_AT_1X_DIRS)
 
     def shuffleVideoList(self):
         """
@@ -1945,7 +1993,9 @@ class PlayVideo:
         Returns:
             None
         """
-        self.render_filename_text(self.vid.name, self.OSD_FILENAME_Y, font_size=26)
+        if self.opts.showFilename:
+            self.OSD_FILENAME_Y = self.displayHeight - 175
+            self.render_filename_text(self.vid.name, self.OSD_FILENAME_Y, font_size=36)
 
     def draw_play_icon(self, x, y):
         """
@@ -2848,37 +2898,8 @@ class PlayVideo:
             print(f"Error reading video metadata: {str(e)}")
             return None
 
-    # brightness/contrast
-    def render_frame(self):
-        """
-        Renders the current video frame with optional effects if the  brightness/contrast control panel
-        is visible. This process involves locking the video surface, creating a copy
-        of the frame, applying effects if needed, and unlocking the surface.
-
-        Returns
-        -------
-        Optional[Surface]
-            A copy of the current frame with effects applied if the control panel
-            is visible, or None if the video frame surface is not available.
-        """
-        if self.vid.frame_surf is None:
-            return None
-
-        # Lock the surface before creating a copy
-        self.vid.frame_surf.lock()
-        try:
-            frame = self.vid.frame_surf.copy()
-        finally:
-            # Always unlock the surface
-            self.vid.frame_surf.unlock()
-
-        # Now apply effects if control panel is visible
-        if self.control_panel.is_visible:
-            frame = self.control_panel.apply_effects(frame)
-
-        return frame
-
-    # brightness/contrast & edge_panel & oil_painting_panel & laplacian_panel & sepia_panel
+    # All filter panel classes are updated via self.draw()
+    # brightness/contrast & edge_panel & oil_painting_panel & laplacian_panel & sepia_panel & saturation_panel
     def draw(self, screen):
         """
         Draws the UI components on the provided screen.
@@ -2897,6 +2918,7 @@ class PlayVideo:
         self.oil_painting_panel.draw(screen)
         self.laplacian_panel.draw(screen)
         self.sepia_panel.draw(screen)
+        self.saturation_panel.draw(screen)
 
     def blit_video_title(self):
         """
@@ -3025,7 +3047,7 @@ class PlayVideo:
         if self.draw_OSD_active:
             if not (self.seekFwd_flag or self.seekRewind_flag):
                 self.draw_OSD()
-                # self.draw_filename()
+                self.draw_filename()
 
         if self.status_bar_visible:
             self.displayVideoInfo(self.win,
@@ -3101,75 +3123,6 @@ class PlayVideo:
                         self.blit_video_title()
 
     @staticmethod
-    def median_blur(image, kernel_size=3):
-        if not hasattr(PlayVideo, '_cuda_median_blur_available'):
-            PlayVideo._cuda_median_blur_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-            PlayVideo._cuda_median_blur_filter = None
-            if PlayVideo._cuda_median_blur_available:
-                print("CUDA Median-Blur Filter initialized")
-
-        if PlayVideo._cuda_median_blur_available:
-            try:
-                # Create filter only once
-                if PlayVideo._cuda_median_blur_filter is None:
-                    PlayVideo._cuda_median_blur_filter = cv2.cuda.createMedianFilter(cv2.CV_8UC3, kernel_size)
-
-                gpu_image = cv2.cuda_GpuMat()
-                gpu_image.upload(image)
-
-                result = PlayVideo._cuda_median_blur_filter.apply(gpu_image)
-                return result.download()
-
-            except cv2.error:
-                # Fallback to CPU if CUDA fails
-                PlayVideo._cuda_median_blur_available = False
-                print("CUDA failed, falling back to CPU")
-                return cv2.medianBlur(frame, 5)
-
-        return cv2.medianBlur(frame, 5)
-
-    @staticmethod
-    def gaussian_blur(frame, kernel_size=(5, 5)):
-        """
-        Apply Gaussian Blur to an image frame with CUDA acceleration if available.
-
-        Args:
-            frame: The input image frame to be blurred.
-            kernel_size (tuple[int, int], optional): The size of the Gaussian kernel.
-                Default is (5, 5).
-
-        Returns:
-            numpy.ndarray: The blurred image.
-        """
-        # Initialize class variables if they don't exist
-        if not hasattr(PlayVideo, '_cuda_blur_available'):
-            PlayVideo._cuda_blur_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-            PlayVideo._cuda_blur_filter = None
-            if PlayVideo._cuda_blur_available:
-                print("CUDA Gaussian Filter initialized")
-
-        if PlayVideo._cuda_blur_available:
-            try:
-                # Create filter only once
-                if PlayVideo._cuda_blur_filter is None:
-                    PlayVideo._cuda_blur_filter = cv2.cuda.createGaussianFilter(
-                        cv2.CV_8UC3, cv2.CV_8UC3, kernel_size, 0
-                    )
-
-                gpu_frame = cv2.cuda_GpuMat()
-                gpu_frame.upload(frame)
-                result = PlayVideo._cuda_blur_filter.apply(gpu_frame)
-                return result.download()
-
-            except cv2.error:
-                # Fallback to CPU if CUDA fails
-                PlayVideo._cuda_blur_available = False
-                print("CUDA failed, falling back to CPU")
-                return cv2.GaussianBlur(frame, kernel_size, 0)
-
-        return cv2.GaussianBlur(frame, kernel_size, 0)
-
-    @staticmethod
     def vignette(frame):
         """
         Applies a vignette effect to the given image frame.
@@ -3196,30 +3149,6 @@ class PlayVideo:
         for i in range(3):
             frame[:, :, i] = frame[:, :, i] * mask
         return frame
-
-    @staticmethod
-    def adjust_saturation(frame, factor=1.5):
-        """
-        Adjusts the saturation of a given image frame by a specified factor.
-
-        This method takes an image frame as input, converts it to HSV color space,
-        modifies the saturation channel by multiplying it with the given factor,
-        and converts the image back to BGR color space.
-
-        Parameters:
-            frame: numpy.ndarray
-                The input image frame in BGR color space, represented as a NumPy array.
-
-            factor: float, optional
-                The factor by which the image's saturation is adjusted. Defaults to 1.5.
-
-        Returns:
-            numpy.ndarray
-                The image with adjusted saturation, in BGR color space.
-        """
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        hsv[:, :, 1] = np.clip(hsv[:, :, 1] * factor, 0, 255)
-        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
     @staticmethod
     def simple_comic_effect(frame):
@@ -3386,51 +3315,6 @@ class PlayVideo:
         return cv2.fastNlMeansDenoisingColored(image, None, h=3, hColor=3, templateWindowSize=7, searchWindowSize=13)
 
     @staticmethod
-    def apply_contrast_enhancement(image):
-        if not hasattr(PlayVideo, '_cuda_contrast_available'):
-            PlayVideo._cuda_contrast_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-            if PlayVideo._cuda_contrast_available:
-                print("CUDA Contrast Enhancement initialized")
-
-        if PlayVideo._cuda_contrast_available:
-            try:
-                # Upload to GPU
-                gpu_image = cv2.cuda_GpuMat()
-                gpu_image.upload(image)
-
-                # Convert to grayscale for luminance analysis
-                gpu_gray = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
-                minVal, maxVal = cv2.cuda.minMax(gpu_gray)
-
-                if maxVal - minVal > 0:
-                    # Create lookup table for contrast adjustment
-                    alpha = 255.0 / (maxVal - minVal)
-                    beta = -minVal * alpha
-
-                    # Apply contrast adjustment using addWeighted
-                    gpu_result = cv2.cuda.addWeighted(gpu_image, alpha, gpu_image, 0, beta)
-                    return gpu_result.download()
-                return image
-
-            except cv2.error as e:
-                # Fallback to CPU if CUDA fails
-                PlayVideo._cuda_contrast_available = False
-                print(f"CUDA failed, falling back to CPU: {str(e)}")
-                # Simple contrast stretching on CPU
-                min_val = image.min()
-                max_val = image.max()
-                if max_val - min_val > 0:
-                    return cv2.convertScaleAbs(image, alpha=255.0 / (max_val - min_val), beta=-min_val * 255.0 / (max_val - min_val))
-                return image
-
-        # CPU version - simple contrast stretching
-        min_val = image.min()
-        max_val = image.max()
-        if max_val - min_val > 0:
-            return cv2.convertScaleAbs(image, alpha=255.0 / (max_val - min_val), beta=-min_val * 255.0 / (max_val - min_val))
-        return image
-
-    @staticmethod
     def enhancement_effects(image):
         """
         Processes an input image to apply multiple enhancement effects including denoising,
@@ -3450,38 +3334,6 @@ class PlayVideo:
         enhanced = PlayVideo.apply_contrast_enhancement(image)
         sharpened = PlayVideo.apply_sharpening(image)
         return denoised, enhanced, sharpened
-
-    @staticmethod
-    def apply_edges_sobel(image):
-        """
-        Applies the Sobel edge detection filter using CUDA if available.
-        """
-        cuda_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-        if not cuda_available:
-            print("No CUDA devices available")
-            return None
-        try:
-            # Upload to GPU
-            gpu_image = cv2.cuda_GpuMat()
-            gpu_image.upload(image)
-             # Convert to grayscale
-            gray_gpu = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
-            try:
-                sobel_filter = cv2.cuda.createSobelFilter(cv2.CV_8UC1, cv2.CV_8UC1, 1, 0, ksize=3)
-                sobel_gpu = sobel_filter.apply(gray_gpu)
-            except cv2.error as e:
-                print(f"Failed during Sobel filter creation/application: {str(e)}")
-                raise
-            # Convert back to BGR
-            result_bgr = cv2.cuda.cvtColor(sobel_gpu, cv2.COLOR_GRAY2BGR)
-            # Download result
-            result = result_bgr.download()
-            return result
-        except Exception as e:
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
-            sobel = np.uint8(np.absolute(sobel))
-            return cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
 
     @staticmethod
     def apply_inverted(image):
@@ -3564,58 +3416,6 @@ class PlayVideo:
             print(f"Error in comic effect: {str(e)}")
             return frame
 
-    # Not used. Needs to be removed
-    @staticmethod
-    def adjust_edge_upper_lower(frame, edge_upper, edge_lower):
-
-        if not ( 0 <= edge_upper <= 255 ):
-            print(f"Warning: edge_upper value {edge_upper} is out of range [0, 255]. Clamping to valid range.")
-            edge_upper = max(0, min(255, edge_upper))
-
-        if not ( 0 <= edge_lower <= edge_upper ):
-            print(f"Warning: edge_lower value {edge_lower} is out of range [0, 254]. Clamping to valid range.")
-            edge_lower = max(0, min(edge_upper, edge_lower))
-
-        return(frame, edge_upper, edge_lower)
-
-    @staticmethod
-    def adjust_brightness_contrast(frame, brightness, contrast):
-        """
-        Adjust brightness and contrast of a video frame
-        :param frame: Input frame
-        :param brightness: Brightness adjustment (-100 to 100)
-        :param contrast: Contrast adjustment (-127 to 127)
-        :return: Adjusted frame
-        """
-        #print(f"brightness: {brightness}, contrast: {contrast}")
-        # Bounds checking with warnings
-        if not (-100 <= brightness <= 100):
-            print(f"Warning: Brightness value {brightness} out of range (-100 to 100). Clamping to valid range.")
-            brightness = max(-100, min(100, brightness))
-
-        if not (-127 <= contrast <= 127):
-            print(f"Warning: Contrast value {contrast} out of range (-127 to 127). Clamping to valid range.")
-            contrast = max(-127, min(127, contrast))
-
-        if brightness <= -100:
-            return np.zeros_like(frame)  # Completely black
-        elif brightness >= 100:
-            return np.ones_like(frame) * 255  # Completely white
-        else:
-            frame = frame.astype(np.float32)
-            frame += (brightness * 2.55)  # Scale -100:100 to -255:255
-
-            # Apply contrast if specified
-            if contrast != 0:
-                # Scale -127:127 to a reasonable factor range
-                # At -127: factor ≈ 0.2
-                # At 0: factor = 1.0
-                # At 127: factor ≈ 2.0
-                contrast_factor = max(0.2, min(2.0, 1.0 + (contrast / 127.0)))
-                frame = (frame - 128) * contrast_factor + 128
-
-            return np.clip(frame, 0, 255).astype(np.uint8)
-
     # (#1)
     @staticmethod
     def apply_sharpening(image):
@@ -3652,16 +3452,6 @@ class PlayVideo:
 
         return sharpened
 
-    @staticmethod
-    def laplacian_boost(image):
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        lap = cv2.Laplacian(gray, cv2.CV_64F)
-        lap = cv2.convertScaleAbs(lap)
-        lap_bgr = cv2.cvtColor(lap, cv2.COLOR_GRAY2BGR)
-        #sharpened = cv2.addWeighted(image, 1.0, lap_bgr, 0.25, 0)
-        sharpened = cv2.addWeighted(image, 1.0, lap_bgr, 0.95, 0)
-        return sharpened
-
     # (2)
     @staticmethod
     def sharpen(image):
@@ -3669,32 +3459,6 @@ class PlayVideo:
                            [-1, 8.95, -1],
                            [-1, -1, -1]]) / 1.06
         return cv2.filter2D(image, -1, kernel)
-
-    @staticmethod
-    def greyscale(image):
-        """Convert image to grayscale, maintaining 3-channel format for PyGame compatibility"""
-        if not hasattr(PlayVideo, '_cuda_grey_available'):
-            PlayVideo._cuda_grey_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-            if PlayVideo._cuda_grey_available:
-                #print(" CUDA Grayscale conversion available")
-                print( " Using CUDA grayscale conversion")
-        try:
-            if PlayVideo._cuda_grey_available:
-                gpu_frame = cv2.cuda_GpuMat()
-                gpu_frame.upload(image)
-                gray_gpu = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2GRAY)
-                # Convert back to 3 channels using CUDA
-                gray_3ch = cv2.cuda.cvtColor(gray_gpu, cv2.COLOR_GRAY2BGR)
-                return gray_3ch.download()
-
-            # CPU fallback
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-
-        except cv2.error:
-            PlayVideo._cuda_grey_available = False
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            return cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
     def update_video_effects(self):
         """
@@ -3815,7 +3579,8 @@ class PlayVideo:
         if opts.apply_sharpening:                       # Sharpen #1
             effects.append(PlayVideo.apply_sharpening)
         if opts.greyscale:
-            effects.append(PlayVideo.greyscale)
+            #effects.append(PlayVideo.greyscale)
+            effects.append(greyScale.greyscale)
         if opts.blur:
             effects.append(PostProcessing.blur)
         if opts.cel_shading:
@@ -3835,12 +3600,11 @@ class PlayVideo:
         if opts.vignette:
             effects.append(PlayVideo.vignette)
         if opts.saturation:
-            # Might want to make the factor configurable
-            effects.append(lambda frame: PlayVideo.adjust_saturation(frame, factor=1.5))
+            effects.append(self.saturation_panel.adjust_saturation)
         if opts.gaussian_blur:
-            effects.append(PlayVideo.gaussian_blur)
+            effects.append(blurFilters.gaussian_blur)
         if opts.median_blur:
-            effects.append(PlayVideo.median_blur)
+            effects.append(blurFilters.median_blur)
         if opts.comic:
             self.comic_effect_enabled = True
             effects.append(self.process_frames)
@@ -3849,12 +3613,7 @@ class PlayVideo:
         if opts.thermal:
             effects.append(lambda frame: cv2.applyColorMap(frame, cv2.COLORMAP_JET))
         if opts.emboss:
-            def emboss(frame):
-                kernel = np.array([[-2, -1, 0],
-                                   [-1, 1, 1],
-                                   [0, 1, 2]])
-                return cv2.filter2D(frame, -1, kernel) + 128
-            effects.append(emboss)
+            effects.append(embossFilter.cuda_emboss)
         if opts.dream:
             def dream_effect(frame):
                 blur = cv2.GaussianBlur(frame, (0, 0), 2.0)
@@ -3938,19 +3697,21 @@ class PlayVideo:
                 return cv2.resize(result, (frame.shape[1], frame.shape[0]))
             effects.append(watercolor_effect)
         if opts.adjust_video or opts.apply_adjust_video:
+            #print("Brightness/Contrast")
             def adj_bright_contrast_filter(frame):
                 brightness = opts.brightness if hasattr(opts, 'brightness') else 0
                 contrast = opts.contrast if hasattr(opts, 'contrast') else 0
                 # Pass the original contrast and brightness values
-                return PlayVideo.adjust_brightness_contrast(frame, brightness, contrast)
+                return self.control_panel.adjust_brightness_contrast(frame, brightness, contrast)
             effects.append(adj_bright_contrast_filter)
         if opts.apply_contrast_enhancement:
-            effects.append(PlayVideo.apply_contrast_enhancement)
+            #effects.append(PlayVideo.apply_contrast_enhancement)
+            effects.append(applyContrastEnhancement.apply_contrast_enhancement)
         if opts.apply_edges_sobel:
-            effects.append(PlayVideo.apply_edges_sobel)
+            #effects.append(PlayVideo.apply_edges_sobel)
+            effects.append(edgesSobel.apply_edges_sobel)
         if opts.apply_inverted:
             effects.append(PlayVideo.apply_inverted)
-
         # Add bilateral filter to the effects chain
         if hasattr(opts, 'apply_bilateral_filter') and opts.apply_bilateral_filter:
             effects.append(lambda frame: self.apply_bilateral_filter_effect(frame))
@@ -4091,7 +3852,47 @@ class PlayVideo:
             If changing video resolution fails
         """
 
+        if self.should_play_at_1x(video):
+            #self.saved_opts_playback_speed = self.opts.playSpeed
+            self.USING_PLAY_AT_1X_DIRS = True
+            if self.opts.playSpeed_last_set:
+                self.opts.playSpeed_last = self.opts.playSpeed
+
+            self.opts.playSpeed = 1
+            self.saved_opts_playback_speed = self.opts.playSpeed_last
+            self.opts.playSpeed_last_set = False
+            if PLAY_AT_1X_DIRS_DEBUG:
+                debug(
+                 "self.USING_PLAY_AT_1X_DIRS:", self.USING_PLAY_AT_1X_DIRS,
+                      "self.opts.playSpeed: ", self.opts.playSpeed,
+                      "self.opts.playSpeed_last: ", self.opts.playSpeed_last
+                )
+        else:
+            self.USING_PLAY_AT_1X_DIRS = False
+            if PLAY_AT_1X_DIRS_DEBUG:
+                debug("self.USING_PLAY_AT_1X_DIRS: ", self.USING_PLAY_AT_1X_DIRS)
+            if self.opts.playSpeed_last_set:
+                if self.saved_opts_playback_speed != self.opts.playSpeed_last:
+                    self.saved_opts_playback_speed = self.opts.playSpeed_last
+                    self.opts.playSpeed = self.saved_opts_playback_speed
+
+                if PLAY_AT_1X_DIRS_DEBUG:
+                    debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.opts.playSpeed_last: ", self.opts.playSpeed_last)
+                    #self.opts.playSpeed = self.opts.playSpeed_last
+                    #debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.opts.playSpeed_last: ", self.opts.playSpeed_last)
+            else:
+                if PLAY_AT_1X_DIRS_DEBUG:
+                    debug("self.opts.playSpeed: ", self.opts.playSpeed,
+                             "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
+                self.opts.playSpeed = self.saved_opts_playback_speed
+                if PLAY_AT_1X_DIRS_DEBUG:
+                    debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
+
+        if PLAY_AT_1X_DIRS_DEBUG:
+            debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
+
         effects_processor = self.build_effects_chain(self.opts)
+
 
         # First, define a custom exception for resolution changes
         class ResolutionChangeError(Exception):
@@ -4118,7 +3919,7 @@ class PlayVideo:
                                           use_pygame_audio=self.opts.usePygameAudio,
                                           interp=self.opts.interp,
                                           audio_track=self.opts.aTrack,
-                                          speed=self.opts.playSpeed,
+                                          speed=(self.opts.playSpeed),
                                           #no_audio=self.opts.noAudio,
                                           subs=None,
                                           reader=self.opts.reader_val_int
@@ -4297,8 +4098,9 @@ class PlayVideo:
                             force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
 
                         # Handles only control_panel
-                        self.render_frame()
-                        # Handles both control_panel and edge_panel
+                        #frm  = self.control_panel.render_frame()
+                        #print(f"frm: {frm if frm is not None else 'None'}")
+                        # Handles both control_panel and edge_panel and all the other filter panels
                         self.draw(self.win)
 
                         '''
@@ -4364,6 +4166,13 @@ class PlayVideo:
                 #self.opts.apply_artistic_filters = not self.opts.apply_artistic_filters
                 print(f"apply_artistic_filters: {'True' if self.opts.apply_artistic_filters else 'False'}")
                 pp_flag = self.opts.apply_artistic_filters
+            case 'saturation':
+                if self.opts.apply_saturation:
+                    self.opts.saturation = True
+                else:
+                    self.opts.saturation = False
+                print(f"opts.saturation: {'True' if self.opts.saturation else 'False'}")
+                pp_flag = self.opts.saturation
             case 'fliplr':
                 #self.opts.fliplr = not self.opts.fliplr
                 print(f"fliplr: {'True' if self.opts.fliplr else 'False'}")
@@ -4591,6 +4400,8 @@ class PlayVideo:
                 else:
                     self.opts.CUDA_bilateral_filter = False
             case 'None':
+                self.opts.saturation = False
+                self.opts.apply_saturation = False
                 self.opts.fliplr = False
                 self.opts.flipud = False
                 self.opts.pixelate = False

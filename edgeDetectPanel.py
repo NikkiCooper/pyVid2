@@ -5,8 +5,7 @@
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
 # Class to display a control panel for adjusting --edge-Upper and edge-Lower-- values for use with --edge-detect.
-
-from typing import Any
+#
 import pygame
 import cv2
 
@@ -19,6 +18,7 @@ HEADING_COLOR = (255, 200, 0)  # Yellow for headings
 FALSE_COLOR = HEADING_COLOR
 TRUE_COLOR = (50, 200, 0)
 TEXT_COLOR = WHITE
+
 
 class edgeDetectPanel:
     """
@@ -439,8 +439,9 @@ class edgeDetectPanel:
 
             except cv2.error:
                 # Fallback to CPU if CUDA fails
-                PlayVideo._cuda_edge_detect_available = False
-                print("Edge Detect: CUDA failed, falling back to CPU")
+                #PlayVideo._cuda_edge_detect_available = False
+                edgeDetectPanel._cuda_edge_detect_available = False
+                #print("Edge Detect: CUDA failed, falling back to CPU")
                 edges = cv2.Canny(image, threshold1, threshold2)
                 return cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 

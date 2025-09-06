@@ -9,6 +9,7 @@ import os
 import pygame
 import constants as const
 import inspect
+from debug_utils import debug
 
 # Mouse constants used in the pygame event loop.
 LEFT = 0
@@ -25,6 +26,7 @@ RIGHT_BUTTON_SHORT = 3
 WHEEL_UP = 1
 WHEEL_DOWN = -1
 
+PLAY_AT_1X_DIRS_DEBUG = False
 
 def bilateral_debug(msg):
     frame = inspect.currentframe().f_back
@@ -170,6 +172,8 @@ class EventHandler:
                         continue
                     elif self.PlayVideoInstance.edge_panel.handle_mouse_motion(event.pos):
                         continue
+                    elif self.PlayVideoInstance.saturation_panel.handle_mouse_motion(event.pos):
+                        continue
                     elif self.PlayVideoInstance.sepia_panel.handle_mouse_motion(event.pos):
                         continue
                     elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_motion(event.pos):
@@ -185,6 +189,8 @@ class EventHandler:
                         continue
                     elif self.PlayVideoInstance.edge_panel.handle_mouse_button_down(event.pos):
                         continue
+                    elif self.PlayVideoInstance.saturation_panel.handle_mouse_button_down(event.pos):
+                        continue
                     elif self.PlayVideoInstance.sepia_panel.handle_mouse_button_down(event.pos):
                         continue
                     elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_down(event.pos):
@@ -197,6 +203,7 @@ class EventHandler:
                 case pygame.MOUSEBUTTONUP:
                     self.PlayVideoInstance.control_panel.handle_mouse_button_up()
                     self.PlayVideoInstance.edge_panel.handle_mouse_button_up()
+                    self.PlayVideoInstance.saturation_panel.handle_mouse_button_up()
                     self.PlayVideoInstance.sepia_panel.handle_mouse_button_up()
                     self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_up()
                     self.PlayVideoInstance.laplacian_panel.handle_mouse_button_up()
@@ -252,6 +259,13 @@ class EventHandler:
                 if self.PlayVideoInstance.edge_panel.is_visible:
                     mouse_pos = pygame.mouse.get_pos()
                     panel_rect = self.PlayVideoInstance.edge_panel.rect
+                    if panel_rect.collidepoint(mouse_pos):
+                        self.mouse_press_times.pop(event.button, None)
+                        return
+
+                if self.PlayVideoInstance.saturation_panel.is_visible:
+                    mouse_pos = pygame.mouse.get_pos()
+                    panel_rect = self.PlayVideoInstance.saturation_panel.rect
                     if panel_rect.collidepoint(mouse_pos):
                         self.mouse_press_times.pop(event.button, None)
                         return
@@ -469,6 +483,8 @@ class EventHandler:
                     if self.PlayVideoInstance.control_panel.is_visible:
                         if self.PlayVideoInstance.edge_panel.is_visible:
                             self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.saturation_panel.is_visible:
+                            self.PlayVideoInstance.saturation_panel.toggle_visibility()
                         elif self.PlayVideoInstance.sepia_panel.is_visible:
                             self.PlayVideoInstance.sepia_panel.toggle_visibility()
                         elif self.PlayVideoInstance.oil_painting_panel.is_visible:
@@ -487,6 +503,8 @@ class EventHandler:
                     if self.PlayVideoInstance.edge_panel.is_visible:
                         if self.PlayVideoInstance.control_panel.is_visible:
                             self.PlayVideoInstance.control_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.saturation_panel.is_visible:
+                            self.PlayVideoInstance.saturation_panel.toggle_visibility()
                         elif self.PlayVideoInstance.sepia_panel.is_visible:
                             self.PlayVideoInstance.sepia_panel.toggle_visibility()
                         elif self.PlayVideoInstance.oil_painting_panel.is_visible:
@@ -506,6 +524,8 @@ class EventHandler:
                     if self.PlayVideoInstance.oil_painting_panel.is_visible:
                         if self.PlayVideoInstance.edge_panel.is_visible:
                             self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.saturation_panel.is_visible:
+                            self.PlayVideoInstance.saturation_panel.toggle_visibility()
                         elif self.PlayVideoInstance.sepia_panel.is_visible:
                             self.PlayVideoInstance.sepia_panel.toggle_visibility()
                         elif self.PlayVideoInstance.control_panel.is_visible:
@@ -745,7 +765,23 @@ class EventHandler:
                         self.PlayVideoInstance.vol = max(0.0, self.PlayVideoInstance.vol - 0.1)
                         self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.vol)
                 case const.KEY_PLAY_SPEED_UP:
+                    if not self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS:
+                        self.PlayVideoInstance.opts.playSpeed_last = self.PlayVideoInstance.opts.playSpeed
+                        self.PlayVideoInstance.opts.playSpeed_last_set = True
+                    else:
+                        self.PlayVideoInstance.opts.playSpeed_last_set = False
+
+                    if PLAY_AT_1X_DIRS_DEBUG:
+                        debug(
+                            "self.USING_PLAY_AT_1X_DIRS: ", self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS,
+                            "self.opts.playSpeed_last: ", self.opts.playSpeed_last,
+                            "self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed
+                        )
                     self.PlayVideoInstance.opts.playSpeed  = min(5.0, self.PlayVideoInstance.opts.playSpeed + 0.50)
+
+                    if PLAY_AT_1X_DIRS_DEBUG:
+                        debug("self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed)
+
                     # Get the current frame that is playing before stoping and closing the video
                     currFrame = self.PlayVideoInstance.vid.frame
                     self.PlayVideoInstance.vid.stop()
@@ -762,7 +798,23 @@ class EventHandler:
                     except Exception as e:
                         pass
                 case const.KEY_PLAY_SPEED_DOWN:
+                    if not self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS:
+                        self.PlayVideoInstance.opts.playSpeed_last = self.PlayVideoInstance.opts.playSpeed
+                        self.PlayVideoInstance.opts.playSpeed_last_set = True
+                    else:
+                        self.PlayVideoInstance.opts.playSpeed_last_set = False
+
+                    if PLAY_AT_1X_DIRS_DEBUG:
+                        debug(
+                            "USING_PLAY_AT_1X_DIRS: ",  self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS,
+                            "self.opts.playSpeed_last: ", self.opts.playSpeed_last,
+                            "self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed
+                        )
+
                     self.PlayVideoInstance.opts.playSpeed = max(0.50, self.PlayVideoInstance.opts.playSpeed - 0.50)
+                    if PLAY_AT_1X_DIRS_DEBUG:
+                        debug("self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed)
+
                     currFrame = self.PlayVideoInstance.vid.frame
                     self.PlayVideoInstance.vid.stop()
                     self.PlayVideoInstance.vid.close()
@@ -858,6 +910,10 @@ class EventHandler:
                     if self.PlayVideoInstance.laplacian_panel.is_visible:
                         if self.PlayVideoInstance.edge_panel.is_visible:
                             self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.saturation_panel.is_visible:
+                            self.PlayVideoInstance.saturation_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.bilateral_panel.is_visible:
+                            self.PlayVideoInstance.bilateral_panel.toggle_visibility()
                         elif self.PlayVideoInstance.sepia_panel.is_visible:
                             self.PlayVideoInstance.sepia_panel.toggle_visibility()
                         elif self.PlayVideoInstance.control_panel.is_visible:
@@ -907,6 +963,8 @@ class EventHandler:
                     if self.PlayVideoInstance.sepia_panel.is_visible:
                         if self.PlayVideoInstance.edge_panel.is_visible:
                             self.PlayVideoInstance.edge_panel.toggle_visibility()
+                        elif self.PlayVideoInstance.saturation_panel.is_visible:
+                            self.PlayVideoInstance.saturation_panel.toggle_visibility()
                         elif self.PlayVideoInstance.control_panel.is_visible:
                             self.PlayVideoInstance.control_panel.toggle_visibility()
                         elif self.PlayVideoInstance.oil_painting_panel.is_visible:
@@ -1720,6 +1778,8 @@ class EventHandler:
                 if self.PlayVideoInstance.bilateral_panel.is_visible():
                     if self.PlayVideoInstance.edge_panel.is_visible:
                         self.PlayVideoInstance.edge_panel.toggle_visibility()
+                    elif self.PlayVideoInstance.saturation_panel.is_visible:
+                        self.PlayVideoInstance.saturation_panel.toggle_visibility()
                     elif self.PlayVideoInstance.control_panel.is_visible:
                         self.PlayVideoInstance.control_panel.toggle_visibility()
                     elif self.PlayVideoInstance.laplacian_panel.is_visible:
