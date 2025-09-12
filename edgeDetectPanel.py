@@ -389,7 +389,7 @@ class edgeDetectPanel:
                     self.play_video.opts.edge_upper = self.edge_upper_level
                     self.play_video.update_video_effects()
             else:
-                self.edge_lower_level =  (slider['value'] - 1)
+                self.edge_lower_level =  slider['value'] - 1
                 # Update PlayVideo's opts.edge_lower if PlayVideo instance is available
                 if self.play_video and hasattr(self.play_video, 'opts'):
                     # Convert our edge_lower value to the range expected by the video processor
