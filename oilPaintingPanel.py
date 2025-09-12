@@ -5,7 +5,7 @@
 #  https://www.gnu.org/licenses/gpl-3.0.html#license-text
 #
 # Class to display a control panel for adjusting --oil-size and --oil-dynamics values for use with --oil-painting.
-from typing import Any
+
 import pygame
 import cv2
 
@@ -255,7 +255,7 @@ class oilPaintingPanel:
                     self.play_video.opts.oil_size = self.oil_size
                     self.play_video.update_video_effects()
             else:
-                self.oil_dynamics =  (slider['value'])
+                self.oil_dynamics =  slider['value']
                 # Update PlayVideo's opts.edge_lower if PlayVideo instance is available
                 if self.play_video and hasattr(self.play_video, 'opts'):
                     # Convert our edge_lower value to the range expected by the video processor
