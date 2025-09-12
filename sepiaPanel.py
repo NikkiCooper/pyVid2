@@ -371,6 +371,7 @@ class sepiaPanel:
                 gpu_frame.upload(frame)
 
                 # Split into channels
+                # pylint: disable=unpacking-non-sequence
                 b, g, r = cv2.cuda.split(gpu_frame)
 
                 # Apply sepia weights with the selected preset
