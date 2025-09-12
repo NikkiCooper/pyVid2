@@ -459,12 +459,12 @@ class EventHandler:
                 self.PlayVideoInstance.saveModeVisible = True
                 self.PlayVideoInstance.message = "Entering into saveMode"
                 self.PlayVideoInstance.saveModeDialogBox(self.PlayVideoInstance.message)
-                print(f"Entered into saveMode.")
+                print(self.PlayVideoInstance.message)
             else:
                 self.PlayVideoInstance.saveModeVisible = True
                 self.PlayVideoInstance.message = "Leaving saveMode"
                 self.PlayVideoInstance.saveModeDialogBox(self.PlayVideoInstance.message)
-                print("Leaving saveMode.")
+                print(self.PlayVideoInstance.message)
         else:
             match event.key:
                 case const.KEY_END:                                                     # END Key
@@ -923,11 +923,10 @@ class EventHandler:
                     self.reInitVideo('laplacian_boost', self.PlayVideoInstance.vid.frame)
                 case const.KEY_AT if event.mod & pygame.KMOD_SHIFT:                          # @ = blur
                     self.reInitVideo('blur', self.PlayVideoInstance.vid.frame)
-                case const.KEY_HASH if event.mod & pygame.KMOD_SHIFT:       # # = edge_detect
+                case const.KEY_HASH if event.mod & pygame.KMOD_SHIFT:                        # # = edge_detect
                     if self.opts.emboss or self.opts.greyscale or self.opts.sepia:
                         return
-                    else:
-                        self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
+                    self.reInitVideo('edge_detect', self.PlayVideoInstance.vid.frame)
                 case const.KEY_DOLLAR if event.mod & pygame.KMOD_SHIFT:       # $ = emboss
                     #print("Pressed emboss key")
                     self.reInitVideo('emboss', self.PlayVideoInstance.vid.frame)
@@ -935,18 +934,15 @@ class EventHandler:
                     #print("Pressed thermal key")
                     if self.opts.sepia or self.opts.greyscale:
                         return
-                    else:
-                        self.reInitVideo('thermal', self.PlayVideoInstance.vid.frame)
+                    self.reInitVideo('thermal', self.PlayVideoInstance.vid.frame)
                 case const.KEY_CARET if event.mod & pygame.KMOD_SHIFT:       # ^ = dream
                     if self.opts.sepia or self.opts.greyscale:
                         return
-                    else:
-                        self.reInitVideo('dream', self.PlayVideoInstance.vid.frame)
+                    self.reInitVideo('dream', self.PlayVideoInstance.vid.frame)
                 case const.KEY_AMPERSAND if event.mod & pygame.KMOD_SHIFT:       # & = comic
                     if self.opts.sepia or self.opts.greyscale:
                         return
-                    else:
-                        self.reInitVideo('comic', self.PlayVideoInstance.vid.frame)
+                    self.reInitVideo('comic', self.PlayVideoInstance.vid.frame)
                 case const.KEY_ASTERISK if event.mod & pygame.KMOD_SHIFT:
                     self.opts.apply_sepia = not self.opts.apply_sepia
                     self.PlayVideoInstance.FilterDialogBox(f"Apply Super-Sepia effect is {'enabled' if self.opts.apply_sepia else 'disabled'}")
@@ -1306,7 +1302,7 @@ class EventHandler:
                 self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.volume)
                 print(f"Volume: {int(self.PlayVideoInstance.volume * 100)}% {'(Muted)' if self.PlayVideoInstance.muted else ''}")
                 print(f"vid.get_volume(): {self.PlayVideoInstance.vid.get_volume()}")
-                
+
                 if self.PlayVideoInstance.muted:
                     self.PlayVideoInstance.vid.mute()
                     self.PlayVideoInstance.videoPlayBar.muted = True
@@ -1543,91 +1539,91 @@ class EventHandler:
             case 'apply_artistic_filters':
                 self.opts.apply_artistic_filters = not self.opts.apply_artistic_filters
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Artistic filter is now {'enabled' if self.opts.apply_artistic_filters else 'disabled'}")
                 print(f"apply_artistic_filters: {'True' if self.opts.apply_artistic_filters else 'False'}")
                 pp_flag = self.opts.apply_artistic_filters
             case 'fliplr':
                 self.opts.fliplr = not self.opts.fliplr
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                   self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Flip Left-Right effect is now {'enabled' if self.opts.fliplr else 'disabled'}")
                 print(f"fliplr: {'True' if self.opts.fliplr else 'False'}")
                 pp_flag = self.opts.fliplr
             case 'flipup':
                 self.opts.flipup = not self.opts.flipup
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Flip Up-Down effect is now {'enabled' if self.opts.flipup else 'disabled'}")
                 print(f"flipup: {'True' if self.opts.flipup else 'False'}")
                 pp_flag = self.opts.flipup
             case 'pixelate':
                 self.opts.pixelate = not self.opts.pixelate
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Pixelate effect is now {'enabled' if self.opts.pixelate else 'disabled'}")
                 print(f"pixelate: {'True' if self.opts.pixelate else 'False'}")
                 pp_flag = self.opts.pixelate
             case 'vignette':
                 self.opts.vignette = not self.opts.vignette
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Vignette effect is now {'enabled' if self.opts.vignette else 'disabled'}")
                 print(f"vignette: {'True' if self.opts.vignette else 'False'}")
                 pp_flag = self.opts.vignette
             case 'cel_shading':
                 self.opts.cel_shading = not self.PlayVideoInstance.opts.cel_shading
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Cel-Shading effect is now {'enabled' if self.opts.cel_shading else 'disabled'}")
                 print(f"cel_shading {'True' if self.opts.cel_shading else 'False'}")
                 pp_flag = self.opts.cel_shading
             case 'apply_noise':
                 self.opts.noise = not self.opts.noise
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Noise effect is now {'enabled' if self.opts.noise else 'disabled'}")
                 print(f"apply_noise: {'True' if self.opts.noise else 'False'}")
                 pp_flag = self.opts.noise
             case 'apply_denoising':
                 self.opts.apply_denoising = not self.opts.apply_denoising
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Apply-Denoising  filter is now {'enabled' if self.opts.apply_denoising else 'disabled'}")
                 print(f"apply_denoising: {'True' if self.opts.apply_denoising else 'False'}")
                 pp_flag = self.opts.apply_denoising
             case 'apply_sharpening':
                 self.opts.apply_sharpening = not self.opts.apply_sharpening
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"U-Sharpen filter is now {'enabled' if self.opts.apply_sharpening else 'disabled'}")
                 print(f"apply_sharpening #1: {'True' if self.opts.apply_sharpening else 'False'}")
                 pp_flag = self.opts.apply_sharpening
             case 'laplacian':
                 self.opts.laplacian = not self.opts.laplacian
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Laplacian Boost filter is now {'enabled' if self.opts.laplacian else 'disabled'}")
                 print(f"Laplacian Boost: {'True' if self.opts.laplacian else 'False'}")
                 pp_flag = self.opts.laplacian
             case 'apply_edges_sobel':
                 self.opts.apply_edges_sobel =  not self.opts.apply_edges_sobel
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Sobel Edge filter is now {'enabled' if self.opts.apply_edges_sobel else 'disabled'}")
                 print(f"apply_edges_sobel {'True' if self.opts.apply_edges_sobel else 'False'}")
                 pp_flag = self.opts.apply_edges_sobel
             case 'apply_inverted':
                 self.opts.apply_inverted = not self.opts.apply_inverted
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Inversion filter is now {'enabled' if self.opts.apply_inverted else 'disabled'}")
                 print(f"apply_inverted: {'True' if self.opts.apply_inverted else 'False'}")
                 pp_flag = self.opts.apply_inverted
             case 'apply_contrast_enhancement':
                 self.opts.apply_contrast_enhancement = not self.opts.apply_contrast_enhancement
                 if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
-                       self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
+                    self.PlayVideoInstance.filterCheckboxPanel.set_visible(True)
                 self.PlayVideoInstance.FilterDialogBox(f"Apply-Contrast effect is now {'enabled' if self.opts.apply_contrast_enhancement else 'disabled'}")
                 print(f"apply_contrast_enhancement: {'True' if self.opts.apply_contrast_enhancement else 'False'}")
                 pp_flag = self.opts.apply_contrast_enhancement
@@ -1753,7 +1749,7 @@ class EventHandler:
 
                         self.PlayVideoInstance.FilterDialogBox(f"CUDA-Bilateral preset: {preset_name}")
                     else:
-                        self.PlayVideoInstance.FilterDialogBox(f"CUDA-Bilateral filter is disabled")
+                        self.PlayVideoInstance.FilterDialogBox("CUDA-Bilateral filter is disabled")
                         self.opts.CUDA_bilateral_filter = False
                         if self.debug:
                             print("Bilateral Filter: OFF")
@@ -1816,7 +1812,7 @@ class EventHandler:
 
                 else:
                     # Filter is already active - make sure panel reflects current state
-                    print(f"Bilateral Filter Panel: Shown - Filter already active")
+                    print("Bilateral Filter Panel: Shown - Filter already active")
 
                     # Make sure panel's filter_enabled matches opts
                     panel.filter_enabled = True
@@ -1917,4 +1913,3 @@ class EventHandler:
         self.PlayVideoInstance.vid.close()
         self.PlayVideoInstance.vid = self.PlayVideoInstance.playVideo(self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx])
         self.PlayVideoInstance.vid.seek_frame(lastFrame)
-
