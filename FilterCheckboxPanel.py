@@ -1100,7 +1100,7 @@ class FilterCheckboxPanel:
         scaled_font_size = up_scale.scale_font(18, self.display_height)
         tooltip_font = pygame.font.Font(FONT_DIR + "Montserrat-Bold.ttf", scaled_font_size)
         self.tooltip_surface = tooltip_font.render(text, True, WHITE)
-        tooltip_width, tooltip_height = tooltip_surface.get_size()
+        tooltip_width, tooltip_height = self.tooltip_surface.get_size()
 
         pygame.draw.rect(
             disp_surface,
@@ -1117,4 +1117,4 @@ class FilterCheckboxPanel:
             border_radius=8
         )
 
-        disp_surface.blit(tooltip_surface, (x + 5, y + 3))
+        disp_surface.blit(self.tooltip_surface, (x + 5, y + 3))
