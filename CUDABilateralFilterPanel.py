@@ -1,7 +1,8 @@
+import os
 import time
+import inspect
 import pygame
 import cv2
-import inspect
 
 DODGERBLUE = (30, 144, 255)
 DODGERBLUE4 = (16, 78, 139)
@@ -96,7 +97,6 @@ class DropDown:
 
         # Fonts - scale font size
         try:
-            import os
             font_dir = os.path.expanduser("~/.local/share/pyVid/fonts/")
             font_size = max(12, int(16 * scaling_factor))
             self.font = pygame.font.Font(font_dir + 'Arial_Bold.ttf', font_size)
@@ -357,7 +357,6 @@ class SpinBox:
 
         # Scale fonts
         try:
-            import os
             font_dir = os.path.expanduser("~/.local/share/pyVid/fonts/")
             font_size = max(12, int(17 * scaling_factor))
             self.value_font = pygame.font.Font(font_dir + 'Arial_Bold.ttf', font_size)
@@ -690,7 +689,6 @@ def draw_label(screen, text, x, y, width=None, height=20):
             the drawn label.
     """
     try:
-        import os
         font_dir = os.path.expanduser("~/.local/share/pyVid/fonts/")
         label_font = pygame.font.Font(font_dir + 'Arial_Black.ttf', 18)
     except (IOError, FileNotFoundError):
@@ -837,7 +835,6 @@ class CUDABilateralFilterPanel:
         self.height = int(base_height * self.scaling_factor)
 
         # Load fonts with scaling
-        import os
         font_dir = os.path.expanduser("~/.local/share/pyVid/fonts/")
         try:
             regular_size = max(12, int(15 * self.scaling_factor))
