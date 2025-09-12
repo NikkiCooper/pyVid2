@@ -1,4 +1,14 @@
-
+#  FilterCheckboxPanel.py Copyright (c) 2025 Nikki Cooper
+#
+#  This program and the accompanying materials are made available under the
+#  terms of the GNU Lesser General Public License, version 3.0 which is available at
+#  https://www.gnu.org/licenses/gpl-3.0.html#license-text
+#
+# Enable/Disable all filters in a checkbox panel
+#
+import os
+import pygame
+import upScale as up_scale
 # Define colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -10,9 +20,6 @@ TRUE_COLOR = (50, 200, 0)
 CHECKBOX_CHECKED_COLOR = (80, 255, 0)
 LABEL_TEXT_COLOR = (0, 175, 255)
 
-import os
-import pygame
-import upScale as up_scale
 
 class Checkbox:
     """
