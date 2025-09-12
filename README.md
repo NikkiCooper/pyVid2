@@ -6,6 +6,9 @@
 
 ## 💋 <span style="color:DodgerBlue">Overview</span>
 
+---
+**NOTE:**  This document is likely out of date relative to the Python code contained herein.
+---
 pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media
 in an automated manner. The latest version is  _vesion 0.50_
 
