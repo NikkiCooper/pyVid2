@@ -47,7 +47,7 @@ def apply_contrast_enhancement(image):
 
             # Convert to grayscale for luminance analysis
             gpu_gray = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
-            minVal, maxVal = cv2.cuda.minMax(gpu_gray)
+            minVal, maxVal, minLoc, maxLoc  = cv2.cuda.minMaxLoc(gpu_gray)
 
             if maxVal - minVal > 0:
                 # Create lookup table for contrast adjustment
