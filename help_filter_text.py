@@ -49,4 +49,3 @@ COMPLEX FILTERS
 
   [   = Disable all filters
 """
-
