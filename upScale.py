@@ -148,6 +148,3 @@ def get_scaled_fonts(original_font_sizes, target_display_height):
     """
     scaling_factor = get_scaling_factor(target_display_height)
     return [int(size * scaling_factor) for size in original_font_sizes]
-
-
-
