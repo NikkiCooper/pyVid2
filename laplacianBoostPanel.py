@@ -246,14 +246,13 @@ class laplacianBoostPanel:
         if not hasattr(laplacianBoostPanel, '_cuda_laplacianBoost_available'):
             laplacianBoostPanel._cuda_laplacianBoost_available = self.cuda_devices > 0
             if laplacianBoostPanel._cuda_laplacianBoost_available:
-                print(f"CUDA-based Laplacian boost initialized and available.")
+                print("CUDA-based Laplacian boost initialized and available.")
             else:
-                print(f"CUDA-based Laplacian boost is not available. Using CPU instead.")
+                print("CUDA-based Laplacian boost is not available. Using CPU instead.")
 
         if self.cuda_devices > 0:
             return self.cuda_laplacian_boost(image)
-        else:
-            return self.cpu_laplacian_boost(image)
+        return self.cpu_laplacian_boost(image)
 
     def enhanced_cuda_laplacian_boost(self, image):
         """
