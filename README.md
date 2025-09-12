@@ -2,6 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.10%2B-brightgreen)](https://www.python.org/downloads/release/python-3100/)
+![Community Standards](https://img.shields.io/badge/community--profile-100%25-green)
 
 ## 💋 <span style="color:DodgerBlue">Overview</span>
 
