@@ -98,9 +98,3 @@ TEXT_COLOR = WHITE   # White for regular text
 BLACK = (0, 0, 0)
 DODGERBLUE = (30, 144, 255)
 DODGERBLUE4 = (16, 78, 139)
-
-
-
-
-
-
