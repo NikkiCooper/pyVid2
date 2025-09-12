@@ -47,4 +47,3 @@ Middle (Short) = Pause video
 Right (Long) = Prev video
 [ M-Whl Up/Dn ]  =  Seek +/- 4 sec
 """
-
