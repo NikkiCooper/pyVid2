@@ -2,6 +2,13 @@ name: Pylint
 
 on: [push]
 
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip Pylint
+        run: echo "Pylint workflow disabled"
+
 #jobs:
 #  build:
 #    runs-on: ubuntu-latest
