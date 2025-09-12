@@ -166,6 +166,8 @@ class DrawFilterInfo:
 
         self.button_rect = pygame.Rect(button_x, button_y, button_width, button_height)
         self.is_hovered = False
+        self.title_surface = None
+        self.title_rect = None
 
     def draw_info_box(self):
         """
