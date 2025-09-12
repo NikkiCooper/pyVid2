@@ -7,6 +7,7 @@
 # Class to display a control panel for adjusting saturation factor.
 #
 import pygame
+import numpy as np
 import cv2
 
 # Define colors
@@ -246,7 +247,7 @@ class saturationPanel:
                 #print(f"CUDA operation failed: {str(e)}")
                 # Fallback to CPU version
                 hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                hsv[:, :, 1] = np.clip(hsv[:, :, 1] * factor, 0, 255)
+                hsv[:, :, 1] = np.clip(hsv[:, :, 1] * saturation_factor, 0, 255)
                 return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
     def toggle_visibility(self):
