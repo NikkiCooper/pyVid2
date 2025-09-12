@@ -7,31 +7,33 @@
 # Class that plays the video and updates all information dialog boxes ETC.
 #
 import os
+import time
+import random
 import json
 import datetime
 import subprocess
 from typing import Optional
-import upScale as up_scale
 import warnings
-from debug_utils import debug
-
-warnings.filterwarnings('ignore', category=UserWarning,
-                       message='pkg_resources is deprecated as an API.*')
-
+from fractions import Fraction
+import cv2
 # This must be called BEFORE importing pygame
 # else set it in ~/.bashrc
 # Or run it from the command line:
 # PYGAME_HIDE_SUPPORT_PROMPT=1 pyvid [options] (more trouble than what it's worth)
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
-import time
-import random
+# pylint: disable=wrong-import-position
 import pygame
-from fractions import Fraction
-import cv2
-import numpy as np
 import numpy
+import numpy as np
 from pyvidplayer2.video_pygame import VideoPygame
 from pyvidplayer2 import Video, PostProcessing
+import upScale as up_scale
+from debug_utils import debug
+#
+import edgesSobel
+import greyScale
+import blurFilters
+import embossFilter
 from ThumbNailMaint import ThumbNailMaint
 from DrawHelpInfo import DrawHelpInfo
 from DrawFilterHelpInfo import DrawFilterHelpInfo
@@ -40,10 +42,6 @@ from DrawFilterInfo import DrawFilterInfo
 from FilterCheckboxPanel import FilterCheckboxPanel
 from VideoPlayBar import VideoPlayBar
 from sepiaPanel import sepiaPanel
-import edgesSobel
-import greyScale
-import blurFilters
-import embossFilter
 from ControlPanel import ControlPanel
 from saturationPanel import saturationPanel
 from edgeDetectPanel import edgeDetectPanel
@@ -51,6 +49,9 @@ from oilPaintingPanel import oilPaintingPanel
 import applyContrastEnhancement
 from laplacianBoostPanel import laplacianBoostPanel
 from CUDABilateralFilterPanel import CUDABilateralFilterPanel
+
+warnings.filterwarnings('ignore', category=UserWarning,
+                       message='pkg_resources is deprecated as an API.*')
 
 # Define colors
 WHITE = (255, 255, 255)
@@ -1538,7 +1539,7 @@ class PlayVideo:
         """
         if not self.saveScreenShotFlag:
             return
-
+        was_playing = None
         try:
             # Temporarily pause without blocking
             was_playing = not self.vid.paused
@@ -1677,8 +1678,8 @@ class PlayVideo:
         # Calculate box height dynamically based on the number of lines
         try:
             box_width, font_height = font_bold_regular.size(self.save_sshot_filename)
-        except typeError:
-            self.save_sshot_filename = self.generate_screenshot_name()
+        except TypeError:
+            self.save_sshot_filename = self.generate_screenshot_name(self.SCREEN_SHOT_DIR)
             box_width, font_height = font_bold_regular.size(self.save_sshot_filename)
 
         padding = int(25 * self.width_multiplier)  # Extra space around the text
@@ -3596,7 +3597,7 @@ class PlayVideo:
         if opts.sepia:
             effects.append(self.sepia_panel.super_sepia)
         if opts.edge_detect or opts.apply_edge_detect:
-             effects.append(self.edge_panel.Apply_Effects)
+            effects.append(self.edge_panel.Apply_Effects)
         if opts.vignette:
             effects.append(PlayVideo.vignette)
         if opts.saturation:
