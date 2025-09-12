@@ -283,12 +283,12 @@ class DrawHelpInfo:
 
     @staticmethod
     def apply_gradient(surface, color_start, color_end, width, height, alpha_start=50, alpha_end=200):
-            for y in range(height):
-                ratio = y / height
-                new_color = (
-                    int(color_start[0] * (1 - ratio) + color_end[0] * ratio),  # Red
-                    int(color_start[1] * (1 - ratio) + color_end[1] * ratio),  # Green
-                    int(color_start[2] * (1 - ratio) + color_end[2] * ratio),  # Blue
-                    int(alpha_start * (1 - ratio) + alpha_end * ratio)  # Alpha blending
-                )
-                pygame.draw.line(surface, new_color, (0, y), (width, y))
+        for y in range(height):
+            ratio = y / height
+            new_color = (
+                int(color_start[0] * (1 - ratio) + color_end[0] * ratio),  # Red
+                int(color_start[1] * (1 - ratio) + color_end[1] * ratio),  # Green
+                int(color_start[2] * (1 - ratio) + color_end[2] * ratio),  # Blue
+                int(alpha_start * (1 - ratio) + alpha_end * ratio)  # Alpha blending
+            )
+            pygame.draw.line(surface, new_color, (0, y), (width, y))
