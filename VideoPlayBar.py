@@ -194,7 +194,7 @@ class VideoPlayBar:
         self.IconHeight = self.icon_scaled_height
         self.IconWidth = self.icon_scaled_width
         self.IconYcord = (self.barHeight - self.icon_scaled_height) / 2  # IconYcord is 7
-        self.barHeight_Offset = (self.displayHeight - self.barHeight + self.IconYcord)
+        self.barHeight_Offset = self.displayHeight - self.barHeight + self.IconYcord
 
         self.width_multiplier = x_multi
         self.height_multiplier = y_multi
@@ -505,4 +505,3 @@ class VideoPlayBar:
         toolTipSurface.blit(tooltip_text_surface, (5, 3))
         # Blit tooltip onto display
         self.display.blit(toolTipSurface, (x, y))
-
