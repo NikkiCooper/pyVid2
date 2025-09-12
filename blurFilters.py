@@ -34,9 +34,9 @@ def median_blur(image, kernel_size=3):
             # Fallback to CPU if CUDA fails
             median_blur._cuda_median_blur_available = False
             print("CUDA failed, falling back to CPU")
-            return cv2.medianBlur(frame, 5)
+            return cv2.medianBlur(image, 5)
 
-    return cv2.medianBlur(frame, 5)
+    return cv2.medianBlur(image, 5)
 
 def gaussian_blur(frame, kernel_size=(5, 5), sigma_X=0):
     """
