@@ -6,9 +6,9 @@
 #
 # Pygame event handler class
 import os
+import inspect
 import pygame
 import constants as const
-import inspect
 from debug_utils import debug
 
 # Mouse constants used in the pygame event loop.
@@ -170,34 +170,34 @@ class EventHandler:
                 case pygame.MOUSEMOTION:
                     if self.PlayVideoInstance.control_panel.handle_mouse_motion(event.pos):
                         continue
-                    elif self.PlayVideoInstance.edge_panel.handle_mouse_motion(event.pos):
+                    if self.PlayVideoInstance.edge_panel.handle_mouse_motion(event.pos):
                         continue
-                    elif self.PlayVideoInstance.saturation_panel.handle_mouse_motion(event.pos):
+                    if self.PlayVideoInstance.saturation_panel.handle_mouse_motion(event.pos):
                         continue
-                    elif self.PlayVideoInstance.sepia_panel.handle_mouse_motion(event.pos):
+                    if self.PlayVideoInstance.sepia_panel.handle_mouse_motion(event.pos):
                         continue
-                    elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_motion(event.pos):
+                    if self.PlayVideoInstance.oil_painting_panel.handle_mouse_motion(event.pos):
                         continue
-                    elif self.PlayVideoInstance.laplacian_panel.handle_mouse_motion(event.pos):
+                    if self.PlayVideoInstance.laplacian_panel.handle_mouse_motion(event.pos):
                         continue
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     self.handle_mouse_motion(mouse_x, mouse_y)
                 case pygame.MOUSEBUTTONDOWN:
                     if self.PlayVideoInstance.control_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.filterCheckboxPanel.handle_event(event):
+                    if self.PlayVideoInstance.filterCheckboxPanel.handle_event(event):
                         continue
-                    elif self.PlayVideoInstance.edge_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.edge_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.saturation_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.saturation_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.sepia_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.sepia_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.oil_painting_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.laplacian_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.laplacian_panel.handle_mouse_button_down(event.pos):
                         continue
-                    elif self.PlayVideoInstance.bilateral_panel.handle_mouse_button_down(event.pos):
+                    if self.PlayVideoInstance.bilateral_panel.handle_mouse_button_down(event.pos):
                         self.PlayVideoInstance.bilateral_panel.set_visibility(False)
                     self.mouse_press_times[event.button] = pygame.time.get_ticks()
                 case pygame.MOUSEBUTTONUP:
@@ -399,6 +399,7 @@ class EventHandler:
         if event.y < 0, this is a MOUSEWHEEL DOWN EVENT.
         event.y == 0 is not possible here because we filter it out before calling this method.
         """
+        # pylint: disable=simplifiable-if-expression
         seek_fwd  = True if event.y > 0 else False
         seek_time = seek if seek_fwd else -seek
         if self.PlayVideoInstance.vid.active:
@@ -445,6 +446,7 @@ class EventHandler:
                                   triggers this handler.
         """
         if self.isKeyCombo(event, *const.KEY_SAVE):
+            # pylint: disable=pointless-string-statement
             """
             saveMode temporarly remaps the "spacebar" key to the 'save screenshot' function
             The 's' key still saves a screenshot, however, by temporarily remapping the 'spacebar' key
@@ -626,12 +628,14 @@ class EventHandler:
                     if self.PlayVideoInstance.mute_flag:
                         self.PlayVideoInstance.vid.toggle_mute()
                         self.PlayVideoInstance.mute_flag = False
-                        self.PlayVideoInstance.key_mute_flag = True \
-                            if self.PlayVideoInstance.vid.muted is True else False
+                        self.PlayVideoInstance.key_mute_flag = self.PlayVideoInstance.vid.muted
                     else:
                         self.PlayVideoInstance.key_mute_flag = not self.PlayVideoInstance.key_mute_flag
-                        self.PlayVideoInstance.vid.mute() \
-                            if self.PlayVideoInstance.key_mute_flag is True else self.PlayVideoInstance.vid.unmute()
+                        if self.PlayVideoInstance.key_mute_flag:
+                            self.PlayVideoInstance.vid.mute()
+                        else:
+                            self.PlayVideoInstance.vid.unmute()
+
                 case const.KEY_NEXT_VID:
                     self.PlayVideoInstance.forwardsFlag = True
                     # Disable video loop for current video before advancing to the next one.
@@ -660,13 +664,20 @@ class EventHandler:
                         self.PlayVideoInstance.seekFwd_flag = False
                 case const.KEY_PAUSE:
                     self.PlayVideoInstance.vid.toggle_pause()
-                    self.PlayVideoInstance.pause = True if self.PlayVideoInstance.vid.paused else False
+                    if self.PlayVideoInstance.vid.paused:
+                        self.PlayVideoInstance.pause = self.PlayVideoInstance.vid.paused
+                    else:
+                        self.PlayVideoInstance.pause = False
                 case const.KEY_SPACE:
                     if self.PlayVideoInstance.saveMode:
                         self.saveFrameShot()
                     else:
                         self.PlayVideoInstance.vid.toggle_pause()
-                        self.PlayVideoInstance.pause = True if self.PlayVideoInstance.vid.paused else False
+                        if self.PlayVideoInstance.vid.paused:
+                            self.PlayVideoInstance.pause = True
+                        else:
+                            self.PlayVideoInstance.pause = False
+
                 case const.KEY_SHOW_TITLES:
                     # Toggle sequence is 'all' -> 'portrait' -> 'landscape' -> None
                     match self.PlayVideoInstance.opts.dispTitles:
@@ -795,7 +806,8 @@ class EventHandler:
                         self.PlayVideoInstance.vid.seek_frame(currFrame)
                         # Update vid internals
                         self.PlayVideoInstance.vid.update()
-                    except Exception as e:
+                    # pylint: disable=(broad-exception-caught
+                    except Exception as e:  # pylint: disable=unused-variable
                         pass
                 case const.KEY_PLAY_SPEED_DOWN:
                     if not self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS:
@@ -824,7 +836,8 @@ class EventHandler:
                         )
                         self.PlayVideoInstance.vid.seek_frame(currFrame)
                         self.PlayVideoInstance.vid.update()
-                    except Exception as e:
+                    # pylint: disable=broad-exception-caught
+                    except Exception as e:  # pylint: disable=unused-variable
                         pass
                 case const.KEY_POST_PROCESSING:
                     if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
@@ -987,6 +1000,7 @@ class EventHandler:
             seek (int): The amount of time to seek. Positive values indicate forward seeking,
                         and negative values indicate backward seeking.
         """
+        # pylint: disable=simplifiable-if-expression
         seek_fwd = True if seek > 0 else False
         if self.PlayVideoInstance.vid.active:
             self.PlayVideoInstance.progress_timeout = 50
@@ -1134,6 +1148,7 @@ class EventHandler:
         if self.PlayVideoInstance.vid.frame_surf is None:
             return
 
+        # pylint: disable=simplifiable-if-expression
         saveDir = self.PlayVideoInstance.check_SSHOT_dir(noImgType=(True if  self.opts.separateDirs is True else False))
         msg = self.PlayVideoInstance.save_sshot_error
         if msg is not None or saveDir is None:
@@ -1198,8 +1213,8 @@ class EventHandler:
                 self.PlayVideoInstance.vid.seek_frame(currFrame)
                 # Update vid internals
                 self.PlayVideoInstance.vid.update()
-
-            except Exception as e:
+            # pylint: disable=broad-exception-caught
+            except Exception as e:  # pylint: disable=unused-variable
                 pass
 
     def update_volume(self, mouse_x, mouse_y):
@@ -1310,7 +1325,7 @@ class EventHandler:
                     self.PlayVideoInstance.vid.unmute()
                     self.PlayVideoInstance.videoPlayBar.muted = False
 
-    def videoPlayBarIconPress(self, event, mouse_x, mouse_y):
+    def videoPlayBarIconPress(self, event, mouse_x, mouse_y):   # pylint: disable=unused-argument
         """
         Handles interaction with video play bar icons such as play, stop, next, previous, speaker,
         speed adjustment, and repeat icons. This method maps mouse click events over specific icon
@@ -1368,10 +1383,18 @@ class EventHandler:
                         if self.PlayVideoInstance.mute_flag:
                             self.PlayVideoInstance.vid.toggle_mute()
                             self.PlayVideoInstance.mute_flag = False
-                            self.PlayVideoInstance.key_mute_flag = True if self.PlayVideoInstance.vid.muted is True else False
+                            if self.PlayVideoInstance.vid.muted:
+                                self.PlayVideoInstance.key_mute_flag = True
+                            else:
+                                self.PlayVideoInstance.key_mute_flag = False
                         else:
                             self.PlayVideoInstance.key_mute_flag = not self.PlayVideoInstance.key_mute_flag
-                            self.PlayVideoInstance.vid.mute() if self.PlayVideoInstance.key_mute_flag is True else self.PlayVideoInstance.vid.unmute()
+
+                            if self.PlayVideoInstance.key_mute_flag:
+                                self.PlayVideoInstance.vid.mute()
+                            else:
+                                self.PlayVideoInstance.vid.unmute()
+
                         self.PlayVideoInstance.videoPlayBar.muted =  self.PlayVideoInstance.key_mute_flag
                     case 'plusIcon':
                         currFrame = 0
@@ -1390,7 +1413,8 @@ class EventHandler:
                                 self.PlayVideoInstance.vid.seek_frame(currFrame)
                                 # Update vid internals
                                 self.PlayVideoInstance.vid.update()
-                            except Exception as e:
+                            # pylint: disable=broad-exception-caught
+                            except Exception as e:  # pylint: disable=unused-variable
                                 pass
                     case 'minusIcon':
                         currFrame = 0
@@ -1409,7 +1433,8 @@ class EventHandler:
                                 self.PlayVideoInstance.vid.seek_frame(currFrame)
                                 # Update vid internals
                                 self.PlayVideoInstance.vid.update()
-                            except Exception as e:
+                            # pylint: disable=broad-exception-caught
+                            except Exception as e:  # pylint: disable=unused-variable
                                 pass
                     case 'repeatIcon':
                         self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
@@ -1418,7 +1443,7 @@ class EventHandler:
                         self.saveFrameShot()
                #print(f"{name} clicked")
 
-    def videoPlayBarIconHover(self, event, mouse_x, mouse_y):
+    def videoPlayBarIconHover(self, event, mouse_x, mouse_y):   # pylint: disable=unused-argument
         """
         Handles the hover events over the video play bar icons and dynamically displays tooltips for the "next" and
         "previous" icons, indicating associated file names. Ensures that only one tooltip is displayed at a time and
@@ -1783,7 +1808,10 @@ class EventHandler:
                     elif self.PlayVideoInstance.oil_painting_panel.is_visible:
                         self.PlayVideoInstance.oil_painting_panel.toggle_visibility()
                 if not self.PlayVideoInstance.bilateral_panel.is_visible():
-                    self.opts.CUDA_bilateral_filter = True if self.opts.apply_bilateral_filter else False
+                    if self.opts.apply_bilateral_filter:
+                        self.opts.CUDA_bilateral_filter = True
+                    else:
+                        self.opts.CUDA_bilateral_filter = False
                     print(f"Bilateral Filter Panel: Hidden (filter remains {'ON' if self.opts.apply_bilateral_filter else 'OFF'})")
                     return
 
@@ -1792,7 +1820,9 @@ class EventHandler:
                 panel.opts_reference = self.opts  # Set up opts reference
 
                 # Set up references so panel can trigger video reinitialization
+                # pylint: disable=protected-access
                 self.opts._play_video_instance = self.PlayVideoInstance
+                # pylint: disable=protected-access
                 self.PlayVideoInstance._event_handler = self
 
                     # If filter is currently OFF, enable it with default preset
