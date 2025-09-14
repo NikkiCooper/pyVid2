@@ -176,7 +176,7 @@ class DropDown:
                 self.is_open = not self.is_open
                 return False
 
-            elif self.is_open and self.dropdown_rect.collidepoint(mouse_pos):
+            if self.is_open and self.dropdown_rect.collidepoint(mouse_pos):
                 relative_y = mouse_pos[1] - self.dropdown_rect.y
                 clicked_index = relative_y // self.option_height
 
@@ -420,12 +420,12 @@ class SpinBox:
                 self.value = min(self.max_val, self.value + self.step)
                 return self.value != old_value
 
-            elif self.down_button.collidepoint(mouse_pos):
+            if self.down_button.collidepoint(mouse_pos):
                 old_value = self.value
                 self.value = max(self.min_val, self.value - self.step)
                 return self.value != old_value
 
-            elif self.input_rect.collidepoint(mouse_pos):
+            if self.input_rect.collidepoint(mouse_pos):
                 self.active = True
                 self.text_input = str(self.value)
 
@@ -435,12 +435,12 @@ class SpinBox:
                 self._apply_text_input()
                 self.active = False
                 return self.value != old_value
-            elif event.key == pygame.K_TAB:
+            if event.key == pygame.K_TAB:
                 old_value = self.value
                 self._apply_text_input()
                 self.active = False
                 return self.value != old_value
-            elif event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE:
                 self.active = False
                 self.text_input = ""
             elif event.key == pygame.K_BACKSPACE:
@@ -1037,12 +1037,12 @@ class CUDABilateralFilterPanel:
         """
         if display_height >= 2160:
             return 2.0
-        elif display_height >= 1440:
+        if display_height >= 1440:
             return 1.5
-        elif display_height >= 1200:
+        if display_height >= 1200:
             return 1.2
-        else:
-            return 1.0
+
+        return 1.0
 
     def cycle_preset(self):
         """
@@ -1069,23 +1069,20 @@ class CUDABilateralFilterPanel:
             self.preset_dropdown.set_selected_option(preset_name)
             #print(f"Bilateral Filter: {preset_name}")
             return True
-        else:
-            self.current_preset_index += 1
-
-            if self.current_preset_index >= len(preset_keys):
-                self.filter_enabled = False
-                self.current_preset_index = -1
-                self.current_preset = 'OFF'
-                self.preset_dropdown.set_selected_option('OFF')
-                print("Bilateral Filter OFF")
-                return False
-            else:
-                preset_name = preset_keys[self.current_preset_index]
-                self.current_preset = preset_name
-                self.apply_preset(preset_name)
-                self.preset_dropdown.set_selected_option(preset_name)
-                #print(f"Bilateral Filter: {preset_name}")
-                return True
+        self.current_preset_index += 1
+        if self.current_preset_index >= len(preset_keys):
+            self.filter_enabled = False
+            self.current_preset_index = -1
+            self.current_preset = 'OFF'
+            self.preset_dropdown.set_selected_option('OFF')
+            print("Bilateral Filter OFF")
+            return False
+        preset_name = preset_keys[self.current_preset_index]
+        self.current_preset = preset_name
+        self.apply_preset(preset_name)
+        self.preset_dropdown.set_selected_option(preset_name)
+        # print(f"Bilateral Filter: {preset_name}")
+        return True
 
     def apply_preset(self, preset_name):
         """
