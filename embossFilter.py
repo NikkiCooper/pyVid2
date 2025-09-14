@@ -17,9 +17,10 @@ def cuda_emboss(frame):
     Creates a 3D effect by emphasizing directional edges.
     """
     if not hasattr(cuda_emboss, '_cuda_available'):
+        # pylint: disable=protected-access
         cuda_emboss._cuda_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
         cuda_emboss._filter = None
-        if cuda_emboss._cuda_available:
+        if cuda_emboss._cuda_available: # pylint: disable=protected-access
             print("CUDA Emboss Filter initialized")
             # Create the emboss kernel
             kernel = np.array([[-2, -1, 0],
@@ -34,7 +35,7 @@ def cuda_emboss(frame):
         else:
             print("CUDA Emboss Filter not available\nFalling back to CPU")
 
-    if cuda_emboss._cuda_available:
+    if cuda_emboss._cuda_available: # pylint: disable=protected-access
         try:
             # Upload image to GPU
             gpu_frame = cv2.cuda_GpuMat()
@@ -44,6 +45,7 @@ def cuda_emboss(frame):
             gpu_gray = cv2.cuda.cvtColor(gpu_frame, cv2.COLOR_BGR2GRAY)
 
             # Apply emboss filter
+            # pylint: disable=protected-access
             filtered = cuda_emboss._filter.apply(gpu_gray)
 
             # Convert back to BGR
