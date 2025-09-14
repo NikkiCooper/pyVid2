@@ -79,7 +79,8 @@ class oilPaintingPanel:
 
         # Initialize oil painting parameters
         if self.play_video and hasattr(self.play_video, 'opts'):
-            self.is_disabled = True if self.play_video.opts.apply_oil_painting is False else False
+            #self.is_disabled = True if self.play_video.opts.apply_oil_painting is False else False
+            self.is_disabled = not self.play_video.opts.apply_oil_painting
             self.oil_size = self.play_video.opts.oil_size
             self.oil_dynamics = self.play_video.opts.oil_dynamics
         else:
