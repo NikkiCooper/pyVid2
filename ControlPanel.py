@@ -375,94 +375,7 @@ class ControlPanel:
 
         return True
 
-    '''
-    #
-    # brightness/contrast
-    def render_frame(self):
-        """
-        Renders the current video frame with optional effects if the  brightness/contrast control panel
-        is visible. This process involves locking the video surface, creating a copy
-        of the frame, applying effects if needed, and unlocking the surface.
-
-        Returns
-        -------
-        Optional[Surface]
-            A copy of the current frame with effects applied if the control panel
-            is visible, or None if the video frame surface is not available.
-        """
-        if not self.play_video.opts.adjust_video or self.play_video.vid.frame_surf is None or (self.play_video.opts.brightness == 0 and self.play_video.opts.contrast == 0):
-            return None
-        #if self.play_video.vid.frame_surf is None:
-        #   return None
-
-        # Lock the surface before creating a copy
-        self.play_video.vid.frame_surf.lock()
-        try:
-            frame = self.play_video.vid.frame_surf.copy()
-        finally:
-            # Always unlock the surface
-            self.play_video.vid.frame_surf.unlock()
-
-        # Now apply effects if control panel is visible
-        #if self.is_visible:
-        #   frame = self.apply_effects(frame)
-            #self.apply_effects(frame)
-        #return frame
-        return None
-    '''
-
-    ''' 
-    def apply_effects(self, surface):
-        """
-        Applies brightness and contrast effects to the provided surface. The method handles different combinations of
-        brightness and contrast adjustments, such as when only brightness or only contrast changes are required, or
-        when both are applied together. Depending on the need, the method internally optimizes for performance by
-        either modifying the surface directly or creating a copy to apply the effects sequentially.
-
-        Parameters:
-            surface: The target Pygame surface on which brightness and contrast effects will be applied.
-
-        Returns:
-            pygame.Surface: The modified surface with the applied brightness and contrast effects.
-        """
-        if self.brightness_level == 0 and self.contrast_multiplier == 1:
-            return surface
-
-        # For brightness changes only, we can use direct blending
-        if self.brightness_level != 0 and self.contrast_multiplier == 1:
-            # Use the original surface and blend directly
-            if self.brightness_level > 0:
-                surface.fill((self.brightness_level, self.brightness_level, self.brightness_level),
-                             special_flags=pygame.BLEND_RGB_ADD)
-            else:
-                surface.fill((-self.brightness_level, -self.brightness_level, -self.brightness_level),
-                             special_flags=pygame.BLEND_RGB_SUB)
-            return surface
-
-        # For contrast-only changes
-        if self.brightness_level == 0 and self.contrast_multiplier != 1:
-            # Use pygame's built-in per-surface alpha
-            surface.set_alpha(int(255 * self.contrast_multiplier))
-            return surface
-
-        # If both effects are needed, we need a copy
-        effect_surface = surface.copy()
-
-        # Apply contrast first
-        effect_surface.set_alpha(int(255 * self.contrast_multiplier))
-
-        # Then brightness
-        if self.brightness_level > 0:
-            effect_surface.fill((self.brightness_level, self.brightness_level, self.brightness_level),
-                                special_flags=pygame.BLEND_RGB_ADD)
-        else:
-            effect_surface.fill((-self.brightness_level, -self.brightness_level, -self.brightness_level),
-                                special_flags=pygame.BLEND_RGB_SUB)
-
-        return effect_surface
-    '''
-
-    ''' adjust_brightness_contrast() is appearantly the money shot here.  very very high performance.'''
+    # adjust_brightness_contrast() is appearantly the money shot here.  very very high performance.
     @staticmethod
     def adjust_brightness_contrast(frame, brightness, contrast):
         """
@@ -477,32 +390,32 @@ class ControlPanel:
         if brightness == 0 and contrast == 0:
             return frame
 
-        if not (-100 <= brightness <= 100):
+        if not -100 <= brightness <= 100:
             print(f"Warning: Brightness value {brightness} out of range (-100 to 100). Clamping to valid range.")
             brightness = max(-100, min(100, brightness))
 
-        if not (-127 <= contrast <= 127):
+        if not -127 <= contrast <= 127:
             print(f"Warning: Contrast value {contrast} out of range (-127 to 127). Clamping to valid range.")
             contrast = max(-127, min(127, contrast))
 
         if brightness <= -100:
             return np.zeros_like(frame)  # Completely black
-        elif brightness >= 100:
+        if brightness >= 100:
             return np.ones_like(frame) * 255  # Completely white
-        else:
-            frame = frame.astype(np.float32)
-            frame += (brightness * 2.55)  # Scale -100:100 to -255:255
 
-            # Apply contrast if specified
-            if contrast != 0:
-                # Scale -127:127 to a reasonable factor range
-                # At -127: factor ≈ 0.2
-                # At 0: factor = 1.0
-                # At 127: factor ≈ 2.0
-                contrast_factor = max(0.2, min(2.0, 1.0 + (contrast / 127.0)))
-                frame = (frame - 128) * contrast_factor + 128
+        frame = frame.astype(np.float32)
+        frame += (brightness * 2.55)  # Scale -100:100 to -255:255
 
-            return np.clip(frame, 0, 255).astype(np.uint8)
+        # Apply contrast if specified
+        if contrast != 0:
+            # Scale -127:127 to a reasonable factor range
+            # At -127: factor ≈ 0.2
+            # At 0: factor = 1.0
+            # At 127: factor ≈ 2.0
+            contrast_factor = max(0.2, min(2.0, 1.0 + (contrast / 127.0)))
+            frame = (frame - 128) * contrast_factor + 128
+
+        return np.clip(frame, 0, 255).astype(np.uint8)
 
     def toggle_visibility(self):
         """
@@ -544,4 +457,3 @@ class ControlPanel:
             self.play_video.opts.contrast = 0
             self.play_video.opts.adjust_video = False
             self.play_video.update_video_effects()
-
