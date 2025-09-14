@@ -15,8 +15,9 @@ def apply_edges_sobel(image):
     """
 
     if not hasattr(apply_edges_sobel, '_cuda_edges_sobel_detect_available'):
+        # pylint: disable=protected-access
         apply_edges_sobel._cuda_edges_sobel_detect_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
-        if apply_edges_sobel._cuda_edges_sobel_detect_available:
+        if apply_edges_sobel._cuda_edges_sobel_detect_available:    # pylint: disable=protected-access
             print("CUDA Edges-Sobel-Detection filter initialized")
         else:
             print("CUDA Edges-Sobel-Detection filter not available\nFalling back to CPU")
@@ -39,8 +40,10 @@ def apply_edges_sobel(image):
             # Download result
             result = result_bgr.download()
             return result
-        except Exception as e:
+        # pylint: disable=broad-exception-caught
+        except Exception as e:  # pylint: disable=unused-variable
             gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=5)
             sobel = np.uint8(np.absolute(sobel))
             return cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
+    return cv2.cvtColor(sobel, cv2.COLOR_GRAY2BGR)
