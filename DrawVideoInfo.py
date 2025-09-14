@@ -293,8 +293,8 @@ class DrawVideoInfo:
         """
         if len(path) <= max_length:
             return path
-        else:
-            return path[:30] + "..." + path[-27:]
+
+        return path[:30] + "..." + path[-27:]
 
     # Tooltip function
     def draw_tooltip(self, disp_surface, text, x, y):
@@ -369,7 +369,7 @@ class DrawVideoInfo:
         """
         is_hovered = self.is_hovered
         y_offset = 0
-        path_surface = None
+        #path_surface = None
         # Create a surface to apply the gradient
         gradient_surface = pygame.Surface((self.BOX_WIDTH, self.BOX_HEIGHT), pygame.SRCALPHA)
         gradient_surface.set_colorkey((0, 255, 0))
@@ -533,6 +533,7 @@ class DrawVideoInfo:
                 "Channels": channels
             }
             return videoMetadata
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             # For quick-and-dirty error handling, print the error and return an empty dictionary.
             print(f"Error retrieving metadata for {video_path}: {e}")
@@ -590,4 +591,3 @@ class DrawVideoInfo:
                 int(alpha_start * (1 - ratio) + alpha_end * ratio)  # Alpha blending
             )
             pygame.draw.line(surface, new_color, (0, y), (width, y))
-
