@@ -103,6 +103,7 @@ class ThumbNailMaint:
                 os.makedirs(self.CACHE_DIR, exist_ok=True)
 
                 # Run ffmpeg and check return code
+                # pylint: disable=subprocess-run-check
                 result = subprocess.run(ffmpeg_cmd, capture_output=True, text=True)
                 if result.returncode != 0:
                     raise OSError(f"FFmpeg failed: {result.stderr}")
@@ -112,9 +113,10 @@ class ThumbNailMaint:
                     raise OSError("Thumbnail file was not created")
 
                 return thumbnail_path
-
+            # pylint: disable=raise-missing-from
             except AttributeError as e:
                 raise ValueError(f"Invalid display type configuration: {str(e)}")
+            # pylint: disable=raise-missing-from
             except subprocess.SubprocessError as e:
                 raise OSError(f"Error running ffmpeg: {str(e)}")
 
@@ -123,6 +125,7 @@ class ThumbNailMaint:
             raise
         except Exception as e:
             # Catch any other unexpected errors
+            # pylint: disable=broad-exception-raised
             raise Exception(f"Unexpected error creating thumbnail: {str(e)}") from e
 
     def load_thumbnail(self, video_path):
