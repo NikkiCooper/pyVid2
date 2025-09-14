@@ -161,7 +161,8 @@ class edgeDetectPanel:
 
         # Initalize Effect values
         if self.play_video and hasattr(self.play_video, 'opts'):
-            self.is_disabled = True if self.play_video.opts.apply_edge_detect is False else False
+            #self.is_disabled = True if self.play_video.opts.apply_edge_detect is False else False
+            self.is_disabled = not self.play_video.opts.apply_edge_detect
             self.edge_upper_level = self.play_video.opts.edge_upper
             self.edge_lower_level = self.play_video.opts.edge_lower
         else:
