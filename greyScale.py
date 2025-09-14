@@ -12,13 +12,16 @@ import cv2
 def greyscale(image):
     """Convert image to grayscale, maintaining 3-channel format for PyGame compatibility"""
     if not hasattr(greyscale, '_cuda_grey_available'):
+        # pylint: disable=protected-access
         greyscale._cuda_grey_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
+        # pylint: disable=protected-access
         if greyscale._cuda_grey_available:
             # print(" CUDA Grayscale conversion available")
             print("Using CUDA grayscale filter")
         else:
             print("CUDA grayscale filter not available\nFalling back to CPU")
     try:
+        # pylint: disable=protected-access
         if greyscale._cuda_grey_available:
             gpu_frame = cv2.cuda_GpuMat()
             gpu_frame.upload(image)
