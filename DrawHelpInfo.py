@@ -151,7 +151,7 @@ class DrawHelpInfo:
     def draw_help_overlay(self, is_hovered):
         self.is_hovered = is_hovered
         if not self.help_visible:
-            return
+            return None
 
         # Create and draw the gradient background
         gradient_surface = pygame.Surface((self.BOX_WIDTH, self.BOX_HEIGHT), pygame.SRCALPHA)
