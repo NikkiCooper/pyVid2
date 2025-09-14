@@ -9,28 +9,6 @@
 #
 import cv2
 
-"""
-Function to apply contrast enhancement to a video frame using GPU acceleration if available, or CPU otherwise.
-
-This function uses CUDA for accelerated contrast enhancement when supported. If CUDA is not available
-or fails during execution, it falls back to a CPU-based implementation for a simple contrast stretching
-operation.
-
-Parameters
-----------
-image : numpy.ndarray
-    Input video frame for which the contrast enhancement needs to be applied.
-
-Returns
--------
-numpy.ndarray
-    The contrast-enhanced image.
-
-Raises
-------
-cv2.error
-    Raised in case of errors during CUDA-based operations.
-"""
 def apply_contrast_enhancement(image):
     if not hasattr(apply_contrast_enhancement, '_cuda_contrast_available'):
         apply_contrast_enhancement._cuda_contrast_available = cv2.cuda.getCudaEnabledDeviceCount() > 0
@@ -47,7 +25,7 @@ def apply_contrast_enhancement(image):
 
             # Convert to grayscale for luminance analysis
             gpu_gray = cv2.cuda.cvtColor(gpu_image, cv2.COLOR_BGR2GRAY)
-            minVal, maxVal, minLoc, maxLoc  = cv2.cuda.minMaxLoc(gpu_gray)
+            minVal, maxVal, _, _  = cv2.cuda.minMaxLoc(gpu_gray)  # pylint: disable=unpacking-non-sequence
 
             if maxVal - minVal > 0:
                 # Create lookup table for contrast adjustment
