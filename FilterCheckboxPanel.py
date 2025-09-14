@@ -311,7 +311,7 @@ class FilterCheckboxPanel:
             int: The total calculated height for the UI component.
         """
         title_height = 40
-        content_start = 60
+        #content_start = 60
         row_spacing = 45
         button_height = 40
         bottom_padding = 20
@@ -398,6 +398,7 @@ class FilterCheckboxPanel:
             checkbox.checked = filter_info['enabled']  # Set the initial state from self.play_video.opts
             # If it's a CUDA filter, store the icon reference
             if filter_name in self.cuda_filters:
+                # pylint: disable=attribute-defined-outside-init
                 checkbox.gpu_icon = gpu_icon
             self.checkboxes.append(checkbox)
 
@@ -408,6 +409,7 @@ class FilterCheckboxPanel:
             checkbox.checked = filter_info['enabled']  # Set the initial state from self.play_video.opts
             # If it's a CUDA filter, store the icon reference
             if filter_name in self.cuda_filters:
+                # pylint: disable=attribute-defined-outside-init
                 checkbox.gpu_icon = gpu_icon
             self.checkboxes.append(checkbox)
 
