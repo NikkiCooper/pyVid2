@@ -58,9 +58,9 @@ def cuda_emboss(frame):
             result = cv2.cuda.addWeighted(filtered_bgr, 1.0, offset, 1.0, 0.0)
 
             return result.download()
-
+        # pylint: disable=unused-variable
         except cv2.error as e:
-            print(f"CUDA operation failed, falling back to CPU: {str(e)}")
+            #print(f"CUDA operation failed, falling back to CPU: {str(e)}")
             # Fallback to CPU version
             kernel = np.array([[-2, -1, 0],
                                [-1, 1, 1],
