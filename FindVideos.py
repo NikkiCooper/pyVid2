@@ -67,8 +67,11 @@ class FindVideos:
             for videoDir in self.pathList:             #  then --Paths was specified along with at least one subfolder.
                 self.recursive(                        #  Scan all user-supplied subfolders for supported video files.
                                 videoDir,                                                   #  Iterate over all subfolders in self.pathList,
+                                # pylint: disable=simplifiable-if-expression
                                 recurse=False if self.opts.noRecurse is True else True,     #  if recurse into each subfolder unless --noRecurse was specified.
+                                # pylint: disable=simplifiable-if-expression
                                 ignore=True if self.opts.noIgnore is True else False,       #  Ignore .ignore files if --noIgnore was specified.
+                                # pylint: disable=simplifiable-if-expression
                                 disableGIF=True if self.opts.disableGIF is True else False  #  Exclude GIF files if --disableGIF was specified.
                               )
         else:
@@ -104,7 +107,7 @@ class FindVideos:
         for file in Files:
             file_lower = file.lower()
             if file_lower.endswith(tuple(ext)):
-                result, result_str = FindVideos.is_video_file(file)
+                result, _ = FindVideos.is_video_file(file)
                 if result:
                     self.videoList.append(file)
 
@@ -122,6 +125,7 @@ class FindVideos:
             FileNotFoundError: If the specified playlist file does not exist
             IOError: If an error occurs while reading the file
         """
+        # pylint: disable=unspecified-encoding
         with open(os.path.expanduser(playListFile) ) as file:
             self.videoList = [line.strip() for line in file]
 
@@ -247,6 +251,7 @@ class FindVideos:
                 return False, f"Not a video file (MIME type: {file_mime})"
 
             # Additional validation using FFprobe
+            # pylint: disable=subprocess-run-check
             result = subprocess.run(
                 ['ffprobe', '-v', 'error', '-show_entries',
                  'stream=codec_type', '-of', 'default=noprint_wrappers=1:nokey=1',
@@ -260,10 +265,12 @@ class FindVideos:
                 return False, "No video streams found in file"
 
             return True, file_mime
-
+        # pylint: disable=broad-exception-caught
         except magic.MagicException as e:
             return False, f"Error reading file magic: {str(e)}"
+        # pylint: disable=broad-exception-caught
         except subprocess.SubprocessError as e:
             return False, f"Error running FFprobe: {str(e)}"
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             return False, f"Unexpected error: {str(e)}"
