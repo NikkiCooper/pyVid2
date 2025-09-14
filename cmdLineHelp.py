@@ -10,6 +10,7 @@ from Bcolors import Bcolors
 bc = Bcolors()
 
 #argparse parser.add_argument_group()
+# pylint: disable=use-dict-literal
 group = dict(
 	required_group=f"{bc.BOLD}{bc.Light_Blue_f}Required. One of{bc.RESET}",
 	video_group=f"{bc.BOLD}{bc.Blue_f}Video Playback Options{bc.RESET}",
@@ -27,6 +28,7 @@ group = dict(
 )
 
 # argparse help=""
+# pylint: disable=redefined-builtin
 help = dict(
 	loop=f"{bc.Light_Yellow_f}Loop videos instead of exiting{bc.RESET}",
 	shuffle=f"{bc.Light_Yellow_f}Play videos in random order{bc.RESET}",
