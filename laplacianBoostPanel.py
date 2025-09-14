@@ -66,7 +66,10 @@ class laplacianBoostPanel:
         self.title_font = pygame.font.Font(None, 48)
         # Laplacian Boost parameters
         if self.play_video and hasattr(self.play_video, 'opts'):
-            self.is_disabled = True if self.play_video.opts.apply_laplacian is False else False
+            if self.play_video.opts.apply_laplacian:
+                self.is_disabled = True
+            else:
+                self.is_disabled = False
             self.laplacian_kernel_size = self.play_video.opts.laplacian_kernel_size
             self.laplacian_boost_strength = self.play_video.opts.laplacian_boost_strength
         else:
@@ -111,6 +114,7 @@ class laplacianBoostPanel:
         screen.blit(title_text, (self.rect.x + (self.panel_width - title_text.get_width()) // 2, self.rect.y + 10))
 
         # Draw sliders
+        # pylint: disable=unused-variable
         for slider, label, value_range in [(self.laplacian_kernel_size_slider, "Kernel Size", (1, 5)), (self.laplacian_boost_strength_slider, "Boost Strength", (1, 10))]:
             # Draw slider background
             pygame.draw.rect(screen, (100, 100, 100),
