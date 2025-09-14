@@ -63,7 +63,11 @@ class sepiaPanel:
 
         # Initalize Effect values
         if self.play_video and hasattr(self.play_video, 'opts'):
-            self.is_disabled = True if self.play_video.opts.apply_sepia is False else False
+            if not self.play_video.opts.apply_sepia:
+                self.is_disabled = True
+            else:
+                self.is_disabled = False
+            #self.is_disabled = True if self.play_video.opts.apply_sepia is False else False
             self.sepia_preset = None
 
             self.sepia_intensity = self.play_video.opts.sepia_intensity
@@ -142,7 +146,7 @@ class sepiaPanel:
         presetStr = f"{'Preset: '}{preset}"
 
         # Draw sliders
-        for slider, label, value_range in [(self.sepia_preset_slider, f"{presetStr}", (0, 3)), (self.sepia_intensity_slider, "Intensity", (0, 10))]:
+        for slider, label, value_range in [(self.sepia_preset_slider, f"{presetStr}", (0, 3)), (self.sepia_intensity_slider, "Intensity", (0, 10))]:    # pylint: disable=unused-variable
             # Draw slider background
             pygame.draw.rect(screen, (100, 100, 100),
                              (self.rect.x + slider['rect'].x, self.rect.y + slider['rect'].y, slider['rect'].width, slider['rect'].height))
