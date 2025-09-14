@@ -66,7 +66,12 @@ class saturationPanel:
         self.title_font = pygame.font.Font(None, 48)
         # Saturation parameters
         if self.play_video and hasattr(self.play_video, 'opts'):
-            self.is_disabled = True if self.play_video.opts.apply_saturation is False else False
+            if not self.play_video.opts.apply_saturation:
+                self.is_disabled = True
+            else:
+                self.is_disabled = False
+
+            #self.is_disabled = True if self.play_video.opts.apply_saturation is False else False
             self.saturation_factor = self.play_video.opts.saturation_factor
         else:
             self.is_disabled = None
@@ -105,7 +110,7 @@ class saturationPanel:
         screen.blit(title_text, (self.rect.x + (self.panel_width - title_text.get_width()) // 2, self.rect.y + 10))
 
         # Draw sliders
-        for slider, label, value_range in [(self.saturation_factor_slider, "Saturation Strength", (0, 100))]:
+        for slider, label, value_range in [(self.saturation_factor_slider, "Saturation Strength", (0, 100))]:       # pylint: disable=unused-variable
             # Draw slider background
             pygame.draw.rect(screen, (100, 100, 100),
                              (self.rect.x + slider['rect'].x, self.rect.y + slider['rect'].y + 75, slider['rect'].width, slider['rect'].height))
@@ -188,8 +193,8 @@ class saturationPanel:
         slider['knob'].x = new_x
 
         # Calculate value based on position
-        value_range = (0, 100)
-        range_min, range_max = value_range
+        #value_range = (0, 100)
+        #range_min, range_max = value_range
 
         pos_ratio = (new_x - slider['rect'].left) / (slider['rect'].width - slider['knob'].width)
         new_value = round(pos_ratio * 100)
@@ -243,12 +248,13 @@ class saturationPanel:
                 result = cv2.cuda.cvtColor(scaled, cv2.COLOR_HSV2BGR)
                 return result.download()
 
-            except cv2.error as e:
+            except cv2.error as e:  # pylint: disable=unused-variable
                 #print(f"CUDA operation failed: {str(e)}")
                 # Fallback to CPU version
                 hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
                 hsv[:, :, 1] = np.clip(hsv[:, :, 1] * saturation_factor, 0, 255)
                 return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
     def toggle_visibility(self):
         self.is_visible = not self.is_visible
