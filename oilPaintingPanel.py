@@ -125,7 +125,7 @@ class oilPaintingPanel:
         title_text = self.title_font.render('Oil Painting Filter', True, HEADING_COLOR)
         screen.blit(title_text, (self.rect.x + (self.panel_width - title_text.get_width()) // 2, self.rect.y + 10))
 
-        for slider, label, value_range in [(self.oil_size_slider, "Neighbor Size", (5, 15)), (self.oil_dynamics_slider, "Dynamic Ratio", (1, 5))]:
+        for slider, label, value_range in [(self.oil_size_slider, "Neighbor Size", (5, 15)), (self.oil_dynamics_slider, "Dynamic Ratio", (1, 5))]:  # pylint: disable=unused-variable
             pygame.draw.rect(screen, (100, 100, 100),
                              (self.rect.x + slider['rect'].x, self.rect.y + slider['rect'].y, slider['rect'].width, slider['rect'].height))
             pygame.draw.rect(screen, DODGERBLUE4, (self.rect.x + slider['knob'].x, self.rect.y + slider['knob'].y, slider['knob'].width, slider['knob'].height))
