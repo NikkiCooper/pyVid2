@@ -7,7 +7,9 @@
 # Class that plays the video and updates all information dialog boxes ETC.
 #
 import os
+import sys
 import time
+import traceback
 import random
 import json
 import datetime
@@ -24,6 +26,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 # pylint: disable=wrong-import-position
 import pygame
 import numpy
+# pylint: disable=reimported
 import numpy as np
 from pyvidplayer2.video_pygame import VideoPygame
 from pyvidplayer2 import Video, PostProcessing
@@ -54,15 +57,21 @@ warnings.filterwarnings('ignore', category=UserWarning,
                        message='pkg_resources is deprecated as an API.*')
 
 # Define colors
+# pylint: disable=unused-variable
 WHITE = (255, 255, 255)
+# pylint: disable=unused-variable
 HEADING_COLOR = (255, 200, 0)  # Yellow for headings
+# pylint: disable=unused-variable
 TEXT_COLOR = WHITE   # White for regular text
+# pylint: disable=unused-variable
 BLACK = (0, 0, 0)
+# pylint: disable=unused-variable
 DODGERBLUE = (30, 144, 255)
+# pylint: disable=unused-variable
 DODGERBLUE4 = (16, 78, 139)
 PLAY_AT_1X_DIRS_DEBUG = False
 
-
+# pylint: disable=too-many-public-methods
 class PlayVideo:
     """
     Class for managing video playback and interactive UI elements in a video player application.
@@ -252,7 +261,7 @@ class PlayVideo:
         '''
         if len(self.videoList) == 0:
             print("No playable media files were found.  Exiting.")
-            exit(128)
+            sys.exit(128)
         #
         # index to access the video elements in self.vidoeList
         self.currVidIndx = -1
@@ -516,9 +525,6 @@ class PlayVideo:
 
         print(f"\n🖥️ Display: {self.displayType}, Resolution: {self.displayResolution}, Scaling: {scaling_factor:.2f}\n")
 
-    '''
-    Static methods
-    '''
     @staticmethod
     def apply_gradient(surface, color_start, color_end, width, height, alpha_start=50, alpha_end=200):
         """
@@ -583,7 +589,7 @@ class PlayVideo:
         if "-echo" in output:
             os.system("stty echo")
             time.sleep(0.1)
-        exit()
+        sys.exit(1)
 
     @staticmethod
     def update():
@@ -678,6 +684,7 @@ class PlayVideo:
         Returns:
             bool: True if the provided image satisfies the "portrait" criteria, otherwise False.
         """
+        # pylint: disable=unused-variable
         width, height = image_surface.get_size()
         total_image_width = DisplayWidth
 
@@ -731,33 +738,27 @@ class PlayVideo:
     @staticmethod
     def dynamic_select_interp(avg_time, current_cpu, target_time, benchmark_threshold=12.0):
         """
-        Determines the appropriate interpolation method for an image smoothing or processing task
-        based on the provided average time, current CPU usage, target processing time, and a
-        benchmark threshold.
-
-        Attributes:
-            None
+        Determines the interpolation method dynamically based on the average process time,
+        current CPU utilization, and the target processing time. The method aims to balance
+        processing speed and quality by applying different interpolation methods depending
+        on performance metrics.
 
         Args:
-            avg_time (float): The average processing time of the interpolation task.
+            avg_time (float): The average time taken for the process.
             current_cpu (float): The current CPU usage percentage.
-            target_time (float): The target processing time for an interpolation task.
-            benchmark_threshold (float, optional): A benchmark threshold value to determine
-                suitability for specific interpolation methods. The default is 12.0.
+            target_time (float): Desired target time for the process.
+            benchmark_threshold (float, optional): The threshold value for average time to
+                decide on the interpolation strategy. Defaults to 12.0.
 
         Returns:
-            str: The selected interpolation method, which can be "lanczos4", "cubic", or "linear".
+            str: The name of the interpolation method to be used.
         """
         if avg_time < benchmark_threshold and current_cpu < 80:
             return "lanczos4"
-        elif avg_time < (target_time * 0.9):
+        if avg_time < (target_time * 0.9):
             return "cubic"
-        else:
-            return "linear"
-
-    '''
-    Class methods
-    '''
+        return "linear"
+    # pylint: disable=unused-argument
     def addShadowEffect(self, screen, font, video_name, org_dur, cur_dur, play_speed, curPos):
         """
         Renders styled text with a shadow effect on a given screen surface. The function displays
@@ -882,6 +883,7 @@ class PlayVideo:
         vol_color           =   (pygame.color.THECOLORS['white'] if self.vid.muted is False else pygame.color.THECOLORS['red'])
 
         # Break down the info text into parts
+        # pylint: disable=f-string-without-interpolation
         play_status_text    =   f"Paused  " if self.vid.get_paused() is True else f"Playing "
         file_number_text    =   f"{self.currVidIndx + 1} of {len(self.videoList)}:  "
         video_name_text     =   f"[ {video_name} ] " if self.opts.loop_flag is True else f"{video_name} "
@@ -931,10 +933,7 @@ class PlayVideo:
         file_number_rect    =   file_number_surface.get_rect(topleft=(play_status_rect.right + 8*self.width_multiplier, base_y))
         video_name_rect     =   video_name_surface.get_rect(topleft=(file_number_rect.right + 12*self.width_multiplier, base_y))
         org_dur_rect        =   org_dur_surface.get_rect(topleft=(video_name_rect.right + 5*self.width_multiplier, base_y))
-        '''
-        do the following block of code
-        if play_speed is not equal to 1
-        '''
+
         if play_speed != 1.0:
             arrow = '-->'
             arrow_text      =   f"{arrow}"
@@ -970,12 +969,7 @@ class PlayVideo:
         screen.blit(video_name_surface, video_name_rect)        # Name of the video
         screen.blit(org_dur_surface, org_dur_rect)              # original duration in MM:SS (1X speed)
 
-        '''
-        if play_speed is NOT equal to 1,
-        go ahead and blit the arrow_surface &  arrow_rect
-        to the screen.
-        Do the same thing for cur_dur_surface & cur_dur_rect
-        '''
+
         if play_speed != 1.0:                                   # If the "play_speed" is not running at 1X:
             screen.blit(arrow_surface, arrow_rect)              # blit the "arrow" and "cur_dur":  Thus:  -->cur_dur
             screen.blit(cur_dur_surface, cur_dur_rect)          # The "cur_dur" is the length of the video in MM:SS based on the "play_speed"
@@ -1020,7 +1014,7 @@ class PlayVideo:
             # This should never happen.  But may as well be redundant ...
             if not os.path.isdir(os.path.expanduser(self.USER_HOME)):
                 print(f"{self.bcolors.FAIL}Cannot determine user $HOME directory.")
-                exit(99)
+                sys.exit(99)
 
             # Check for the env var 'SMOOTHSCALE_BACKEND'
         if "SMOOTHSCALE_BACKEND" in os.environ:
@@ -1054,11 +1048,11 @@ class PlayVideo:
             # Default if no environment exists
             self.SCREEN_SHOT_DIR = self.USER_HOME + '/pyVidSShots'
 
-        '''
-        Play @ 1x speed - Directories containing videos which will play at 1x speed 
-        regardless of the playback speed (specified on cli or otherwise).  These paths are
-        separated by a colon.  This is useful for things like music videos, etc.
-        '''
+
+        # Play @ 1x speed - Directories containing videos which will play at 1x speed
+        # regardless of the playback speed (specified on cli or otherwise).  These paths are
+        # separated by a colon.  This is useful for things like music videos, etc.
+
         self.PLAY_AT_1X_DIRS = [
             os.path.expanduser(path.strip()) for path in os.environ.get("PLAY_AT_1X_DIRS", "").split(":")
             if path.strip()
@@ -1111,6 +1105,7 @@ class PlayVideo:
         filename (str): The name of the file where the playlist will be stored.
         """
         _File = self.savePlayListPath + '/' + filename
+        # pylint: disable=unspecified-encoding
         with open(_File, "w") as file:
             for line in self.videoList:
                 file.write(str(line) + "\n")
@@ -1181,6 +1176,7 @@ class PlayVideo:
         arrow = '-->'
 
         # Format each column
+        # pylint: disable=f-string-without-interpolation
         play_string = f"PAUSED:" if vid_paused else f"Playing:"
         # index
         index_str = (str(index) + ' of ' + str(num_vids)).ljust(index_width)
@@ -1513,6 +1509,8 @@ class PlayVideo:
                     self.save_sshot_error = f"File system error saving image: {e}"
                     print(self.save_sshot_error)
                 return False
+
+            # pylint: disable=broad-exception-caught
             except Exception as e:
                 self.save_sshot_error = f"Unexpected error while saving frame to: {e}"
                 print(self.save_sshot_error)
@@ -1599,7 +1597,7 @@ class PlayVideo:
         box_x = (self.displayWidth - box_width) // 2
         box_y = (self.displayHeight - box_height) // 2
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
-        box_surface_rect = box_surface.get_rect()
+        # box_surface_rect = box_surface.get_rect()
         # box_surface.set_alpha(190)
         box_surface.set_colorkey((0, 255, 0))
         PlayVideo.apply_gradient(
@@ -1759,7 +1757,7 @@ class PlayVideo:
         box_x = (self.displayWidth - box_width) // 2
         box_y = (self.displayHeight - box_height) // 2
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)
-        box_surface_rect = box_surface.get_rect()
+        # box_surface_rect = box_surface.get_rect()
         # box_surface.set_alpha(190)
         box_surface.set_colorkey((0, 255, 0))
         PlayVideo.apply_gradient(
@@ -1886,7 +1884,7 @@ class PlayVideo:
 
         # Create a semi-transparent surface for the box
         box_surface = pygame.Surface((box_width, box_height), pygame.SRCALPHA)  # Allows transparency
-        box_surface_rect = box_surface.get_rect()
+        # box_surface_rect = box_surface.get_rect()
 
         box_surface.set_colorkey((0, 255, 0))
         PlayVideo.apply_gradient(
@@ -2484,7 +2482,7 @@ class PlayVideo:
         DodgerBlue = pygame.color.THECOLORS['dodgerblue']
         DodgerBlue4 = pygame.color.THECOLORS['dodgerblue4']
 
-        """Handles fade-in and fade-out animation for splash screen."""
+        # Handles fade-in and fade-out animation for splash screen.
         splash_surface = pygame.Surface((self.Splash_Width, self.Splash_Height), pygame.SRCALPHA)
         #splash_surface.set_alpha(175)
         splash_surface.set_colorkey((0, 255, 0))
@@ -2504,24 +2502,6 @@ class PlayVideo:
                          border_radius=8
                          )
 
-        '''
-        alpha = 0  # Start fully transparent
-        # Fade In
-        while alpha < 255:
-            alpha += 5  # Increase alpha to fade in
-            splash_surface.set_alpha(alpha)
-            self.draw_video_splash(splash_surface, video_info)
-            pygame.time.delay(30)  # Control speed of fade-in
-        # Length of time to hold splash visible
-        pygame.time.delay((self.opts.loopDelay * 1000))
-
-        # Fade Out
-        while alpha > 100:
-            alpha -= 5  # Decrease alpha to fade out
-            splash_surface.set_alpha(alpha)
-            self.draw_video_splash(splash_surface, video_info)
-            pygame.time.delay(30)  # Control speed of fade-out
-        '''
         self.vid.play()
 
     def setup_video_splash(self):
@@ -2701,6 +2681,7 @@ class PlayVideo:
         # Required but mutually exclusive options
         Paths = self.opts.Paths
         loadPlayList = self.opts.loadPlayList
+        # pylint: disable=subprocess-run-check
         result = subprocess.run(["xrandr", "--listactivemonitors"], capture_output=True, text=True)
 
         # Video Playback Options
@@ -2876,6 +2857,7 @@ class PlayVideo:
             ]
 
             # Run ffprobe command and capture output
+            # pylint: disable=subprocess-run-check
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             # Check if the command was successful
@@ -2976,6 +2958,7 @@ class PlayVideo:
             # Finally render the main colored text on top
             self.win.blit(text_surface, (x_position, y_position))
 
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             print(f"Error blitting title: {str(e)}")
 
@@ -3186,6 +3169,8 @@ class PlayVideo:
             # Combine
             result = cv2.subtract(result, edges)
             return cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
+
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             print(f"Error in comic effect: {str(e)}")
             return frame
@@ -3281,6 +3266,8 @@ class PlayVideo:
             result = cv2.subtract(smoothed, edges)
 
             return cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
+
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             print(f"Error in comic-sharp effect: {str(e)}")
             return frame
@@ -3413,6 +3400,8 @@ class PlayVideo:
             result = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
 
             return result
+
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             print(f"Error in comic effect: {str(e)}")
             return frame
@@ -3667,8 +3656,8 @@ class PlayVideo:
         if opts.oil_painting or opts.apply_oil_painting:
             effects.append(self.oil_painting_panel.Apply_Effects)
         if opts.watercolor:
-            from concurrent.futures import ThreadPoolExecutor
-            executor = ThreadPoolExecutor(max_workers=2)
+            from concurrent.futures import ThreadPoolExecutor # pylint: disable=import-outside-toplevel
+            #executor = ThreadPoolExecutor(max_workers=2)
             def process_channel(channel, d, sigma):
                 return cv2.bilateralFilter(channel, d, sigma, sigma)
             def watercolor_effect(frame):
@@ -3715,6 +3704,7 @@ class PlayVideo:
             effects.append(PlayVideo.apply_inverted)
         # Add bilateral filter to the effects chain
         if hasattr(opts, 'apply_bilateral_filter') and opts.apply_bilateral_filter:
+            # pylint: disable=unnecessary-lambda
             effects.append(lambda frame: self.apply_bilateral_filter_effect(frame))
         # ... add other effects as needed
         # If no effects are specified, return None or PostProcessing.none
@@ -3930,6 +3920,7 @@ class PlayVideo:
             if self.opts.enableFFprobe:
                 try:
                     self.vid.probe()
+                # pylint: disable=broad-exception-caught
                 except Exception as probe_error:
                     print(f"Warning: FFprobe failed: {probe_error}")
 
@@ -3958,24 +3949,27 @@ class PlayVideo:
                 if hasattr(self, 'vid') and self.vid is not None:
                     try:
                         self.vid.close()
+                    # pylint: disable=bare-except
                     except:
                         pass
                 raise  # Re-raise the exception to halt execution
 
+            # pylint: disable=broad-exception-caught
             except Exception as e:
-                print(f"CRITICAL ERROR - Unexpected resolution change error:")
+                print("CRITICAL ERROR - Unexpected resolution change error:")
                 print(f"Error type: {type(e).__name__}")
                 print(f"Error message: {str(e)}")
                 print(f"Attempted display height: {self.displayHeight}")
                 if original_resolution:
                     print(f"Original resolution: {original_resolution}")
                 print("Stack trace:")
-                import traceback
+                #import traceback
                 traceback.print_exc()
                 # Clean up
                 if hasattr(self, 'vid') and self.vid is not None:
                     try:
                         self.vid.close()
+                    # pylint: disable=bare-except
                     except:
                         pass
                 return None
@@ -3988,12 +3982,14 @@ class PlayVideo:
             self.vid.set_volume(self.volume)
             return self.vid
 
+        # pylint: disable=broad-exception-caught
         except Exception as e:
             print(f"Critical error during video initialization: {str(e)}")
             # Cleanup
             if hasattr(self, 'vid') and self.vid is not None:
                 try:
                     self.vid.close()
+                # pylint: disable=bare-except
                 except:
                     pass
             return None
@@ -4042,7 +4038,7 @@ class PlayVideo:
                 self.reset_OSD_tracking()
                 self.reset_video_info_splash()
 
-                '''Play the video'''
+                # Play the video
                 self.vid = self.playVideo(self.videoList[self.currVidIndx])
                 if self.vid is None:
                     continue
@@ -4068,12 +4064,6 @@ class PlayVideo:
                 if not self.disableSplash:
                     self.draw_video_splash()
 
-                '''
-                self.frameSaveDir = self.check_SSHOT_dir(noImgType=True)
-                self.frameCount = 0
-                self.counter = 0
-                '''
-
                  # The event handler loop
                 while self.vid.active:
                     if self.current_vid_width < self.displayWidth or self.current_vid_height < self.displayHeight:
@@ -4096,18 +4086,13 @@ class PlayVideo:
 
                     pos_w, pos_h = self.getResolutions()
                     if self.vid.draw(self.win, (pos_w, pos_h),
-                            force_draw=(False if not self.vid.paused else True)) or self.vid.paused:
+                            force_draw=(False if not self.vid.paused else True)) or self.vid.paused:    # pylint: disable=(simplifiable-if-expression
 
                         # Handles only control_panel
                         #frm  = self.control_panel.render_frame()
                         #print(f"frm: {frm if frm is not None else 'None'}")
                         # Handles both control_panel and edge_panel and all the other filter panels
                         self.draw(self.win)
-
-                        '''
-                        self.frameCount = self.counter
-                        self.counter = self.FrameCapture(self.frameCount)
-                        '''
 
                         self.handle_queued_screenshot()
                         self.update_GUI_components()
@@ -4123,7 +4108,7 @@ class PlayVideo:
             # End of videoList playback loop
             if self.stopButtonClicked:
                 continue
-            elif not self.opts.loop:
+            if not self.opts.loop:
                 break
         # End of the main loop
         self.quit()
@@ -4337,11 +4322,10 @@ class PlayVideo:
 
                         self.FilterDialogBox(f"CUDA-Bilateral preset: {preset_name}")
                     else:
-                        self.FilterDialogBox(f"CUDA-Bilateral filter is disabled")
+                        self.FilterDialogBox("CUDA-Bilateral filter is disabled")
                         self.opts.CUDA_bilateral_filter = False
                         if self.debug:
                             print("Bilateral Filter: OFF")
-
                         else:
                             pass
 
