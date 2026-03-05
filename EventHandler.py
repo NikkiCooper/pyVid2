@@ -504,7 +504,9 @@ class EventHandler:
                         elif self.PlayVideoInstance.laplacian_panel.is_visible:
                             self.PlayVideoInstance.laplacian_panel.toggle_visibility()
                         elif self.PlayVideoInstance.bilateral_panel.is_visible():
-                            self.PlayVideoInstance.show_filter_panel.toggle_visibility()
+                            self.PlayVideoInstance.bilateral_panel.toggle_visibility()
+                            #self.PlayVideoInstance.show_filter_panel.toggle_visibility()
+
                 case const.KEY_EDGE_DETECT if event.mod & pygame.KMOD_SHIFT:
                     self.opts.apply_edge_detect = not self.opts.apply_edge_detect
                     self.PlayVideoInstance.FilterDialogBox(f"Apply Edge-Detect effect is {'enabled' if self.opts.apply_edge_detect else 'disabled'}")
@@ -544,9 +546,12 @@ class EventHandler:
                             self.PlayVideoInstance.control_panel.toggle_visibility()
                         elif self.PlayVideoInstance.laplacian_panel.is_visible:
                             self.PlayVideoInstance.laplacian_panel.toggle_visibility()
-                        elif self.PlayVideoInstance.show_filter_panel:
-                            self.PlayVideoInstance.show_filter_panel = False
-                            self.PlayVideoInstance.bilateral_panel.is_visible = False
+                        elif self.PlayVideoInstance.bilateral_panel.is_visible():
+                            self.PlayVideoInstance.bilateral_panel.toggle_visibility()
+                            #self.PlayVideoInstance.show_filter_panel.toggle_visibility()
+                        #elif self.PlayVideoInstance.show_filter_panel:
+                            #self.PlayVideoInstance.show_filter_panel = False
+                            #self.PlayVideoInstance.bilateral_panel.is_visible = False
                     self.reInitVideo('oil_painting', self.PlayVideoInstance.vid.frame)
                 case const.KEY_SHUFFLE:                                                                 # j key
                     self.PlayVideoInstance.shuffleVideoList()
