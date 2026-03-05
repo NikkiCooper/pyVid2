@@ -10,9 +10,13 @@
 ### **NOTE:**  This document is likely out of date relative to the Python code contained herein.
 
 pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media
-in an automated manner. The latest version is  _vesion 0.50_
+in an automated manner. The latest version is  _version 0.60_
 
-pyVid2 is unique in that it only supports playing videos that it finds in user supplied directories.  The scan in pyVid2 is capable of finding tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
+pyVid2 is unique in that it only supports playing videos that it finds in Fuser supplied directories.  The scan in pyVid2 is capable of finding tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
+
+STARTING WITH VERSION >= 0.50, PLEASE NOTE THAT MONITOR SCALING IS OPTIMIZED TO 4K UHD MONITORS ONLY.
+I HAVE NOT TRIED TO RUN pyVid2 ON LOWER RESOLUTION MONITORS, THUS IT IS NOT LIKELY TO RUN AS EXPECTED AS A RESULT.
+ 
 
 ## 🧸 <span style="color:DodgerBlue">Features</span>
 
@@ -91,7 +95,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 |-------------------------|-----------------------------------------------------------------------------|
 | `--Paths <Path>...`     | Directories to scan for playable media                                      |
 | `--Files <File>...`     | Load and play supported media                                               |
-| `--loadPlayList`        | Load and play a playlist file (`/path/PlaylistName`)                        |
+| `--loadPlayList <File>...` | Load and play one or more playlist files (supports multiple playlists)   |
 | `--listActiveMonitors`  | Lists detected monitors, then exits (helper for `--display`)                |
 
 ---
@@ -109,6 +113,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `--loopDelay`         | Delay (in seconds) between videos. Default: `1`                             |
 | `--playSpeed`         | Playback speed multiplier (`0.5`–`5.0`). Default: `1.0`                     |
 | `--dispTitles`        | Show titles on: `all`, `portrait`, or `landscape` frames                    |
+| `--showFilename`      | Display video filename on screen                                            |
 | `--enableOSDcurpos`   | Enable current playback position on-screen overlay                          |
 
 ---
@@ -158,17 +163,35 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 ### 🧪 <span style="color:DodgerBlue">Post-Processing Filter Options</span>
 
+**CUDA-enabled filters:**
+- `--contrast-enhance`
+- `--cuda-bilateral`
+- `--edge-detect`
+- `--edges-sobel`
+- `--emboss`
+- `--gaussian-blur`
+- `--greyscale`
+- `--laplacian`
+- `--median-blur`
+- `--saturation`
+- `--sepia`
+
+**Filters with <img src="./assets/cuda.svg" width="16" alt="CUDA"> support CUDA acceleration if a suitable Python environment is configured with cv2 CUDA support.**
+
 | Argument              | Description                                                                 |
 |-----------------------|-----------------------------------------------------------------------------|
-| `--sharpen`           | Apply sharpening to video                                                   |
+| `--cuda-bilateral` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable CUDA-accelerated bilateral filter with default preset |
+| `--laplacian` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Apply sharpening to video |
 | `--blur`              | Apply standard blur                                                         |
-| `--median-blur`       | Enable median blur filtering                                                |
-| `--gaussian-blur`     | Enable Gaussian blur                                                        |
+| `--median-blur` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable median blur filtering |
+| `--gaussian-blur` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable Gaussian blur |
+| `--contrast-enhance` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable contrast enhancement filter |
+| `--edges-sobel` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable Sobel edge detection filter |
 | `--noise`             | Add noise for stylistic grain                                               |
 | `--cel-shading`       | Enable cel (toon-style) shading                                             |
 | `--comic`             | Apply comic-book effect                                                     |
 | `--thermal`           | Simulate thermal/heat vision palette                                        |
-| `--emboss`            | Emboss the video                                                            |
+| `--emboss` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Emboss the video |
 | `--dream`             | Apply dreamy, soft focus effect                                             |
 | `--pixelate`          | Pixelate the video (low-res aesthetic)                                      |
 | `--neon`              | Apply neon outlining effect                                                 |
@@ -195,7 +218,6 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `--oil-size`                | Neighborhood size `5`–`15`. Default: `7`                                    |
 | `--oil-dynamics`            | Dynamic blending ratio `1`–`5`. Default: `1`                                |
 
-
 ---
 
 ### ✏️ <span style="color:DodgerBlue">Pencil Sketch Parameters</span>  
@@ -217,10 +239,10 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 | Argument             | Description                                                                 |
 |----------------------|-----------------------------------------------------------------------------|
-| `--greyscale`        | Convert video to greyscale                                                  |
-| `--sepia`            | Apply sepia tone effect                                                     |
+| `--greyscale` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Convert video to greyscale |
+| `--sepia` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Apply sepia tone effect |
 | `--vignette`         | Add vignette darkening around frame edges                                   |
-| `--saturation`       | Adjust color saturation (`0.0`–`2.0`). Default: N/A                         |
+| `--saturation` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Adjust color saturation (`0.0`–`2.0`). Default: N/A |
 
 ---
 
@@ -228,7 +250,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 
 | Argument               | Description                                                                |
 |------------------------|----------------------------------------------------------------------------|
-| `--edge-detect`        | Enable edge detection filter                                               |
+| `--edge-detect` <img src="./assets/cuda.svg" width="16" alt="CUDA"> | Enable edge detection filter |
 | `--edge-lower`         | Lower threshold (`0 <= value < upper`). Default: `100`                     |
 | `--edge-upper`         | Upper threshold (`value <= 255`). Default: `200`                           |
 
@@ -259,6 +281,143 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `comic-sharp-2`     | Intermediate setup with custom bilateral/edge tweaks                       |
 | `comic-sharp-3`     | Advanced comic effect with color quant + sharpening                        |
 | `pencil-sketch-1`   | Heredoc example + full CLI usage for pencil sketch                         |
+
+---
+
+### 📖 <span style="color:DodgerBlue">Post-Processing Filters Documentation</span>
+
+This section provides comprehensive documentation for all post-processing filters available in pyVid2.
+
+---
+
+#### 🔍 <span style="color:DodgerBlue">Blur Filters</span>
+
+| Filter | Parameters | Description | CUDA |
+|--------|-----------|-------------|------|
+| `--blur` | None | Applies standard blur effect to soften the video image | ❌ |
+| `--gaussian-blur` | None | Applies Gaussian blur for smooth, natural-looking blur effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--median-blur` | None | Reduces noise while preserving edges using median filtering | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+
+---
+
+#### ✨ <span style="color:DodgerBlue">Enhancement Filters</span>
+
+| Filter | Parameters | Description | CUDA |
+|--------|-----------|-------------|------|
+| `--laplacian` | None | Sharpens video by enhancing edges using Laplacian kernel | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--contrast-enhance` | None | Automatically enhances contrast for improved visual clarity | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--neon` | None | Creates neon-style glowing edge outlines | ❌ |
+| `--dream` | None | Applies soft-focus dreamy effect with ethereal quality | ❌ |
+
+---
+
+#### 🎨 <span style="color:DodgerBlue">Artistic & Stylistic Filters</span>
+
+| Filter | Parameters | Description | CUDA |
+|--------|-----------|-------------|------|
+| `--cel-shading` | None | Creates cartoon/anime-style cel-shaded appearance | ❌ |
+| `--comic` | None | Applies comic book-style visual effect | ❌ |
+| `--emboss` | None | Creates 3D embossed relief effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--pixelate` | None | Pixelates video for retro 8-bit aesthetic | ❌ |
+| `--thermal` | None | Simulates thermal/infrared heat vision palette | ❌ |
+| `--noise` | None | Adds film grain noise for vintage or stylistic effect | ❌ |
+
+---
+
+#### 🌈 <span style="color:DodgerBlue">Color Manipulation Filters</span>
+
+**Note:** `--greyscale` and `--sepia` are mutually exclusive with `--vignette` and `--saturation`.
+
+| Filter | Parameters | Description | CUDA |
+|--------|-----------|-------------|------|
+| `--greyscale` | None | Converts video to greyscale (black and white) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--sepia` | None | Applies warm sepia tone for vintage photograph effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--saturation` | `0.0`-`2.0` | Adjusts color saturation intensity (values > 1.0 increase vibrancy) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--vignette` | None | Darkens frame edges for cinematic focus effect | ❌ |
+
+---
+
+#### 🔲 <span style="color:DodgerBlue">Edge Detection Filters</span>
+
+| Filter | Parameters | Description | CUDA |
+|--------|-----------|-------------|------|
+| `--edge-detect` | `--edge-lower` (default: 100)<br>`--edge-upper` (default: 200) | Canny edge detection with adjustable thresholds (0-255) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--edges-sobel` | None | Sobel operator edge detection for gradient-based edges | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+
+**Edge Detection Parameters:**
+- `--edge-lower`: Lower threshold for Canny edge detection (must be < upper threshold)
+- `--edge-upper`: Upper threshold for Canny edge detection (0-255)
+
+---
+
+#### 🎭 <span style="color:DodgerBlue">Transformation Filters</span>
+
+| Filter | Parameters | Description |
+|--------|-----------|-------------|
+| `--fliplr` | None | Flips video horizontally (mirror left-right) |
+| `--flipup` | None | Flips video vertically (upside down) |
+
+---
+
+#### 🖼️ <span style="color:DodgerBlue">Complex Effect Filters</span>
+
+##### **CUDA Bilateral Filter**
+
+| Argument | Parameters | Description |
+|----------|-----------|-------------|
+| `--cuda-bilateral` | None | Enables CUDA-accelerated bilateral filter with 'default' preset. Provides edge-preserving smoothing. |
+
+**Note:** Interactive panel accessible via keyboard `[f]` during playback for preset selection.
+
+##### **Watercolor Effect**
+
+| Argument | Default | Range | Description |
+|----------|---------|-------|-------------|
+| `--watercolor` | — | — | Enables watercolor painting effect (computationally intensive) |
+| `--watercolor-scale` | `0.5` | `0.25`-`1.0` | Processing scale factor (lower = faster, less detail) |
+| `--watercolor-quality` | `medium` | `fast`, `medium`, `high` | Quality vs. speed trade-off |
+
+##### **Oil Painting Effect**
+
+| Argument | Default | Range | Description |
+|----------|---------|-------|-------------|
+| `--oil-painting` | — | — | Enables oil painting artistic effect |
+| `--oil-size` | `7` | `5`-`15` | Neighborhood size for oil painting brush strokes |
+| `--oil-dynamics` | `1` | `1`-`5` | Dynamic blending ratio for color mixing |
+
+##### **Pencil Sketch Effect**
+
+| Argument | Default | Range | Description |
+|----------|---------|-------|-------------|
+| `--pencil-sketch` | — | — | Enables pencil sketch drawing effect |
+| `--sketch-detail` | `21` | Odd numbers | Detail level (higher = less detail) |
+| `--sketch-block-size` | `9` | `7`-`15` (odd) | Block size for edge detection |
+| `--sketch-c-value` | `2` | `1`-`5` | Threshold sensitivity (higher = more edges) |
+| `--sketch-intensity` | `0.7` | `0.0`-`1.0` | Intensity of sketch effect |
+| `--edge-weight` | `0.3` | `0.0`-`1.0` | Weight of edges in final composition |
+
+##### **Comic Sharp Effect**
+
+| Argument | Default | Range | Description |
+|----------|---------|-------|-------------|
+| `--comic-sharp` | — | — | Enables comic-style sharpening pipeline |
+| `--comic-sharp-amount` | `0.5` | `0.0`-`1.0` | Sharpening intensity |
+| `--bilateral-d` | `5` | `1`,`3`,`5`,`7`,`9`,`11`,`13`,`15` | Bilateral filter diameter (odd numbers only) |
+| `--bilateral-color` | `60` | `10`-`200` | Bilateral filter color sigma |
+| `--bilateral-space` | `60` | `10`-`200` | Bilateral filter space sigma |
+| `--edge-low` | `40` | `0`-`255` | Lower threshold for comic edge detection |
+| `--edge-high` | `140` | `0`-`255` | Upper threshold for comic edge detection |
+| `--color-quant` | `20` | `1`-`64` | Color quantization factor (lower = more posterization) |
+
+---
+
+#### 💡 <span style="color:DodgerBlue">Filter Usage Tips</span>
+
+- **CUDA Filters**: Filters marked with <img src="./assets/cuda.svg" width="16" alt="CUDA"> support GPU acceleration when cv2 is compiled with CUDA support
+- **Performance**: Complex filters like `--watercolor` are computationally expensive; reduce `--watercolor-scale` for better performance
+- **Combining Filters**: Multiple filters can be combined, but some are mutually exclusive (see individual filter notes)
+- **Interactive Controls**: Many filters have keyboard shortcuts for runtime toggling (press `[h]` during playback for help)
+- **Presets**: Complex filters like bilateral and oil painting support interactive panels during playback
 
 ---
 
@@ -319,32 +478,91 @@ speed is also displayed to the right of the -->.
 
 
 
-### ⌨ <span style="color:DodgerBlue">Keyboard-commands</span>
+### ⌨ <span style="color:DodgerBlue">Keyboard Commands</span>
 
-There are a number of keyboard commands available while a video is playing:
+#### **Playback Control**
+- ░**p**░ or **Space Bar** — Pause/unpause video
+- ░**n**░ — Advance to next video
+- **Backspace** — Play previous video
+- ░**r**░ or **HOME** — Restart current video from beginning
+- ░**q**░ or **ESC** — Quit the program
+- ░**END**░ — Seek to last 10 seconds of video
+- ░**→**░ — Seek forward 20 seconds
+- ░**←**░ — Seek backward 20 seconds
+- ░**l**░ — Toggle loop current video indefinitely
+- ░ **+** ░ — (keypad) Increase playback speed by 0.50 (*max 5.0*)
+- ░ **-** ░ — (keypad) Decrease playback speed by 0.50 (*min 0.50*)
 
-- ░**d**░ = Debug: Print the value of all command line options to the console.
-- ░**g**░ = Reshuffle video playlist in place.
-- ░**h**░ = Help
-- ░**i**░ = Show video metadata window. Click the **OK** button to clear. [work in progress] 
-- ░**l**░ = Loop the currently playing video indefinately. This is a toggle.
-- ░**m**░ = Toggle mute video.
-- ░**n**░ = Advance to next video.
-- ░**o**░ = Toggle OSD views. (3 states)
-- ░**p**░ or **Space Bar** = Pause video.
-- ░**q**░ or **ESC** = Quit the program
-- ░**r**░ or **HOME** = Restart the currently playing video back to the beginning.
-- ░**s**░ = Save Screenshot to ~/pyVidScreenShots
-- ░**t**░ = Toggle mp4 Title display. (3 states)
-- ░**w**░ = Save pyVid2s internal playlist to a file.
-- ░ **+** ░ = (keypad) Increase playback speed by 0.50  (*max is 5.0*)
-- ░ **-** ░ = (keypad) Decrease playback speed by 0.50  (*min is 0.50*)
-- ░**END**░ = Seek to the end of video minus about 10 seconds (video_duration - 10) sec.
-- ░**→**░ Seek *forward* 20 seconds.
-- ░**←**░ Seek *backward* 20 seconds.
-- ░**↑**░ Increase the volume by 10%.
-- ░**↓**░ Decrease the volume by 10%.
-- **Backspace** = Play previous video.
+#### **Audio Control**
+- ░**m**░ — Toggle mute
+- ░**↑**░ — Increase volume by 10%
+- ░**↓**░ — Decrease volume by 10%
+
+#### **Display & Information**
+- ░**o**░ — Toggle OSD views (3 states: off / position+duration / position only)
+- ░**t**░ — Toggle video title display (4 states: None → all → portrait → landscape)
+- ░**h**░ — Show keyboard help panel
+- **Shift+H** — Show filter help panel
+- ░**i**░ — Show video metadata window
+- **Shift+I** — Cycle interpolation method (linear → cubic → lanczos4)
+
+#### **Playlist Management**
+- ░**j**░ — Reshuffle video playlist in place
+- ░**w**░ — Save current playlist to file (~/VideoPlayList-SIZE.txt)
+
+#### **Screenshot & Save Mode**
+- ░**s**░ — Save screenshot to ~/pyVidScreenShots
+- **Alt+S** — Toggle save mode (remaps Space Bar to screenshot function)
+
+#### **Filter Panels**
+- ░**c**░ — Toggle brightness/contrast panel
+- **Shift+C** — Toggle brightness/contrast filter on/off
+- ░**e**░ — Toggle edge detection panel
+- **Shift+E** — Toggle edge detection filter on/off
+- ░**f**░ — Toggle CUDA bilateral filter panel
+- ░**x**░ — Cycle through bilateral filter presets
+- ░**z**░ — Toggle oil painting panel
+- **Shift+Z** — Toggle oil painting filter on/off
+- ░**!**░ (Shift+1) — Toggle Laplacian Boost panel
+- **Shift+!** — Toggle Laplacian Boost filter on/off
+- ░*****░ (Shift+8) — Toggle sepia panel
+- **Shift+*** — Toggle "Super-Sepia" effect on/off
+- **INSERT** — Toggle filter checkbox panel
+- **DELETE** — Show filter info list
+
+#### **Simple Filters (Toggle On/Off)**
+- ░**u**░ — Sharpening filter #1
+- ░**@**░ (Shift+2) — Blur filter
+- ░**(**░ (Shift+9) — Gaussian blur filter (CUDA)
+- ░**)**░ (Shift+0) — Median blur filter (CUDA)
+- ░**g**░ — Greyscale filter (CUDA)
+- ░**k**░ — Edge Sobel filter (CUDA)
+- ░**v**░ — Noise filter
+- ░**/**░ — Denoise filter
+- ░**$**░ (Shift+4) — Emboss filter (CUDA)
+- ░**%**░ (Shift+5) — Thermal filter
+- ░**#**░ (Shift+3) — Edge detect toggle
+
+#### **Enhancement Filters (Toggle On/Off)**
+- ░**;**░ — Contrast enhancement (CUDA)
+- ░**:**░ (Shift+;) — Neon enhancement
+- ░**'**░ — Vignette enhancement
+- ░**"**░ (Shift+') — Pixelate enhancement
+- ░**<**░ (Shift+,) — Cel-shading enhancement
+- ░**^**░ (Shift+6) — Dream enhancement
+- ░**&**░ (Shift+7) — Comic enhancement
+- ░**`**░ — Artistic filter toggle
+
+#### **Transformation**
+- ░**,**░ — Flip video horizontally (left-right)
+- ░**.**░ — Flip video vertically (up-down)
+
+#### **Disable All Filters**
+- ░**[**░ — Disable all active filters
+
+#### **Debug & Development**
+- ░**d**░ — Print all command-line options to console
+- ░**b**░ — Print VideoPlayBar icon rectangles (debug)
 <!--
 - ➡️  = Seek 20 seconds.
 - ⬅️  = seek -20 seconds.

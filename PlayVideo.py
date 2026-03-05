@@ -24,6 +24,8 @@ import cv2
 # PYGAME_HIDE_SUPPORT_PROMPT=1 pyvid [options] (more trouble than what it's worth)
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 # pylint: disable=wrong-import-position
+warnings.filterwarnings('ignore', category=UserWarning,message='pkg_resources is deprecated as an API.*')
+warnings.filterwarnings('ignore', category=RuntimeWarning,message='Your system is avx2 capable but pygame was not built with support for it.*')
 import pygame
 import numpy
 # pylint: disable=reimported
@@ -53,8 +55,8 @@ import applyContrastEnhancement
 from laplacianBoostPanel import laplacianBoostPanel
 from CUDABilateralFilterPanel import CUDABilateralFilterPanel
 
-warnings.filterwarnings('ignore', category=UserWarning,
-                       message='pkg_resources is deprecated as an API.*')
+#warnings.filterwarnings('ignore', category=UserWarning,
+#                       message='pkg_resources is deprecated as an API.*')
 
 # Define colors
 # pylint: disable=unused-variable
@@ -69,7 +71,6 @@ BLACK = (0, 0, 0)
 DODGERBLUE = (30, 144, 255)
 # pylint: disable=unused-variable
 DODGERBLUE4 = (16, 78, 139)
-PLAY_AT_1X_DIRS_DEBUG = False
 
 # pylint: disable=too-many-public-methods
 class PlayVideo:
@@ -313,12 +314,6 @@ class PlayVideo:
         self.save_sshot_filename = None
         self.save_sshot_error = None
         self.SCREEN_SHOT_DIR = None
-        #
-        # List containing the paths to play videos at 1x speed
-        # This overrides all other video playback speed settings.
-        self.PLAY_AT_1X_DIRS = None
-        self.USING_PLAY_AT_1X_DIRS = False
-        self.saved_opts_playback_speed = self.opts.playSpeed
         # Set some environment variables BEFORE initializing pygame
         self.__environmentSetup()
 
@@ -435,6 +430,12 @@ class PlayVideo:
         self.drawVideoPlayBarToolTipTextLast = ""
         self.drawVideoPlayBarToolTipLastIcon = None
         #
+        # FilterCheckboxPanel tooltip state
+        self.drawFilterCheckboxToolTip = False
+        self.drawFilterCheckboxToolTipText = ""
+        self.drawFilterCheckboxToolTipMouse_x = 0
+        self.drawFilterCheckboxToolTipMouse_y = 0
+        #
         self.stopButtonClicked = False
         self.playButtonClicked = False
         #
@@ -510,6 +511,7 @@ class PlayVideo:
             print("🎬 CUDA-accelerated Contrast-Enhance filter ready!")
             print("🎬 CUDA-accelerated Edge-Detect effect ready!")
             print("🎬 CUDA-accelerated Edges-Sobel effect ready!")
+            print("🎬 CUDA-accelerated Emboss effect ready!")
             print("🎬 CUDA-accelerated Color-Saturation effect ready!")
         else:
             print("⚠️  Using CPU for all effects and filters")
@@ -522,6 +524,16 @@ class PlayVideo:
         self.bilateral_panel = CUDABilateralFilterPanel(self.displayWidth,self.displayHeight)
         self.bilateral_panel.opts_reference = opts
 
+        # Enable CUDA bilateral filter from CLI if requested
+        if opts.cuda_bilateral:
+            self.bilateral_panel.apply_preset('default')
+            self.bilateral_panel.filter_enabled = True
+            self.bilateral_panel.preset_dropdown.set_selected_option('default')
+            opts.apply_bilateral_filter = True
+            opts.CUDA_bilateral_filter = True
+            self.bilateral_filter_enabled = True
+            self.bilateral_panel.set_visibility(True)
+            print(f"{self.bcolors.OKGREEN}CUDA Bilateral Filter enabled from CLI with 'default' preset{self.bcolors.ENDC}")
 
         print(f"\n🖥️ Display: {self.displayType}, Resolution: {self.displayResolution}, Scaling: {scaling_factor:.2f}\n")
 
@@ -1041,42 +1053,21 @@ class PlayVideo:
             # No environment variable, so set the path to ~
             self.savePlayListPath = os.path.expanduser("~")
 
+        # PLAYLIST_HOME: Home directory for playlists (used for playlist file resolution)
+        if "PLAYLIST_HOME" in os.environ:
+            playlist_home = os.environ["PLAYLIST_HOME"]
+            if os.path.isdir(os.path.expanduser(playlist_home)):
+                print(f"{self.bcolors.OKGREEN}Using environment variable PLAYLIST_HOME for playlist path: {playlist_home}{self.bcolors.ENDC}")
+            else:
+                print(f"{self.bcolors.WARNING}Warning: PLAYLIST_HOME is set but path does not exist: {playlist_home}{self.bcolors.ENDC}")
+
         # Screenshot directory.  Note that self.check_SSHOT_dir() will create the directory if it doesn't exit.
+        # Todo: rename SCREEN_SHOT_DIR to something more descriptive.  Maybe PYVID_SCREEN_SHOTS_DIR?
         if "SCREEN_SHOT_DIR" in os.environ:
             self.SCREEN_SHOT_DIR = os.environ["SCREEN_SHOT_DIR"]
         else:
             # Default if no environment exists
             self.SCREEN_SHOT_DIR = self.USER_HOME + '/pyVidSShots'
-
-
-        # Play @ 1x speed - Directories containing videos which will play at 1x speed
-        # regardless of the playback speed (specified on cli or otherwise).  These paths are
-        # separated by a colon.  This is useful for things like music videos, etc.
-
-        self.PLAY_AT_1X_DIRS = [
-            os.path.expanduser(path.strip()) for path in os.environ.get("PLAY_AT_1X_DIRS", "").split(":")
-            if path.strip()
-        ] if "PLAY_AT_1X_DIRS" in os.environ else []
-
-    def should_play_at_1x(self, video_path):
-        """
-        Check if the video should be played at 1x speed based on its directory path.
-
-        Args:
-            video_path (str): The full path to the video file
-
-        Returns:
-            bool: True if the video should be played at 1x speed, False otherwise
-        """
-        if self.PLAY_AT_1X_DIRS is None:
-            return False
-
-        # Get just the directory portion of the video path
-        video_dir = os.path.dirname(os.path.expanduser(video_path))
-
-        # Check if the video's directory matches any of the 1x directories
-        return any(video_dir.startswith(os.path.expanduser(directory))
-                   for directory in self.PLAY_AT_1X_DIRS)
 
     def shuffleVideoList(self):
         """
@@ -3059,6 +3050,14 @@ class PlayVideo:
 
         if self.filterCheckboxPanel.is_visible():
             self.filterCheckboxPanel.draw(self.win)
+            # Draw FilterCheckboxPanel tooltips
+            if self.drawFilterCheckboxToolTip:
+                self.filterCheckboxPanel.draw_tooltip(
+                    self.win,
+                    self.drawFilterCheckboxToolTipText,
+                    self.drawFilterCheckboxToolTipMouse_x,
+                    self.drawFilterCheckboxToolTipMouse_y
+                )
 
         if self.video_info_box:
             self.drawVidInfo.draw_info_box()
@@ -3842,45 +3841,6 @@ class PlayVideo:
         ResolutionChangeError
             If changing video resolution fails
         """
-
-        if self.should_play_at_1x(video):
-            #self.saved_opts_playback_speed = self.opts.playSpeed
-            self.USING_PLAY_AT_1X_DIRS = True
-            if self.opts.playSpeed_last_set:
-                self.opts.playSpeed_last = self.opts.playSpeed
-
-            self.opts.playSpeed = 1
-            self.saved_opts_playback_speed = self.opts.playSpeed_last
-            self.opts.playSpeed_last_set = False
-            if PLAY_AT_1X_DIRS_DEBUG:
-                debug(
-                 "self.USING_PLAY_AT_1X_DIRS:", self.USING_PLAY_AT_1X_DIRS,
-                      "self.opts.playSpeed: ", self.opts.playSpeed,
-                      "self.opts.playSpeed_last: ", self.opts.playSpeed_last
-                )
-        else:
-            self.USING_PLAY_AT_1X_DIRS = False
-            if PLAY_AT_1X_DIRS_DEBUG:
-                debug("self.USING_PLAY_AT_1X_DIRS: ", self.USING_PLAY_AT_1X_DIRS)
-            if self.opts.playSpeed_last_set:
-                if self.saved_opts_playback_speed != self.opts.playSpeed_last:
-                    self.saved_opts_playback_speed = self.opts.playSpeed_last
-                    self.opts.playSpeed = self.saved_opts_playback_speed
-
-                if PLAY_AT_1X_DIRS_DEBUG:
-                    debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.opts.playSpeed_last: ", self.opts.playSpeed_last)
-                    #self.opts.playSpeed = self.opts.playSpeed_last
-                    #debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.opts.playSpeed_last: ", self.opts.playSpeed_last)
-            else:
-                if PLAY_AT_1X_DIRS_DEBUG:
-                    debug("self.opts.playSpeed: ", self.opts.playSpeed,
-                             "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
-                self.opts.playSpeed = self.saved_opts_playback_speed
-                if PLAY_AT_1X_DIRS_DEBUG:
-                    debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
-
-        if PLAY_AT_1X_DIRS_DEBUG:
-            debug("self.opts.playSpeed: ", self.opts.playSpeed, "self.saved_opts_playback_speed: ", self.saved_opts_playback_speed)
 
         effects_processor = self.build_effects_chain(self.opts)
 

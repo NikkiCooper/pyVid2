@@ -1,0 +1,150 @@
+#!/usr/bin/env python
+import random
+import re
+import sys
+from pathlib import Path
+from datetime import datetime
+
+# 🎯 Transition pools
+BANNED_IDS = {26, 27, 28, 29, 68, 69, 70, 71}
+VALID_IDS = list(range(1, 26)) + list(range(32, 68))
+
+# 🎨 Colors for pretty output
+class Colors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+
+# Regex patterns
+TRANSITION_RE = re.compile(r"^(transition_id)=(\-?\d+)\s*$", re.IGNORECASE)
+VIDEO_CODEC_RE = re.compile(r"^(video codec)=x264\s*$", re.IGNORECASE)
+BITRATE_RE = re.compile(r"^(bitrate)=1500[kK]\s*$", re.IGNORECASE)
+DISTORT_RE = re.compile(r"^(distort images)=true\s*$", re.IGNORECASE)
+
+# Audit log
+audit_log = {}
+
+def get_random_transition(exclude_ids):
+    """Return a random valid transition ID not in exclude_ids."""
+    choices = [tid for tid in VALID_IDS if tid not in exclude_ids]
+    return random.choice(choices) if choices else random.choice(VALID_IDS)
+
+def process_img_file(filepath):
+    print(f"\n{Colors.HEADER}{Colors.BOLD}📂 Processing file:{Colors.ENDC} {filepath.name}")
+    banned_count = 0
+    settings_changes = []
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    # Extract all transition IDs in order
+    transition_ids = []
+    for line in lines:
+        match = TRANSITION_RE.match(line)
+        if match:
+            transition_ids.append(int(match.group(2)))
+        else:
+            transition_ids.append(None)
+
+    # Process transition replacements
+    for i, tid in enumerate(transition_ids):
+        if tid is None:
+            continue
+        if tid in BANNED_IDS or tid == -1:
+            prev_tid = transition_ids[i - 1] if i > 0 else None
+            next_tid = transition_ids[i + 1] if i < len(transition_ids) - 1 else None
+            exclude = {prev_tid, next_tid}
+            exclude.discard(None)
+            transition_ids[i] = get_random_transition(exclude)
+            banned_count += 1
+
+    # Write back updated lines with codec/bitrate/distort changes
+    out_lines = []
+    tid_index = 0
+    for line in lines:
+        if TRANSITION_RE.match(line):
+            out_lines.append(f"transition_id={transition_ids[tid_index]}\n")
+        elif VIDEO_CODEC_RE.match(line):
+            out_lines.append("video codec=x265\n")
+            settings_changes.append("video codec → x265")
+        elif BITRATE_RE.match(line):
+            out_lines.append("bitrate=10000k\n")
+            settings_changes.append("bitrate → 10000k")
+        elif DISTORT_RE.match(line):
+            out_lines.append("distort images=false\n")
+            settings_changes.append("distort images → false")
+        else:
+            out_lines.append(line)
+        tid_index += 1
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.writelines(out_lines)
+
+    audit_log[filepath.name] = {
+        "banned_count": banned_count,
+        "settings_changes": settings_changes
+    }
+
+    print(f"{Colors.OKBLUE}✅ Finished processing {filepath.name}{Colors.ENDC}")
+
+def print_audit_report_and_log(log_path):
+    report_lines = []
+    separator = "-" * 50
+    header = f"📜 AUDIT REPORT - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+    # Console header
+    print(f"\n{Colors.BOLD}{Colors.HEADER}{header}{Colors.ENDC}")
+
+    # Add separator and header to log
+    report_lines.append(separator)
+    report_lines.append(header)
+
+    for filename, data in audit_log.items():
+        # Console output
+        print(f"\n{Colors.BOLD}{filename}{Colors.ENDC}")
+        print(f"  Replaced banned transitions: {data['banned_count']}")
+        report_lines.append(f"{filename}")
+        report_lines.append(f"  Replaced banned transitions: {data['banned_count']}")
+
+        if data["settings_changes"]:
+            print("  Slideshow settings changes:")
+            report_lines.append("  Slideshow settings changes:")
+            for change in data["settings_changes"]:
+                print(f"    - {change}")
+                report_lines.append(f"    - {change}")
+        else:
+            print("  Slideshow settings changes: None")
+            report_lines.append("  Slideshow settings changes: None")
+
+        # Add a blank line between each file in the log
+        report_lines.append("")
+
+    # Append to log file
+    with open(log_path, "a", encoding="utf-8") as log_file:
+        log_file.write("\n".join(report_lines) + "\n\n")
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print(f"{Colors.FAIL}Usage:{Colors.ENDC} python fix_transitions.py <file_or_directory>")
+        sys.exit(1)
+
+    target = Path(sys.argv[1])
+    if target.is_file():
+        process_img_file(target)
+        log_dir = target.parent
+    elif target.is_dir():
+        for img_file in sorted(target.glob("*.img")):
+            process_img_file(img_file)
+        log_dir = target
+    else:
+        print(f"{Colors.FAIL}Invalid path.{Colors.ENDC}")
+        sys.exit(1)
+
+    log_path = log_dir / "+fix_imagination_transitions.log"
+    print_audit_report_and_log(log_path)
+    print(f"\n{Colors.OKGREEN}📝 Audit log saved to:{Colors.ENDC} {log_path}")

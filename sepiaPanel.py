@@ -314,15 +314,20 @@ class sepiaPanel:
     def super_sepia(self, frame):
         #preset='classic', intensity=1.0
         """
-        Applies an adjustable sepia-tone effect using CUDA if available.
+        Applies a sepia-toned effect to a given video frame, utilizing either a GPU-based
+        CUDA implementation for optimized processing or a CPU-based fallback if CUDA
+        is unavailable. The sepia effect can be customized based on preset styles and
+        intensity levels.
 
-        Args:
-            frame (numpy.ndarray): Input BGR image frame
-            preset (str): 'classic', 'warm', 'cool', or 'vintage'
-            intensity (float): Effect intensity from 0.0 to 1.0
+        Parameters:
+            frame (numpy.ndarray): The video frame to which the sepia effect is to be applied.
+                It should be represented as a NumPy array.
 
         Returns:
-            numpy.ndarray: Sepia-toned image frame
+            numpy.ndarray: The video frame with the sepia effect applied, as a NumPy array.
+
+        Raises:
+            cv2.error: When there are issues with CUDA processing or frame transformation.
         """
         # Preset weights for different looks
         preset = self.play_video.opts.sepia_preset

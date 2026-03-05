@@ -75,7 +75,14 @@ class FindVideos:
                                 disableGIF=True if self.opts.disableGIF is True else False  #  Exclude GIF files if --disableGIF was specified.
                               )
         else:
-            self.loadPlayList(self.playListFile)      # Otherwise, we are going to load a playlist from a file.
+            # Load one or more playlists
+            if isinstance(self.playListFile, list):
+                # Multiple playlists
+                for playlist in self.playListFile:
+                    self.loadPlayList(playlist)
+            else:
+                # Single playlist (backward compatibility)
+                self.loadPlayList(self.playListFile)
         return len(self.videoList)                    # Always return the number of videos in the playlist.
 
     def buildPlayList(self, Files):
@@ -127,7 +134,8 @@ class FindVideos:
         """
         # pylint: disable=unspecified-encoding
         with open(os.path.expanduser(playListFile) ) as file:
-            self.videoList = [line.strip() for line in file]
+            # Append to existing videoList instead of replacing it (for multiple playlists)
+            self.videoList.extend([line.strip() for line in file])
 
     def recursive(self, dpath: str, recurse: bool = False, ignore: bool = False, disableGIF: bool = False) -> None:
         """

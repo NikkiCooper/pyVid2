@@ -82,7 +82,7 @@ def cmdLineOptions():
     group = required.add_mutually_exclusive_group(required=True)
     group.add_argument("--Paths", nargs="+", type=validate_user_dirs, default=None, help=chl.help["Paths"])
     group.add_argument("--Files", nargs="+", type=validate_user_files, default=None, help=chl.help["Files"])
-    group.add_argument("--loadPlayList", type=validate_playList, help=chl.help["loadPlayList"])
+    group.add_argument("--loadPlayList", nargs="+", type=validate_playList, help=chl.help["loadPlayList"])
     group.add_argument("--listActiveMonitors", nargs="?", const=True, help=chl.help["listActiveMonitors"])
 
     # 🎬 Video Playback Group
@@ -132,6 +132,8 @@ def cmdLineOptions():
     pp_group.add_argument("--blur", action="store_true", help=chl.help["blur"])
     pp_group.add_argument("--median-blur", action="store_true", help=chl.help["median"])
     pp_group.add_argument("--gaussian-blur", action="store_true", help=chl.help["gaussian"])
+    pp_group.add_argument("--contrast-enhance", action="store_true", help="Enable contrast enhancement filter")
+    pp_group.add_argument("--edges-sobel", action="store_true", help="Enable Sobel edge detection filter")
     pp_group.add_argument("--noise", action="store_true", help=chl.help["noise"])
     pp_group.add_argument("--cel-shading", action="store_true", help=chl.help["cel_shading"])
     pp_group.add_argument("--comic", action="store_true", help=chl.help["comic"])
@@ -155,6 +157,11 @@ def cmdLineOptions():
     oil_painting_group.add_argument('--oil-painting', action='store_true', help=chl.help["oil_painting"])
     oil_painting_group.add_argument('--oil-size', type=int, default=7, help=chl.help["oil_size"])
     oil_painting_group.add_argument('--oil-dynamics', type=int, default=1, help=chl.help["oil_dynamics"])
+
+    # CUDA Bilateral Filter Group
+    cuda_bilateral_group = parser.add_argument_group('CUDA Bilateral Filter')
+    cuda_bilateral_group.add_argument('--cuda-bilateral', action='store_true',
+                                     help='Enable CUDA-accelerated bilateral filter with default preset')
 
     # Pencil Sketch Group
     pencil_group =  parser.add_argument_group(chl.group["pencil_group"])
@@ -243,9 +250,6 @@ def cmdLineOptions():
     args.apply_saturation = False
     args.saturation_factor = 1.0
     #
-    # use with --playSpeed
-    args.playSpeed_last = 0
-    args.playSpeed_last_set = False
     # --loadPlayList
     if args.loadPlayList is None:
         args.loadPlayListFlag = False
@@ -284,7 +288,6 @@ def cmdLineOptions():
         if args.edge_lower < 0 or args.edge_upper > 255:
             parser.error('Edge detection thresholds must be between 0 and 255')
 
-
     # Additional validation to ensure no combination of base effects with color modifications
     if (args.greyscale or args.sepia) and (args.saturation is not None or args.vignette):
         parser.error('Cannot combine greyscale/sepia with saturation or vignette effects')
@@ -316,9 +319,35 @@ def cmdLineOptions():
 
 # Validate that the user-supplied path/playlist exists.
 def validate_playList(playlist):
-    if not os.path.isfile(os.path.expanduser(playlist)):
+    """
+    Validates a playlist file path. Checks if path is absolute, in CWD, or uses PLAYLIST_HOME.
+    Args:
+        playlist: Playlist filename or path
+    Returns:
+        Resolved playlist path if found
+    Raises:
+        ArgumentTypeError: If playlist file cannot be found
+    """
+    # Rule 1: If absolute path is specified, use it
+    if os.path.isabs(playlist):
+        if os.path.isfile(os.path.expanduser(playlist)):
+            return os.path.expanduser(playlist)
         raise argparse.ArgumentTypeError(f"Error: {bc.Red_f}'{playlist}'{bc.Light_Yellow_f} was not found.{bc.RESET}")
-    return playlist
+
+    # Rule 2: Check current working directory
+    cwd_path = os.path.join(os.getcwd(), playlist)
+    if os.path.isfile(cwd_path):
+        return cwd_path
+
+    # Rule 3: Check PLAYLIST_HOME environment variable
+    if "PLAYLIST_HOME" in os.environ:
+        playlist_home = os.environ["PLAYLIST_HOME"]
+        home_path = os.path.join(playlist_home, playlist)
+        if os.path.isfile(home_path):
+            return home_path
+
+    # Rule 4: File not found anywhere
+    raise argparse.ArgumentTypeError(f"Error: {bc.Red_f}'{playlist}'{bc.Light_Yellow_f} was not found in current directory or PLAYLIST_HOME.{bc.RESET}")
 
 # Validate user supplied media directories
 def validate_user_dirs(path):

@@ -73,9 +73,12 @@ class VideoPlayBar:
         stopIcon: Surface object representing the stop icon.
         previousIcon: Surface object representing the previous icon.
         nextIcon: Surface object representing the next icon.
-        plusIcon: Surface object representing the volume-increase icon.
-        minusIcon: Surface object representing the volume-decrease icon.
+        plusIcon: Surface object representing the speed-increase icon.
+        minusIcon: Surface object representing the speed-decrease icon.
         repeatIcon: Surface object representing the loop mode icon when inactive.
+        screenShotIcon: Surface object representing the screenshot icon.
+        filterIconOn: Surface object for filter icon when panel is NOT visible (ON state).
+        filterIconOff: Surface object for filter icon when panel IS visible (OFF state).
         speakerIcon: Surface object representing the active volume speaker icon.
         pauseIcon: Surface object representing the pause icon.
         forwardIcon: Surface object for the 10-second forward navigation icon.
@@ -148,9 +151,12 @@ class VideoPlayBar:
             stopIcon (pygame.Surface): Stop button icon resource.
             previousIcon (pygame.Surface): Previous button icon resource.
             nextIcon (pygame.Surface): Next button icon resource.
-            plusIcon (pygame.Surface): Plus button/icon to increase volume.
-            minusIcon (pygame.Surface): Minus button/icon to decrease volume.
+            plusIcon (pygame.Surface): Plus button/icon to increase playback speed.
+            minusIcon (pygame.Surface): Minus button/icon to decrease playback speed.
             repeatIcon (pygame.Surface): Repeat button/icon for toggling looping playback.
+            screenShotIcon (pygame.Surface): Screenshot button/icon for capturing current frame.
+            filterIconOn (pygame.Surface): Filter icon shown when panel is NOT visible (ON state).
+            filterIconOff (pygame.Surface): Filter icon shown when panel IS visible (OFF state).
             speakerIcon (pygame.Surface): Speaker icon for sound-related UI.
             pauseIcon (pygame.Surface): Pause button/icon resource.
             forwardIcon (pygame.Surface): Forward button/icon skipping the video forward by 10s.
@@ -237,7 +243,10 @@ class VideoPlayBar:
         self.plusIcon = pygame.image.load(self.RESOURCES_DIR + "plus.png").convert_alpha()
         self.minusIcon = pygame.image.load(self.RESOURCES_DIR + "minus.png").convert_alpha()
         self.repeatIcon = pygame.image.load(self.RESOURCES_DIR + "repeat.png").convert_alpha()
-        self.screenShotIcon = pygame.image.load(self.RESOURCES_DIR + "screenshots.png").convert_alpha()
+        self.screenShotIcon = pygame.image.load(self.RESOURCES_DIR + "camera.svg").convert_alpha()
+        self.filterIconOn = pygame.image.load(self.RESOURCES_DIR + "Filter-Alt-ON-48x48.png").convert_alpha()
+        self.filterIconOff = pygame.image.load(self.RESOURCES_DIR + "Filter-Alt-OFF-48x48.png").convert_alpha()
+        self.videoRestartIcon = pygame.image.load(self.RESOURCES_DIR + "video-restart.png").convert_alpha()
         self.speakerIcon = pygame.image.load(self.RESOURCES_DIR + "volume.png").convert_alpha()
 
         self.pauseIcon = pygame.image.load(self.RESOURCES_DIR + "pause.png").convert_alpha()
@@ -250,7 +259,7 @@ class VideoPlayBar:
         self.IconRects = {}
         self.IconNames = [
             "playIcon", "stopIcon", "previousIcon", "nextIcon",
-            "plusIcon", "minusIcon", "repeatIcon", "screenShotIcon", "speakerIcon"
+            "plusIcon", "minusIcon", "repeatIcon", "videoRestartIcon" "screenShotIcon", "filterIcon", "speakerIcon"
         ]
 
         self.speakerRect = None
@@ -258,6 +267,7 @@ class VideoPlayBar:
         self.barRect = None
         self.volumeRect = None
         self.volumeLevel = self.volume
+        self.filter_panel_visible = False  # Track filter panel visibility state
 
         self.local_mouse = None
 
@@ -293,7 +303,9 @@ class VideoPlayBar:
             ("plusIcon", self.plusIcon),
             ("minusIcon", self.minusIcon),
             ("repeatIcon", self.repeatIcon if not self.loop_flag else self.repeatWhiteIcon),
+            ("videoRestartIcon", self.videoRestartIcon),
             ("screenShotIcon", self.screenShotIcon),
+            ("filterIcon", self.filterIconOff if self.filter_panel_visible else self.filterIconOn),
         ]
         x = spacing
         mx, my = pygame.mouse.get_pos()
@@ -488,19 +500,28 @@ class VideoPlayBar:
                 150.
         """
         BLACK = (0, 0, 0)
-        tooltip_font = pygame.font.Font(self.FONT_DIR + "Montserrat-Regular.ttf", 18)
-        tooltip_text_surface = tooltip_font.render(text, True, BLACK)
+        WHITE = (255, 255, 255)
+        tooltip_font = pygame.font.Font(self.FONT_DIR + "Montserrat-Bold.ttf", 28)
+        tooltip_text_surface = tooltip_font.render(text, True, WHITE)
         tooltip_width, tooltip_height = tooltip_text_surface.get_size()
         # Create a transparent surface
-        toolTipSurface = pygame.Surface((tooltip_width + 10, tooltip_height + 6), pygame.SRCALPHA)
+        toolTipSurface = pygame.Surface((tooltip_width + 10, tooltip_height + 6))
         # Fill with semi-transparent background
-        toolTipSurface.fill((50, 50, 50, alpha))  # Dark gray, semi-transparent
+        #toolTipSurface.fill((50, 50, 50, alpha))  # Dark gray, semi-transparent
         # Draw rounded rectangle (border radius for smoother edges)
         pygame.draw.rect(toolTipSurface,
-                         pygame.color.THECOLORS['green'],
+                         DODGERBLUE4,
                          (0, 0, tooltip_width + 10, tooltip_height + 6),
-                         border_radius=5
+                         border_radius=8
         )
+
+        pygame.draw.rect(toolTipSurface,
+                         DODGERBLUE,
+                         (0, 0, tooltip_width + 10, tooltip_height + 6),
+                         1,
+                         border_radius=8
+        )
+
         # Blit text onto tooltip surface
         toolTipSurface.blit(tooltip_text_surface, (5, 3))
         # Blit tooltip onto display

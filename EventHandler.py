@@ -26,8 +26,6 @@ RIGHT_BUTTON_SHORT = 3
 WHEEL_UP = 1
 WHEEL_DOWN = -1
 
-PLAY_AT_1X_DIRS_DEBUG = False
-
 def bilateral_debug(msg):
     frame = inspect.currentframe().f_back
     line_no = frame.f_lineno
@@ -180,6 +178,18 @@ class EventHandler:
                         continue
                     if self.PlayVideoInstance.laplacian_panel.handle_mouse_motion(event.pos):
                         continue
+
+                    # Check for FilterCheckboxPanel tooltips
+                    tooltip_data = self.PlayVideoInstance.filterCheckboxPanel.update_tooltip(event.pos)
+                    if tooltip_data:
+                        text, x, y = tooltip_data
+                        self.PlayVideoInstance.drawFilterCheckboxToolTip = True
+                        self.PlayVideoInstance.drawFilterCheckboxToolTipText = text
+                        self.PlayVideoInstance.drawFilterCheckboxToolTipMouse_x = x
+                        self.PlayVideoInstance.drawFilterCheckboxToolTipMouse_y = y
+                    else:
+                        self.PlayVideoInstance.drawFilterCheckboxToolTip = False
+
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     self.handle_mouse_motion(mouse_x, mouse_y)
                 case pygame.MOUSEBUTTONDOWN:
@@ -385,8 +395,8 @@ class EventHandler:
             if self.PlayVideoInstance.status_bar_visible:
                 self.PlayVideoInstance.videoPlayBar.MOUSE_X = mouse_x
                 self.PlayVideoInstance.videoPlayBar.MOUSE_Y = mouse_y
-                self.PlayVideoInstance.videoPlayBar.drawVideoPlayBar()
-                # self.videoPlayBarIconHover(event, mouse_x, mouse_y)
+                # Set tooltip state based on icon hover (will be drawn in update_GUI_components)
+                self.update_videoPlayBar_icon_tooltips(mouse_x, mouse_y)
         else:
             self.PlayVideoInstance.drawVideoPlayBarFlag = False
             self.PlayVideoInstance.status_bar_visible = self.PlayVideoInstance.drawVideoPlayBarFlag
@@ -776,23 +786,7 @@ class EventHandler:
                         self.PlayVideoInstance.vol = max(0.0, self.PlayVideoInstance.vol - 0.1)
                         self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.vol)
                 case const.KEY_PLAY_SPEED_UP:
-                    if not self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS:
-                        self.PlayVideoInstance.opts.playSpeed_last = self.PlayVideoInstance.opts.playSpeed
-                        self.PlayVideoInstance.opts.playSpeed_last_set = True
-                    else:
-                        self.PlayVideoInstance.opts.playSpeed_last_set = False
-
-                    if PLAY_AT_1X_DIRS_DEBUG:
-                        debug(
-                            "self.USING_PLAY_AT_1X_DIRS: ", self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS,
-                            "self.opts.playSpeed_last: ", self.opts.playSpeed_last,
-                            "self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed
-                        )
-                    self.PlayVideoInstance.opts.playSpeed  = min(5.0, self.PlayVideoInstance.opts.playSpeed + 0.50)
-
-                    if PLAY_AT_1X_DIRS_DEBUG:
-                        debug("self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed)
-
+                    self.PlayVideoInstance.opts.playSpeed = min(5.0, self.PlayVideoInstance.opts.playSpeed + 0.50)
                     # Get the current frame that is playing before stoping and closing the video
                     currFrame = self.PlayVideoInstance.vid.frame
                     self.PlayVideoInstance.vid.stop()
@@ -810,23 +804,7 @@ class EventHandler:
                     except Exception as e:  # pylint: disable=unused-variable
                         pass
                 case const.KEY_PLAY_SPEED_DOWN:
-                    if not self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS:
-                        self.PlayVideoInstance.opts.playSpeed_last = self.PlayVideoInstance.opts.playSpeed
-                        self.PlayVideoInstance.opts.playSpeed_last_set = True
-                    else:
-                        self.PlayVideoInstance.opts.playSpeed_last_set = False
-
-                    if PLAY_AT_1X_DIRS_DEBUG:
-                        debug(
-                            "USING_PLAY_AT_1X_DIRS: ",  self.PlayVideoInstance.USING_PLAY_AT_1X_DIRS,
-                            "self.opts.playSpeed_last: ", self.opts.playSpeed_last,
-                            "self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed
-                        )
-
                     self.PlayVideoInstance.opts.playSpeed = max(0.50, self.PlayVideoInstance.opts.playSpeed - 0.50)
-                    if PLAY_AT_1X_DIRS_DEBUG:
-                        debug("self.opts.playSpeed: ", self.PlayVideoInstance.opts.playSpeed)
-
                     currFrame = self.PlayVideoInstance.vid.frame
                     self.PlayVideoInstance.vid.stop()
                     self.PlayVideoInstance.vid.close()
@@ -856,6 +834,8 @@ class EventHandler:
 
                     self.PlayVideoInstance.filter_checkbox_panel = not self.PlayVideoInstance.filter_checkbox_panel
                     self.PlayVideoInstance.filterCheckboxPanel.toggle_visibility()
+                    # Update the VideoPlayBar icon state
+                    self.PlayVideoInstance.videoPlayBar.filter_panel_visible = self.PlayVideoInstance.filter_checkbox_panel
                     if self.PlayVideoInstance.filter_checkbox_panel:
                         self.PlayVideoInstance.DrawFilterCheckboxPanel()
                 case const.KEY_LIST_POST_PROCESSING:              # INS key
@@ -1300,9 +1280,10 @@ class EventHandler:
             # Update the VideoPlayBar instance with the current mouse coordinates
             self.PlayVideoInstance.videoPlayBar.MOUSE_X = mouse_x
             self.PlayVideoInstance.videoPlayBar.MOUSE_Y = mouse_y
-            iconYcord = mouse_y - 2040
+            # Calculate local mouse Y coordinate relative to the video play bar
+            local_mouse_y = mouse_y - self.PlayVideoInstance.videoPlayBar.bar_top
             # Check if the local mouse position collides with the volume slider rectangle
-            if self.PlayVideoInstance.videoPlayBar.volumeRect.collidepoint(mouse_x, iconYcord):
+            if self.PlayVideoInstance.videoPlayBar.volumeRect.collidepoint(mouse_x, local_mouse_y):
                 # Adjust volume: Increase if left-clicked, decrease if right-clicked
                 if Event.button == 1:       # Left-click  Increase Volume
                     new_volume = min(1.0, round(self.PlayVideoInstance.volume + 0.10, 1))
@@ -1315,6 +1296,8 @@ class EventHandler:
                 self.PlayVideoInstance.volume = new_volume
                 self.PlayVideoInstance.vol = self.PlayVideoInstance.volume
                 self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.volume)
+                # Update the VideoPlayBar volume level for visual feedback
+                self.PlayVideoInstance.videoPlayBar.volumeLevel = int(new_volume * 100)
                 print(f"Volume: {int(self.PlayVideoInstance.volume * 100)}% {'(Muted)' if self.PlayVideoInstance.muted else ''}")
                 print(f"vid.get_volume(): {self.PlayVideoInstance.vid.get_volume()}")
 
@@ -1441,6 +1424,43 @@ class EventHandler:
                         self.PlayVideoInstance.videoPlayBar.loop_flag = self.PlayVideoInstance.opts.loop_flag
                     case 'screenShotIcon':
                         self.saveFrameShot()
+                    case 'videoRestartIcon':
+                        self.PlayVideoInstance.vid.restart()
+                        self.PlayVideoInstance.progress_value = 0
+                        self.PlayVideoInstance.progress_percentage = 0
+                        self.PlayVideoInstance.current_pos = 0
+                        pygame.time.wait(50)                            # Small delay to allow state reset
+                        # **Step 1: Force OSD reset**
+                        self.PlayVideoInstance.last_osd_position = 0.0  # Reset position tracking
+                        self.PlayVideoInstance.seek_flag = False        # Reset seek state
+                        self.PlayVideoInstance.seek_flag2 = False
+                        self.PlayVideoInstance.last_vid_info_pos = 0.0
+                        # **Step 2: Force a seek to 0 immediately after restart**
+                        self.PlayVideoInstance.vid.seek(0)
+                        # **Step 3: Immediately refresh the display**
+                        self.PlayVideoInstance.draw_OSD()
+                    case 'filterIcon':
+                        # Toggle the filter checkbox panel (same as INS key)
+                        if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
+                                self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
+                                self.PlayVideoInstance.video_info_box or
+                                self.PlayVideoInstance.filter_info_box):
+
+                            if self.PlayVideoInstance.drawHelpInfo.is_visible():
+                                self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                            if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
+                                self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                            if self.PlayVideoInstance.video_info_box:
+                                self.PlayVideoInstance.video_info_box = False
+                            if self.PlayVideoInstance.filter_info_box:
+                                self.PlayVideoInstance.filter_info_box = False
+
+                        self.PlayVideoInstance.filter_checkbox_panel = not self.PlayVideoInstance.filter_checkbox_panel
+                        self.PlayVideoInstance.filterCheckboxPanel.toggle_visibility()
+                        # Update the VideoPlayBar icon state
+                        self.PlayVideoInstance.videoPlayBar.filter_panel_visible = self.PlayVideoInstance.filter_checkbox_panel
+                        if self.PlayVideoInstance.filter_checkbox_panel:
+                            self.PlayVideoInstance.DrawFilterCheckboxPanel()
                #print(f"{name} clicked")
 
     def videoPlayBarIconHover(self, event, mouse_x, mouse_y):   # pylint: disable=unused-argument
@@ -1522,6 +1542,65 @@ class EventHandler:
                                                                          )
                     else:
                         self.PlayVideoInstance.drawVideoPlayBarToolTip = False
+
+    def update_videoPlayBar_icon_tooltips(self, mouse_x, mouse_y):
+        """
+        Updates tooltip state for VideoPlayBar icons based on mouse hover position.
+        Sets the tooltip text and position which will be drawn by update_GUI_components().
+
+        Args:
+            mouse_x (int): Mouse X coordinate
+            mouse_y (int): Mouse Y coordinate
+        """
+        # Calculate local mouse position relative to the bar
+        bar_top = self.PlayVideoInstance.videoPlayBar.bar_top
+        local_mouse_y = mouse_y - bar_top
+
+        # Reset tooltip flag
+        self.PlayVideoInstance.drawVideoPlayBarToolTip = False
+
+        # Check each icon for hover
+        for name, rect in self.PlayVideoInstance.videoPlayBar.IconRects.items():
+            if rect.collidepoint(mouse_x, local_mouse_y):
+                tooltip_text = None
+
+                # Determine tooltip text based on icon
+                if name == 'playIcon':
+                    tooltip_text = "Click to Pause" if not self.PlayVideoInstance.vid.paused else "Click to Unpause"
+                elif name == 'stopIcon':
+                    tooltip_text = "Exit Program"
+                elif name == 'previousIcon':
+                    # Only show if there's a previous video
+                    if self.PlayVideoInstance.currVidIndx > 0:
+                        tooltip_text = "Play Previous"
+                elif name == 'nextIcon':
+                    # Only show if there's a next video
+                    if self.PlayVideoInstance.currVidIndx < len(self.PlayVideoInstance.videoList) - 1:
+                        tooltip_text = "Play Next"
+                elif name == 'plusIcon':
+                    tooltip_text = "Increase Playback Speed"
+                elif name == 'minusIcon':
+                    tooltip_text = "Decrease Playback Speed"
+                elif name == 'repeatIcon':
+                    tooltip_text = "Disable Repeat Video" if self.PlayVideoInstance.opts.loop_flag else "Repeat Video"
+                elif name == 'videoRestartIcon':
+                    tooltip_text = "Restart Video"
+                elif name == 'screenShotIcon':
+                    tooltip_text = "Capture Screenshot"
+                elif name == 'filterIcon':
+                    tooltip_text = "Disable Filter Panel" if self.PlayVideoInstance.videoPlayBar.filter_panel_visible else "Enable Filter Panel"
+                elif name == 'speakerIcon':
+                    tooltip_text = "Unmute" if self.PlayVideoInstance.vid.muted else "Mute"
+
+                # Set tooltip state if we have text
+                if tooltip_text:
+                    self.PlayVideoInstance.drawVideoPlayBarToolTip = True
+                    self.PlayVideoInstance.drawVideoPlayBarToolTipText = tooltip_text
+                    self.PlayVideoInstance.drawVideoPlayBarToolTipMouse_x = mouse_x + 10
+                    self.PlayVideoInstance.drawVideoPlayBarToolTipMouse_y = bar_top - 30
+
+                # Only show one tooltip at a time
+                break
 
     def reInitVideo(self, flag, frame_num):
         """

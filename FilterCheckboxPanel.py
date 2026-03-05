@@ -557,37 +557,37 @@ class FilterCheckboxPanel:
             the predefined filter map.
         """
         filter_map = {
-            'Laplacian': 'Laplacian Boost Filter.  CUDA-Accelerated',
-            'U-Sharp': 'U-Sharp Filter',
-            'Blur': 'Blur Filter',
-            'Median-Blur': 'Median-Blur Filter, Kernel Size: 3, CUDA-Accelerated',
-            'Gaussian-Blur': 'Gaussian-Blur Filter, Kernel Size: 5,5, SigmaX: 0, CUDA-Accelerated',
-            'Noise': 'Apply Noise to a video frame',
-            'Denoise': 'Remove noise from a video frame (S-L-O-W)',
-            'Greyscale': 'Convert video to greyscale. CUDA-Accelerated',
-            'Sepia': 'Apply sepia filter. Presets: Classic, Warm, Cool, Vintage. CUDA-Accelerated',
-            'Cel-Shading': 'Apply cel-shading filter',
-            'Saturation': 'Color Saturation Adjustment Filter.  CUDA-Accelerated',
-            'Contrast Enhance': 'Contrast Enhancement Filter. CUDA-Accelerated',
-            'Bright/Contrast': 'Apply Bright/Contrast Filter (Very Fast)',
-            'Vignette': 'Apply Vignette Filter',
-            'Thermal': 'Apply Thermal Filter',
-            'Emboss': 'Emboss Filter.  CUDA-Accelerated',
-            'Dream': 'Apply Dream Filter',
-            'Neon': 'Apply Neon Filter',
-            'Pixelate': 'Apply Pixelate Filter',
-            'Invert': 'Invert Filter',
-            'Flip-Left-Right': 'Flip Left-Right Filter',
-            'Flip-Up-Down': 'Flip Up-Down Filter',
-            'Comic': 'Comic Filter',
-            'Comic-Sharp': 'Comic-Sharp Filter',
-            'Oil Painting': 'Oil Painting Filter',
-            'Watercolor': 'Watercolor Filter',
-            'Pencil Sketch': 'Pencil Sketch Filter',
-            'Edges-Sobel': 'Apply Sobel Filter. CUDA-Accelerated',
-            'Edge Detect': 'Edge Detect Filter. CUDA-Accelerated',
-            'Artistic': 'Artistic Filter',
-            'Bilateral': 'Apply Bilateral Filter. CUDA-Accelerated'
+            'Laplacian': 'Sharpens video by enhancing edges using Laplacian kernel (CUDA)',
+            'U-Sharp': 'Basic sharpening filter for enhanced clarity',
+            'Blur': 'Applies standard blur to soften video image',
+            'Median-Blur': 'Reduces noise while preserving edges (Kernel: 3x3) (CUDA)',
+            'Gaussian-Blur': 'Smooth natural-looking blur (Kernel: 5x5, Sigma: 0) (CUDA)',
+            'Noise': 'Adds film grain for vintage or stylistic effect',
+            'Denoise': 'Removes noise from video frames (computationally intensive)',
+            'Greyscale': 'Converts video to black and white (CUDA)',
+            'Sepia': 'Vintage photograph effect (Presets: Classic, Warm, Cool, Vintage) (CUDA)',
+            'Cel-Shading': 'Creates cartoon/anime-style cel-shaded appearance',
+            'Saturation': 'Adjusts color intensity and vibrancy (CUDA)',
+            'Contrast Enhance': 'Automatically enhances contrast for improved clarity (CUDA)',
+            'Bright/Contrast': 'Manual brightness and contrast adjustment (fast)',
+            'Vignette': 'Darkens frame edges for cinematic focus effect',
+            'Thermal': 'Simulates thermal/infrared heat vision palette',
+            'Emboss': 'Creates 3D embossed relief effect (CUDA)',
+            'Dream': 'Applies soft-focus dreamy effect with ethereal quality',
+            'Neon': 'Creates neon-style glowing edge outlines',
+            'Pixelate': 'Pixelates video for retro 8-bit aesthetic',
+            'Invert': 'Inverts colors for negative film effect',
+            'Flip-Left-Right': 'Mirrors video horizontally',
+            'Flip-Up-Down': 'Flips video vertically (upside down)',
+            'Comic': 'Applies comic book-style visual effect',
+            'Comic-Sharp': 'Advanced comic-style sharpening with edge detection',
+            'Oil Painting': 'Artistic oil painting effect with brush strokes',
+            'Watercolor': 'Watercolor painting effect (computationally intensive)',
+            'Pencil Sketch': 'Converts video to pencil sketch drawing style',
+            'Edges-Sobel': 'Sobel operator edge detection for gradient-based edges (CUDA)',
+            'Edge Detect': 'Canny edge detection with adjustable thresholds (CUDA)',
+            'Artistic': 'Combines multiple artistic effects',
+            'Bilateral': 'Edge-preserving smoothing filter with preset options (CUDA)'
         }
         return filter_map[filter_name]
 
@@ -1106,24 +1106,72 @@ class FilterCheckboxPanel:
 
         USER_HOME = os.path.expanduser("~")
         FONT_DIR = USER_HOME + "/.local/share/pyVid/fonts/"
-        scaled_font_size = up_scale.scale_font(18, self.display_height)
-        tooltip_font = pygame.font.Font(FONT_DIR + "Montserrat-Bold.ttf", scaled_font_size)
+        scaled_font_size = up_scale.scale_font(14, self.display_height)
+        tooltip_font = pygame.font.Font(FONT_DIR + "Montserrat-Bold.ttf", 28)
         self.tooltip_surface = tooltip_font.render(text, True, WHITE)
         tooltip_width, tooltip_height = self.tooltip_surface.get_size()
 
         pygame.draw.rect(
             disp_surface,
-            DODGERBLUE,
+            DODGERBLUE4,
             (x, y, tooltip_width + 10, tooltip_height + 8),
             border_radius=8
         )
 
         pygame.draw.rect(
             disp_surface,
-            DODGERBLUE4,
+            DODGERBLUE,
             (x, y, tooltip_width + 10, tooltip_height + 8),
             1,
             border_radius=8
         )
 
         disp_surface.blit(self.tooltip_surface, (x + 5, y + 3))
+
+    def update_tooltip(self, mouse_pos):
+        """
+        Updates the tooltip state based on mouse position over checkbox labels.
+
+        This method checks if the mouse cursor is hovering over any checkbox label
+        or checkbox itself, and sets the appropriate tooltip text to be displayed.
+        The tooltip text is retrieved from the filter tooltip map.
+
+        Parameters
+        ----------
+        mouse_pos : tuple
+            A tuple containing the (x, y) coordinates of the mouse position.
+
+        Returns
+        -------
+        tuple or None
+            Returns (tooltip_text, x, y) if mouse is over a checkbox/label,
+            otherwise returns None.
+        """
+        if not self.is_visible():
+            return None
+
+        mouse_x, mouse_y = mouse_pos
+
+        for checkbox in self.checkboxes:
+            # Check if mouse is over checkbox rect
+            if checkbox.rect.collidepoint(mouse_x, mouse_y):
+                tooltip_text = self.get_filter_tooltip(checkbox.label)
+                # Position tooltip slightly offset from mouse
+                return (tooltip_text, mouse_x + 15, mouse_y - 10)
+
+            # Check if mouse is over label text
+            if checkbox.label_rect and checkbox.label_rect.collidepoint(mouse_x, mouse_y):
+                tooltip_text = self.get_filter_tooltip(checkbox.label)
+                # Position tooltip slightly offset from mouse
+                return (tooltip_text, mouse_x + 15, mouse_y - 10)
+
+            # Check if mouse is over GPU icon (if present)
+            if hasattr(checkbox, 'gpu_icon') and checkbox.label_rect:
+                icon_x = checkbox.label_rect.right + 5
+                icon_y = checkbox.label_rect.centery - checkbox.gpu_icon.get_height() // 2
+                icon_rect = pygame.Rect(icon_x, icon_y, 24, 24)
+                if icon_rect.collidepoint(mouse_x, mouse_y):
+                    tooltip_text = self.get_filter_tooltip(checkbox.label)
+                    return (tooltip_text, mouse_x + 15, mouse_y - 10)
+
+        return None
