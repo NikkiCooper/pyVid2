@@ -597,7 +597,11 @@ ffmpeg -loglevel quiet -i video.mp4 -c copy -movflags use_metadata_tags -metadat
 ```
 The new tag called **title** can be verified by using ffprobe:
 ```sh
-ffprobe -loglevel quiet -show_format output.mp4  | grep TAG:title | cut --delimiter='=' -f2
+
+ffprobe -v quiet -show_entries format_tags=title \
+  -of default=noprint_wrappers=1:nokey=1 \
+  output.mp4
+
 Nikki and the girls on vacation in the Outback!
 $
 ```
