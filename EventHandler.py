@@ -1335,7 +1335,6 @@ class EventHandler:
                         else:
                             self.PlayVideoInstance.pause = False
                             self.PlayVideoInstance.stopButtonClicked = False
-                            self.PlayVideoInstance.currVidIndx = -1
                         self.PlayVideoInstance.videoPlayBar.vid_paused = self.PlayVideoInstance.pause
                     case 'stopIcon':
                         pygame.event.post(pygame.event.Event(pygame.QUIT))
