@@ -9,10 +9,10 @@
 ---
 ### **NOTE:**  This document is likely out of date relative to the Python code contained herein.
 
-pyVid2 is a **Python application** It is mainly designed as a presentation application which may continuously play media
+pyVid2 is a **Python application**. It is mainly designed as a presentation application which may continuously play media
 in an automated manner. The latest version is  _version 0.60_
 
-pyVid2 is unique in that it only supports playing videos that it finds in Fuser supplied directories.  The scan in pyVid2 is capable of finding tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
+pyVid2 is unique in that it only supports playing videos that it finds in user supplied directories.  The scan in pyVid2 is capable of finding tens of thousands of playable media in just seconds. The resulting internal playlist is limited only by how much ram is available. The speed of course depends upon the hardware PyVid2 is running on.  For now, pyVid2 is only in the testing phase.  There are many features missing or not working correctly. In short, pyVid2 is not yet ready for prime time.
 
 STARTING WITH VERSION >= 0.50, PLEASE NOTE THAT MONITOR SCALING IS OPTIMIZED TO 4K UHD MONITORS ONLY.
 I HAVE NOT TRIED TO RUN pyVid2 ON LOWER RESOLUTION MONITORS, THUS IT IS NOT LIKELY TO RUN AS EXPECTED AS A RESULT.
@@ -176,7 +176,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 - `--saturation`
 - `--sepia`
 
-**Filters with <img src="./assets/cuda.svg" width="16" alt="CUDA"> support CUDA acceleration if a suitable Python environment is configured with cv2 CUDA support.**
+**Filters with <img src="./assets/cuda.svg" width="16" alt="CUDA"> support CUDA GPU acceleration when running in a Python virtual environment with OpenCV compiled with CUDA support.** If CUDA support is not detected at runtime, these filters will automatically fall back to CPU processing. Setting up a Python virtual environment and compiling OpenCV with CUDA support is beyond the scope of this document. For the most comprehensive CUDA support, including OpenCV Python CUDA bindings, consider using Arch Linux, which provides excellent CUDA integration and tooling support.
 
 | Argument              | Description                                                                 |
 |-----------------------|-----------------------------------------------------------------------------|
@@ -292,35 +292,35 @@ This section provides comprehensive documentation for all post-processing filter
 
 #### 🔍 <span style="color:DodgerBlue">Blur Filters</span>
 
-| Filter | Parameters | Description | CUDA |
-|--------|-----------|-------------|------|
-| `--blur` | None | Applies standard blur effect to soften the video image | ❌ |
-| `--gaussian-blur` | None | Applies Gaussian blur for smooth, natural-looking blur effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--median-blur` | None | Reduces noise while preserving edges using median filtering | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--blur` | None | Applies standard blur effect to soften the video image | ✅ | ❌ |
+| `--gaussian-blur` | None | Applies Gaussian blur for smooth, natural-looking blur effect | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--median-blur` | None | Reduces noise while preserving edges using median filtering | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
 
 ---
 
 #### ✨ <span style="color:DodgerBlue">Enhancement Filters</span>
 
-| Filter | Parameters | Description | CUDA |
-|--------|-----------|-------------|------|
-| `--laplacian` | None | Sharpens video by enhancing edges using Laplacian kernel | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--contrast-enhance` | None | Automatically enhances contrast for improved visual clarity | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--neon` | None | Creates neon-style glowing edge outlines | ❌ |
-| `--dream` | None | Applies soft-focus dreamy effect with ethereal quality | ❌ |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--laplacian` | None | Sharpens video by enhancing edges using Laplacian kernel | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--contrast-enhance` | None | Automatically enhances contrast for improved visual clarity | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--neon` | None | Creates neon-style glowing edge outlines | ✅ | ❌ |
+| `--dream` | None | Applies soft-focus dreamy effect with ethereal quality | ✅ | ❌ |
 
 ---
 
 #### 🎨 <span style="color:DodgerBlue">Artistic & Stylistic Filters</span>
 
-| Filter | Parameters | Description | CUDA |
-|--------|-----------|-------------|------|
-| `--cel-shading` | None | Creates cartoon/anime-style cel-shaded appearance | ❌ |
-| `--comic` | None | Applies comic book-style visual effect | ❌ |
-| `--emboss` | None | Creates 3D embossed relief effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--pixelate` | None | Pixelates video for retro 8-bit aesthetic | ❌ |
-| `--thermal` | None | Simulates thermal/infrared heat vision palette | ❌ |
-| `--noise` | None | Adds film grain noise for vintage or stylistic effect | ❌ |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--cel-shading` | None | Creates cartoon/anime-style cel-shaded appearance | ✅ | ❌ |
+| `--comic` | None | Applies comic book-style visual effect | ✅ | ❌ |
+| `--emboss` | None | Creates 3D embossed relief effect | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--pixelate` | None | Pixelates video for retro 8-bit aesthetic | ✅ | ❌ |
+| `--thermal` | None | Simulates thermal/infrared heat vision palette | ✅ | ❌ |
+| `--noise` | None | Adds film grain noise for vintage or stylistic effect | ✅ | ❌ |
 
 ---
 
@@ -328,21 +328,21 @@ This section provides comprehensive documentation for all post-processing filter
 
 **Note:** `--greyscale` and `--sepia` are mutually exclusive with `--vignette` and `--saturation`.
 
-| Filter | Parameters | Description | CUDA |
-|--------|-----------|-------------|------|
-| `--greyscale` | None | Converts video to greyscale (black and white) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--sepia` | None | Applies warm sepia tone for vintage photograph effect | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--saturation` | `0.0`-`2.0` | Adjusts color saturation intensity (values > 1.0 increase vibrancy) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--vignette` | None | Darkens frame edges for cinematic focus effect | ❌ |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--greyscale` | None | Converts video to greyscale (black and white) | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--sepia` | None | Applies warm sepia tone for vintage photograph effect | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--saturation` | `0.0`-`2.0` | Adjusts color saturation intensity (values > 1.0 increase vibrancy) | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--vignette` | None | Darkens frame edges for cinematic focus effect | ✅ | ❌ |
 
 ---
 
 #### 🔲 <span style="color:DodgerBlue">Edge Detection Filters</span>
 
-| Filter | Parameters | Description | CUDA |
-|--------|-----------|-------------|------|
-| `--edge-detect` | `--edge-lower` (default: 100)<br>`--edge-upper` (default: 200) | Canny edge detection with adjustable thresholds (0-255) | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
-| `--edges-sobel` | None | Sobel operator edge detection for gradient-based edges | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--edge-detect` | `--edge-lower` (default: 100)<br>`--edge-upper` (default: 200) | Canny edge detection with adjustable thresholds (0-255) | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--edges-sobel` | None | Sobel operator edge detection for gradient-based edges | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
 
 **Edge Detection Parameters:**
 - `--edge-lower`: Lower threshold for Canny edge detection (must be < upper threshold)
@@ -352,62 +352,51 @@ This section provides comprehensive documentation for all post-processing filter
 
 #### 🎭 <span style="color:DodgerBlue">Transformation Filters</span>
 
-| Filter | Parameters | Description |
-|--------|-----------|-------------|
-| `--fliplr` | None | Flips video horizontally (mirror left-right) |
-| `--flipup` | None | Flips video vertically (upside down) |
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--fliplr` | None | Flips video horizontally (mirror left-right) | ✅ | ❌ |
+| `--flipup` | None | Flips video vertically (upside down) | ✅ | ❌ |
 
 ---
 
 #### 🖼️ <span style="color:DodgerBlue">Complex Effect Filters</span>
 
-##### **CUDA Bilateral Filter**
+| Filter | Parameters | Description | CPU | CUDA |
+|--------|-----------|-------------|-----|------|
+| `--cuda-bilateral` | None | Edge-preserving smoothing filter with 'default' preset | ✅ | <img src="./assets/cuda.svg" width="16" alt="CUDA"> |
+| `--watercolor` | `--watercolor-scale` (default: 0.5)<br>`--watercolor-quality` (default: medium) | Watercolor painting effect (computationally intensive) | ✅ | ❌ |
+| `--oil-painting` | `--oil-size` (default: 7)<br>`--oil-dynamics` (default: 1) | Oil painting artistic effect | ✅ | ❌ |
+| `--pencil-sketch` | `--sketch-detail` (default: 21)<br>`--sketch-block-size` (default: 9)<br>`--sketch-c-value` (default: 2)<br>`--sketch-intensity` (default: 0.7)<br>`--edge-weight` (default: 0.3) | Pencil sketch drawing effect | ✅ | ❌ |
+| `--comic-sharp` | `--comic-sharp-amount` (default: 0.5)<br>`--bilateral-d` (default: 5)<br>`--bilateral-color` (default: 60)<br>`--bilateral-space` (default: 60)<br>`--edge-low` (default: 40)<br>`--edge-high` (default: 140)<br>`--color-quant` (default: 20) | Comic-style sharpening pipeline | ✅ | ❌ |
 
-| Argument | Parameters | Description |
-|----------|-----------|-------------|
-| `--cuda-bilateral` | None | Enables CUDA-accelerated bilateral filter with 'default' preset. Provides edge-preserving smoothing. |
+**Note:** Despite the name `--cuda-bilateral`, this filter supports both CPU and CUDA execution with automatic fallback. Interactive panel accessible via keyboard `[f]` during playback for preset selection.
 
-**Note:** Interactive panel accessible via keyboard `[f]` during playback for preset selection.
+**Bilateral Filter Parameters:**
+- No additional parameters (uses preset system)
 
-##### **Watercolor Effect**
+**Watercolor Effect Parameters:**
+- `--watercolor-scale`: Scale factor `0.25`-`1.0` (lower = faster, less detail)
+- `--watercolor-quality`: Quality vs. speed trade-off (`fast`, `medium`, `high`)
 
-| Argument | Default | Range | Description |
-|----------|---------|-------|-------------|
-| `--watercolor` | — | — | Enables watercolor painting effect (computationally intensive) |
-| `--watercolor-scale` | `0.5` | `0.25`-`1.0` | Processing scale factor (lower = faster, less detail) |
-| `--watercolor-quality` | `medium` | `fast`, `medium`, `high` | Quality vs. speed trade-off |
+**Oil Painting Effect Parameters:**
+- `--oil-size`: Neighborhood size `5`-`15` for oil painting brush strokes
+- `--oil-dynamics`: Dynamic blending ratio `1`-`5` for color mixing
 
-##### **Oil Painting Effect**
+**Pencil Sketch Effect Parameters:**
+- `--sketch-detail`: Detail level (odd numbers, higher = less detail)
+- `--sketch-block-size`: Block size for edge detection (`7`-`15`, odd only)
+- `--sketch-c-value`: Threshold sensitivity (`1`-`5`, higher = more edges)
+- `--sketch-intensity`: Intensity of sketch effect (`0.0`-`1.0`)
+- `--edge-weight`: Weight of edges in final composition (`0.0`-`1.0`)
 
-| Argument | Default | Range | Description |
-|----------|---------|-------|-------------|
-| `--oil-painting` | — | — | Enables oil painting artistic effect |
-| `--oil-size` | `7` | `5`-`15` | Neighborhood size for oil painting brush strokes |
-| `--oil-dynamics` | `1` | `1`-`5` | Dynamic blending ratio for color mixing |
-
-##### **Pencil Sketch Effect**
-
-| Argument | Default | Range | Description |
-|----------|---------|-------|-------------|
-| `--pencil-sketch` | — | — | Enables pencil sketch drawing effect |
-| `--sketch-detail` | `21` | Odd numbers | Detail level (higher = less detail) |
-| `--sketch-block-size` | `9` | `7`-`15` (odd) | Block size for edge detection |
-| `--sketch-c-value` | `2` | `1`-`5` | Threshold sensitivity (higher = more edges) |
-| `--sketch-intensity` | `0.7` | `0.0`-`1.0` | Intensity of sketch effect |
-| `--edge-weight` | `0.3` | `0.0`-`1.0` | Weight of edges in final composition |
-
-##### **Comic Sharp Effect**
-
-| Argument | Default | Range | Description |
-|----------|---------|-------|-------------|
-| `--comic-sharp` | — | — | Enables comic-style sharpening pipeline |
-| `--comic-sharp-amount` | `0.5` | `0.0`-`1.0` | Sharpening intensity |
-| `--bilateral-d` | `5` | `1`,`3`,`5`,`7`,`9`,`11`,`13`,`15` | Bilateral filter diameter (odd numbers only) |
-| `--bilateral-color` | `60` | `10`-`200` | Bilateral filter color sigma |
-| `--bilateral-space` | `60` | `10`-`200` | Bilateral filter space sigma |
-| `--edge-low` | `40` | `0`-`255` | Lower threshold for comic edge detection |
-| `--edge-high` | `140` | `0`-`255` | Upper threshold for comic edge detection |
-| `--color-quant` | `20` | `1`-`64` | Color quantization factor (lower = more posterization) |
+**Comic Sharp Effect Parameters:**
+- `--comic-sharp-amount`: Sharpening intensity (`0.0`-`1.0`)
+- `--bilateral-d`: Bilateral filter diameter (`1`,`3`,`5`,`7`,`9`,`11`,`13`,`15`, odd numbers only)
+- `--bilateral-color`: Bilateral filter color sigma (`10`-`200`)
+- `--bilateral-space`: Bilateral filter space sigma (`10`-`200`)
+- `--edge-low`: Lower threshold for comic edge detection (`0`-`255`)
+- `--edge-high`: Upper threshold for comic edge detection (`0`-`255`)
+- `--color-quant`: Color quantization factor (`1`-`64`, lower = more posterization)
 
 ---
 
@@ -425,7 +414,7 @@ This section provides comprehensive documentation for all post-processing filter
 ### ✔️ <span style="color:DodgerBlue">Example Command-Line</span>
 
 ```sh
-PyVid2 --loop --shuffle --enableFFprobe --Paths ~/SlideShows ~/MyVideos ~/mnt/MediaServer/Music \Videos
+PyVid2 --loop --shuffle --enableFFprobe --Paths ~/SlideShows ~/MyVideos ~/mnt/MediaServer/Music\ Videos
 ```
 
 ## 📚 <span style="color:DodgerBlue">Documentation</span>
@@ -437,10 +426,11 @@ There are currently four command line arguments whose use are mutually exclusive
 3. --loadPlayList LOADPLAYLIST
 4. --listActiveMonitors
 
-Due to how _argparse_ handles mutually exclusive argument groups, **--listActiveMonitors** is shown as requiring a parameter.
-when using **--help** or **-h**.  Passing a parameter to **--listActiveMonitors** is not necesesary.
-The **--Paths** argument is _always_ required unless using **--loadPlayList**, or in more rare cases
+Due to how _argparse_ handles mutually exclusive argument groups, **--listActiveMonitors** is shown as requiring a parameter
+when using **--help** or **-h**.  Passing a parameter to **--listActiveMonitors** is not necessary.
+The **--Paths** argument is _always_ required unless using **--Files**, **--loadPlayList**, or in more rare cases
 **--listActiveMonitors**.  Supply **--Paths** with as many _directories_ you want scanned for media as necessary.
+Supply **--Files** with as many path/filespec pairs as necessary.
 In order to use **--loadPlayList**, an active pyVid2 playlist must be saved to a file after pyVid2 is up and running by
 pressing the 'w' key. This writes pyVid2s running playlist to ```~/VideoPlayList-SIZE.txt```, where **_SIZE_** is the
 number of entries in the list.  Example: ```~/VideoPlayList-454.txt``` indicates there are 454 entries in the list. The
@@ -456,8 +446,8 @@ supporting huge playlists consisting of thousands of entries.~~
 **--noRecurse** applies to _all_ paths supplied to the **--Paths** argument.  
 
 ### 🔖 <span style="color:DodgerBlue">--interp lanczos4</span>
-When using **lanczos4** and **--playSpeed** with a playback speed > 1x, playback will experience some lost frames  unless
-the hardware pyVid2 is running on is _very_ high end in performance.  This is due to the fact that **lanczos4**  by its
+When using **lanczos4** and **--playSpeed** with a playback speed > 1x, playback will experience some lost frames unless
+the hardware pyVid2 is running on is _very_ high end in performance.  This is due to the fact that **lanczos4** by its
 nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, which is suitable for most hardware.
 
 
@@ -465,9 +455,8 @@ nature is very processor intensive.  PyVid2 defaults to ```interp=cubic```, whic
 
 ### 🎬 <span style="color:DodgerBlue">Playback status bar</span>
 The playback status bar is work in progress. It is automatically displayed when the mouse cursor is in the lower 15% of
-the display. It accepts mouse button clicks too.  This includes the Playback speed and the Volume.  Left-clicking on the 
-extreme left of the playback speed or the Volume decreases the values, Left-clicking on the extreme left of the playback
-speed or the Volume decreases the values.  The Right-Mouse button also works, only in the opposite manner. 
+the display. It accepts mouse button clicks too.  This includes the Playback speed and the Volume.  Left-clicking on the
+extreme left of the playback speed or the Volume decreases the values.  The Right-Mouse button also works, only in the opposite manner. 
 
 ![Playback status bar](./assets/Playback-1.jpg)
 
@@ -481,135 +470,127 @@ speed is also displayed to the right of the -->.
 ### ⌨ <span style="color:DodgerBlue">Keyboard Commands</span>
 
 #### **Playback Control**
-- ░**p**░ or **Space Bar** — Pause/unpause video
-- ░**n**░ — Advance to next video
-- **Backspace** — Play previous video
-- ░**r**░ or **HOME** — Restart current video from beginning
-- ░**q**░ or **ESC** — Quit the program
-- ░**END**░ — Seek to last 10 seconds of video
-- ░**→**░ — Seek forward 20 seconds
-- ░**←**░ — Seek backward 20 seconds
-- ░**l**░ — Toggle loop current video indefinitely
-- ░ **+** ░ — (keypad) Increase playback speed by 0.50 (*max 5.0*)
-- ░ **-** ░ — (keypad) Decrease playback speed by 0.50 (*min 0.50*)
+- `p` or `Space` — Pause/unpause video
+- `n` — Advance to next video
+- `Backspace` — Play previous video
+- `r` or `Home` — Restart current video from the beginning
+- `q` or `Esc` — Quit the program
+- `End` — Seek to last 10 seconds of video
+- `→` — Seek forward 20 seconds
+- `←` — Seek backward 20 seconds
+- `l` — Toggle loop current video indefinitely
+- `+` (keypad) — Increase playback speed by 0.50 (*max 5.0*)
+- `-` (keypad) — Decrease playback speed by 0.50 (*min 0.50*)
 
 #### **Audio Control**
-- ░**m**░ — Toggle mute
-- ░**↑**░ — Increase volume by 10%
-- ░**↓**░ — Decrease volume by 10%
+- `m` — Toggle mute
+- `↑` — Increase volume by 10%
+- `↓` — Decrease volume by 10%
 
 #### **Display & Information**
-- ░**o**░ — Toggle OSD views (3 states: off / position+duration / position only)
-- ░**t**░ — Toggle video title display (4 states: None → all → portrait → landscape)
-- ░**h**░ — Show keyboard help panel
-- **Shift+H** — Show filter help panel
-- ░**i**░ — Show video metadata window
-- **Shift+I** — Cycle interpolation method (linear → cubic → lanczos4)
+- `o` — Toggle OSD views (3 states: off / position+duration / position only)
+- `t` — Toggle video title display (4 states: None → all → portrait → landscape)
+- `h` — Show keyboard help panel
+- `Shift+H` — Show filter help panel
+- `i` — Show video metadata window
+- `Shift+I` — Cycle interpolation method (linear → cubic → lanczos4)
 
 #### **Playlist Management**
-- ░**j**░ — Reshuffle video playlist in place
-- ░**w**░ — Save current playlist to file (~/VideoPlayList-SIZE.txt)
+- `j` — Reshuffle video playlist in place
+- `w` — Save current playlist to file (~/VideoPlayList-SIZE.txt)
 
 #### **Screenshot & Save Mode**
-- ░**s**░ — Save screenshot to ~/pyVidScreenShots
-- **Alt+S** — Toggle save mode (remaps Space Bar to screenshot function)
+- `s` — Save screenshot to ~/pyVidScreenShots
+- `Alt+S` — Toggle save mode (remaps Space Bar to screenshot function)
 
 #### **Filter Panels**
-- ░**c**░ — Toggle brightness/contrast panel
-- **Shift+C** — Toggle brightness/contrast filter on/off
-- ░**e**░ — Toggle edge detection panel
-- **Shift+E** — Toggle edge detection filter on/off
-- ░**f**░ — Toggle CUDA bilateral filter panel
-- ░**x**░ — Cycle through bilateral filter presets
-- ░**z**░ — Toggle oil painting panel
-- **Shift+Z** — Toggle oil painting filter on/off
-- ░**!**░ (Shift+1) — Toggle Laplacian Boost panel
-- **Shift+!** — Toggle Laplacian Boost filter on/off
-- ░*****░ (Shift+8) — Toggle sepia panel
-- **Shift+*** — Toggle "Super-Sepia" effect on/off
-- **INSERT** — Toggle filter checkbox panel
-- **DELETE** — Show filter info list
+- `c` — Toggle brightness/contrast panel
+- `Shift+C` — Toggle brightness/contrast filter on/off
+- `e` — Toggle edge detection panel
+- `Shift+E` — Toggle edge detection filter on/off
+- `f` — Toggle CUDA bilateral filter panel
+- `x` — Cycle through bilateral filter presets
+- `z` — Toggle oil painting panel
+- `Shift+Z` — Toggle oil painting filter on/off
+- `!` (Shift+1) — Toggle Laplacian Boost panel
+- `Shift+!` — Toggle Laplacian Boost filter on/off
+- `*` (Shift+8) — Toggle sepia panel
+- `Shift+*` — Toggle "Super-Sepia" effect on/off
+- `Insert` — Toggle filter checkbox panel
+- `Delete` — Show filter info list
 
 #### **Simple Filters (Toggle On/Off)**
-- ░**u**░ — Sharpening filter #1
-- ░**@**░ (Shift+2) — Blur filter
-- ░**(**░ (Shift+9) — Gaussian blur filter (CUDA)
-- ░**)**░ (Shift+0) — Median blur filter (CUDA)
-- ░**g**░ — Greyscale filter (CUDA)
-- ░**k**░ — Edge Sobel filter (CUDA)
-- ░**v**░ — Noise filter
-- ░**/**░ — Denoise filter
-- ░**$**░ (Shift+4) — Emboss filter (CUDA)
-- ░**%**░ (Shift+5) — Thermal filter
-- ░**#**░ (Shift+3) — Edge detect toggle
+- `u` — Sharpening filter #1
+- `@` (Shift+2) — Blur filter
+- `(` (Shift+9) — Gaussian blur filter (CUDA)
+- `)` (Shift+0) — Median blur filter (CUDA)
+- `g` — Greyscale filter (CUDA)
+- `k` — Edge Sobel filter (CUDA)
+- `v` — Noise filter
+- `/` — Denoise filter
+- `$` (Shift+4) — Emboss filter (CUDA)
+- `%` (Shift+5) — Thermal filter
+- `#` (Shift+3) — Edge detect toggle
 
 #### **Enhancement Filters (Toggle On/Off)**
-- ░**;**░ — Contrast enhancement (CUDA)
-- ░**:**░ (Shift+;) — Neon enhancement
-- ░**'**░ — Vignette enhancement
-- ░**"**░ (Shift+') — Pixelate enhancement
-- ░**<**░ (Shift+,) — Cel-shading enhancement
-- ░**^**░ (Shift+6) — Dream enhancement
-- ░**&**░ (Shift+7) — Comic enhancement
-- ░**`**░ — Artistic filter toggle
+- `;` — Contrast enhancement (CUDA)
+- `:` (Shift+;) — Neon enhancement
+- `'` — Vignette enhancement
+- `"` (Shift+') — Pixelate enhancement
+- `<` (Shift+,) — Cel-shading enhancement
+- `^` (Shift+6) — Dream enhancement
+- `&` (Shift+7) — Comic enhancement
+- `` ` `` — Artistic filter toggle
 
 #### **Transformation**
-- ░**,**░ — Flip video horizontally (left-right)
-- ░**.**░ — Flip video vertically (up-down)
+- `,` — Flip video horizontally (left-right)
+- `.` — Flip video vertically (up-down)
 
 #### **Disable All Filters**
-- ░**[**░ — Disable all active filters
+- `[` — Disable all active filters
 
 #### **Debug & Development**
-- ░**d**░ — Print all command-line options to console
-- ░**b**░ — Print VideoPlayBar icon rectangles (debug)
-<!--
-- ➡️  = Seek 20 seconds.
-- ⬅️  = seek -20 seconds.
-- ⬆️  = Increase the volume by 10%
-- ⬇️  = Decrease the volume by 10%
--->
-<!-- ░a░ ░b░ ░c░ ░d░ ░e░ ░f░ ░g░ ░h░ ░i░ ░j░ ░k░ ░l░ ░m░ ░n░ ░o░ ░p░ ░q░ ░r░ ░s░ ░t░ ░u░ ░v░ ░w░ ░x░ ░y░ ░z░ ░+░ ░-░ ░ ░!░ ░@░ ░ ░#░ ░$░ ░%░ ░&░ ░ ░*░ ░(░ ░ ░)░   ░_░ ░+░ ░~░ ░1░ ░2░ ░3░ ░4░ ░5░ ░6░ ░7░ ░8░ ░9░ ░0░ ░|░ ░→░ ░←░ ░↑░ ░↓░
-░A░ ░B░ ░C░ ░D░ ░E░ ░F░ ░G░ ░H░ ░I░ ░J░ ░K░ ░L░ ░M░ ░N░ ░O░ ░P░ ░Q░ ░R░ ░S░ ░T░ ░U░ ░V░ ░W░ ░X░ ░Y░ ░Z░ -->
+- `d` — Print all command-line options to console
+- `b` — Print VideoPlayBar icon rectangles (debug)
 
 ### 🖱️ <span style="color:DodgerBlue">Mouse</mouse>
 
-- **Left Mouse Long Press** = Advance to next video.  Long press = Left mouse button pressed >= 1 second.
-- **Right Mouse Long Press** = Play previous video.  Long press = Right mouse button pressed >= 1 second.
-- **Middle Mouse Long Press** = Pause Video toggle.  Long Press = Mouse Wheel button pressed >= 1 second.
-- **Wheel UP** = Seek ahead 5 seconds.
-- **Wheel Down** = Seek backwards 5 seconds.
+- **Left Mouse Long Press** — Advance to next video (press ≥ 1 second)
+- **Right Mouse Long Press** — Play previous video (press ≥ 1 second)
+- **Middle Mouse Long Press** — Pause/unpause video (press ≥ 1 second)
+- **Wheel Up** — Seek ahead 5 seconds
+- **Wheel Down** — Seek backwards 5 seconds
 
 ### 💻 <span style="color:DodgerBlue">OSD</span>
 
-There are three modes for the **On Screen Display**. Pressing the ░**o**░ key 3 times will toggle through the three modes:
+There are three modes for the **On Screen Display**. Pressing the `o` key 3 times will toggle through the three modes:
 
 1. **Off**
 2. ▶️ **HH:MM:SS / HH:MM:SS**
 3. ▶️ **HH:MM:SS**
 
 In the *2nd* mode, the **HH:MM:SS** to the far left is the ***current play position***. The one to the far right is the ***total video duration*** time.
-The *3rd* mode behaves in a special manner.  When the ***current play position*** is approx. ***20 seconds*** from the video end, its default color will slowly fade to a much brighter one giving a visual indication the video is 20 seconds from completion.  Currently, the OSD timings are displayed in the color of **DodgerBlue**. When the color fading begins in *mode 3*, The OSD text color slowly fades until it reaches **HotPink** which denotes the end of the video had been reached. By default, the OSD is ***OFF*** when **pyVid2** is run. The command line argument ***--enableOSDcurpos*** enables OSD mode 3 at runtime.
+The *3rd* mode behaves in a special manner.  When the ***current play position*** is approx. ***20 seconds*** from the video end, its default color will slowly fade to a much brighter one giving a visual indication the video is 20 seconds from completion.  Currently, the OSD timings are displayed in the color of **DodgerBlue**. When the color fading begins in *mode 3*, the OSD text color slowly fades until it reaches **HotPink** which denotes the end of the video has been reached. By default, the OSD is ***OFF*** when **pyVid2** is run. The command line argument ***--enableOSDcurpos*** enables OSD mode 3 at runtime.
 
 
 ### 💻 <span style="color:DodgerBlue">Portrait frame Detection</span>
 
 Portrait frame detection determines whether a given image surface represents a "portrait" orientation by analyzing its pixel data. The method inspects specific regions on the left and right edges of the
-image to verify if they contain predominantly black pixels (with a threshold applied for RGB channel values). The function relies on efficient pixel access and locks the input surface during processing. The portrait detection is based on specified areas and is useful for identifying images surrounded by black padding.  Note that this is highly experimental and is likely to not be useful to the vast majority of users.  In fact,it is likely to not even work at all!  Currently, **Display Video Title**,  **--dispTitle** and friends (see below), as well as screenshot saving when using the command line argument **--separateDirs** make use of this. When specifying **--separateDirs** on the command line and upon saving a screenshot, Portrait fame detection is enabled and saved screenshots will be placed in Landscape and Portrait subfolders.  This functionality has very limited usefulness and will likely **NOT** work for most people.   
+image to verify if they contain predominantly black pixels (with a threshold applied for RGB channel values). The function relies on efficient pixel access and locks the input surface during processing. The portrait detection is based on specified areas and is useful for identifying images surrounded by black padding.  Note that this is highly experimental and is likely to not be useful to the vast majority of users.  In fact, it is likely to not even work at all!  Currently, **Display Video Title**,  **--dispTitle** and friends (see below), as well as screenshot saving when using the command line argument **--separateDirs** make use of this. When specifying **--separateDirs** on the command line and upon saving a screenshot, Portrait frame detection is enabled and saved screenshots will be placed in Landscape and Portrait subfolders.  This functionality has very limited usefulness and will likely **NOT** work for most people.   
 
 
 ### 💻 <span style="color:DodgerBlue">Display Video Title</span>
 
 This command key (t) along with its command line interface counterpart **--dispTitle** deserves some explanation.
 pyVid2 has some very specific use cases that probably will not be of much use to most users.  In the world of video, there is no such thing as 'portrait' (where the image height > image width) or 'landscape' (where the image width > image height). In video, each displayed frame is *always* the same size. That having been said, pyVid2 is a *presentation* video player.  Consider the usage case
-of a photographer. He or she may wish to show-ase their work by rendering their photos into slideshow videos.  These videos will likely have different transition effects for each slide or photo.  In the world of photography, depending upon the subject, many photos will likely be taken in both portrait and landscape.  Thus, when these photos are rendered into a video slideshow, The resulting video will consist of photos representing both.  Other subjects might consist only of landscape photos or just portrait photos. **--dispTitle** can take one of three possible parameters.  These are:
+of a photographer. He or she may wish to showcase their work by rendering their photos into slideshow videos.  These videos will likely have different transition effects for each slide or photo.  In the world of photography, depending upon the subject, many photos will likely be taken in both portrait and landscape.  Thus, when these photos are rendered into a video slideshow, the resulting video will consist of photos representing both.  Other subjects might consist only of landscape photos or just portrait photos. **--dispTitle** can take one of three possible parameters.  These are:
 - **all**       =  Display metadata title tag text on all frames
 - **portrait**  =  Display metadata title tag text on detected portrait frames
-- **landscape** =  Display metadata title tag text on landscape frames (likely all frames) 
+- **landscape** =  Display metadata title tag text on landscape frames (likely all frames)
 
-The portrait detection algorithm is rather crude. There are so many cases where this will fail.  It is suggested to just use **all** and not worry about it. The command key (t) will toggle between the various possible states: **None**->**all**->**portrait**->**landscape**->**None**    
+The portrait detection algorithm is rather crude. There are so many cases where this will fail.  It is suggested to just use **all** and not worry about it. The command key (t) will toggle between the various possible states: **None**->**all**->**portrait**->**landscape**->**None**
 
-Note that the selection of any parameter other than **all* is likely not going to work as intended.  Customized metadata tags can be added to a mp4 video (and likely others) by using ffmpeg:
+Note that the selection of any parameter other than **all** is likely not going to work as intended.  Customized metadata tags can be added to a mp4 video (and likely others) by using ffmpeg:
 ```sh
 # The -c copy is very important as it will prevent having to transcode the entire video over again. 
 ffmpeg -loglevel quiet -i video.mp4 -c copy -movflags use_metadata_tags -metadata title="Nikki and the girls on vacation in the Outback!" output.mp4
@@ -664,21 +645,21 @@ Command line arguments (if there are any) always take priority over any set envi
 
 - **PYGAME_DISPLAY=display** For multiple monitor setups. Sets the monitor to play media on.  Select 0|1|2 ...
 - **SDL_VIDEO_MINIMIZE_ON_FOCUS_LOSS=0** For multi-monitor setups, this is necessary to avoid the video minimizing when it loses focus.
-- **SAVE_PLAYLIST_PATH=path** Specifiy the path to save pyVids playlist to ('w' keyboard command)
+- **SAVE_PLAYLIST_PATH=path** Specify the path to save pyVids playlist to ('w' keyboard command)
 
-Currently, there is only one command line argument that overrides any set environment variables:  **--display**.  For example: ```pyVid2 --display 2`` will start the video on monitor #2 on a three monitor setup.  Note that monitor numbers begin with 0.  By default, pyVid2 will render the video in the active monitor it is run in. Use **--listActiveMonitors** to retrieve a list of possible monitors to use with the **--display** argument.   
+Currently, there is only one command line argument that overrides any set environment variables:  **--display**.  For example: ```pyVid2 --display 2``` will start the video on monitor #2 on a three monitor setup.  Note that monitor numbers begin with 0.  By default, pyVid2 will render the video in the active monitor it is run in. Use **--listActiveMonitors** to retrieve a list of possible monitors to use with the **--display** argument.   
 
 ## 🛠️ <span style="color:DodgerBlue">Installation</span>
 
-### ✅ <spam style="color:DodgerBlue">Requirements</spam>
+### ✅ <span style="color:DodgerBlue">Requirements</span>
 
 - 🔗 [pygame>=2.6](https://www.pygame.org/download.shtml)
 - 🔗 [cachetools>=75.8.0](https://pypi.org/project/cachetools/)
 - 🔗 [setuptools>=5.5.2](https://pypi.org/project/setuptools/)
 - 🔗 [pyvidplayer2>=0.9.26](https://pypi.org/project/pyvidplayer2/)
 
-There are other requirements such as **_ffmpeg_** that will need to be installed via your Linux distributions 
-package manager. Refer to your particular distributions documention for information how to accomplish that. 
+There are other requirements such as **_ffmpeg_** that will need to be installed via your Linux distribution's
+package manager. Refer to your particular distribution's documentation for information how to accomplish that. 
 
 ```sh
 git clone https://github.com/NikkiCooper/pyVid2.git
