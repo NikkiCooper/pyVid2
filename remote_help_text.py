@@ -1,4 +1,4 @@
-#  remote_help_text.py Copyright (c) 2025 Nikki Cooper
+#  remote_help_text.py Copyright (c) 2026 Nikki Cooper
 #
 #  This program and the accompanying materials are made available under the
 #  terms of the GNU Lesser General Public License, version 3.0 which is available at
