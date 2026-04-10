@@ -200,20 +200,20 @@ class EventHandler:
 
         # SPEED+ - Increase playback speed
         #self.ir_remote.register_callback('SPEED+', lambda: pygame.event.post(pygame.event.Event(self.IR_SPEED_UP)))
-        self.ir_remote.register_callback('SPEED+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_KP_PLUS,mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('SPEED+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_KP_PLUS,mod=0)), False)
 
         # SPEED- - Decrease playback speed
         #self.ir_remote.register_callback('SPEED-', lambda: pygame.event.post(pygame.event.Event(self.IR_SPEED_DOWN)))
-        self.ir_remote.register_callback('SPEED-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_KP_MINUS, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('SPEED-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_KP_MINUS, mod=0)), False)
 
         # VOL+ - Increase volume pygame.K_UP
-        self.ir_remote.register_callback('VOL+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('VOL+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP, mod=0)), False)
 
         # VOL- - Decrease volume pygame.K_DOWN
-        self.ir_remote.register_callback('VOL-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('VOL-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN, mod=0)), False)
 
         # MUTE-UNMUTE - Toggle mute  pygame.K_m
-        self.ir_remote.register_callback('MUTE-UNMUTE', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('MUTE-UNMUTE', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0)), False)
 
         # LOOP - Toggle single video loop pygame.K_l
         self.ir_remote.register_callback('LOOP', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_l, mod=0)), False)
@@ -230,9 +230,9 @@ class EventHandler:
 
         # Number buttons 1-7
         # pygame.K_o
-        self.ir_remote.register_callback('1', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_o, mod=0)))
+        self.ir_remote.register_callback('1', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_o, mod=0)), False)
         # pygame.K_t
-        self.ir_remote.register_callback('2', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_t, mod=0)))
+        self.ir_remote.register_callback('2', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_t, mod=0)), False)
         # pygame.k_w
         self.ir_remote.register_callback('3', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_w, mod=0)), False)
         # pygame.K_j
