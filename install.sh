@@ -6,6 +6,8 @@
 # Run this script from the directory it is located in.
 #
 fonts_src_path="`pwd`/fonts/"
+XDG="$HOME/.local/share/pyVid/"
+ir_keymap_src_path="`pwd`/IR_Pico_W"
 fonts_dest_path="$HOME/.local/share/pyVid/fonts"
 resources_src_path="`pwd`/Resources/"
 resources_dest_path="$HOME/.local/share/pyVid/Resources"
@@ -43,6 +45,12 @@ if [ ! -d "${fonts_src_path}" ]; then
   echo 'Ensure this script is run from the PyVid2 installation root directory'
   exit 20
 fi
+cp -a "${ir_keymap_src_path}/ir_keymap.conf" "${XDG}"
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "Could not copy ir_keymap.conf to ${XDG}"
+  exit 25
+fi
 cd "${fonts_src_path}"
 cp -a * -t "${fonts_dest_path}"
 rc=$?
@@ -59,9 +67,4 @@ if [ $rc -ne 0 ]; then
   echo "The return code received was: ${rc}"
   exit 35
 fi
-
 echo 'Installation successful!  Enjoy :-)'
-
-
-
-

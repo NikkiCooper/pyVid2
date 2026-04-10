@@ -117,6 +117,7 @@ def cmdLineOptions():
     system_group.add_argument("--verbose", action="store_true", help=chl.help["verbose"])
     system_group.add_argument("--display", type=str,  help=chl.help["display"])
     system_group.add_argument("--consoleStatusBar", action="store_true", help=chl.help["consoleStatusBar"])
+    system_group.add_argument("--disable-IR", action="store_true", help=chl.help["disable_IR"])
 
     # 📂 File & Directory Management
     file_group = parser.add_argument_group(chl.group["file_group"])

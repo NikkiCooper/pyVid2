@@ -145,6 +145,7 @@ python pyvid2.py --loop --shuffle --Paths ~/Videos
 | `--verbose`           | Enable verbose/debug output                                                 |
 | `--display`           | Target specific display by index                                            |
 | `--consoleStatusBar`  | Enables live status updates in terminal                                     |
+| `--disable-IR`        | Disable the IR Remote Control UDP listener                                  |
 
 ---
 
@@ -560,6 +561,82 @@ speed is also displayed to the right of the -->.
 - **Middle Mouse Long Press** — Pause/unpause video (press ≥ 1 second)
 - **Wheel Up** — Seek ahead 5 seconds
 - **Wheel Down** — Seek backwards 5 seconds
+
+### 📡 <span style="color:DodgerBlue">IR Remote Control</span>
+
+pyVid2 supports a virtual keyboard driven by an infrared remote control, implemented via a Raspberry Pi Pico-W acting as a Wi-Fi-to-IR bridge. This arrangement came about simply because a Pico-W and a spare IR receiver happened to be the hardware on hand when remote control support was needed — and it turned out to work surprisingly well.
+
+#### Hardware
+
+The Pico-W is wired to a standard 3-terminal IR receiver module:
+
+| IR Receiver Pin | Pico-W Pin         |
+|-----------------|--------------------|
+| VCC             | 3V3 (pin 36)       |
+| GND             | GND                |
+| Data Out        | GP15 (pin 20)      |
+
+The Pico runs a small MicroPython script (`IR_Pico_W/main.py`) that decodes incoming IR codes using Peter Hinch's `ir_rx` library and forwards them over UDP to the machine running pyVid2.
+
+> For full setup instructions — flashing MicroPython, uploading files via Thonny, configuring your Wi-Fi credentials, and selecting the correct IR protocol decoder — see **[`IR_Pico_W/README.txt`](IR_Pico_W/README.txt)**.
+
+#### Disabling the IR Remote
+
+The IR Remote UDP listener is **enabled by default**. If you are not using IR remote control hardware — or simply want pyVid2 to stop binding UDP port 5005 — pass `--disable-IR` on the command line:
+
+```sh
+python pyvid2.py --disable-IR --loop --shuffle --Paths ~/Videos
+```
+
+#### How It Works
+
+pyVid2 listens on **UDP port 5005** (configurable) in a background thread. When the Pico-W receives an IR keypress, it sends the decoded keycode as a UDP datagram to pyVid2. The `IRRemoteControl` module receives the raw integer code, looks it up in the keymap, and fires the registered callback — which is the same function bound to the equivalent keyboard hotkey. From pyVid2's perspective, pressing a button on the IR remote is identical to pressing the corresponding key on the keyboard.
+
+#### Installation
+
+`install.sh` copies `IR_Pico_W/ir_keymap.conf` to `~/.local/share/pyVid/ir_keymap.conf`, which is where pyVid2 reads it at startup. If you customise your keymap, edit the installed copy rather than the one in the repo so your changes survive a `git pull`.
+
+#### Keymap Format
+
+The keymap file maps symbolic button names to the raw hex IR codes emitted by your remote. Lines beginning with `#` are comments; everything after `#` on a data line is also ignored.
+
+```
+BUTTON_NAME:0xHEXCODE    # optional comment
+```
+
+#### Default Keymap
+
+The shipped keymap targets a **GE Universal Remote in DVD mode**. The hex codes on the right are what the Pico-W forwards over UDP; edit them to match whatever remote you have.
+
+| Button Name      | IR Code | Maps To (Keyboard Hotkey)                        |
+|------------------|---------|--------------------------------------------------|
+| `PWR`            | `0x2`   | `q` / `Esc` — Quit program                       |
+| `REW`            | `0x1e`  | `←` — Seek backward 20 seconds                  |
+| `FWD`            | `0x1c`  | `→` — Seek forward 20 seconds                   |
+| `PLAY_NEXT`      | `0x1d`  | `n` — Play next video                            |
+| `PLAY_PREV`      | `0x13`  | `Backspace` — Play previous video                |
+| `PLAY_PAUSE`     | `0xb`   | `p` / `Space` — Pause / unpause                  |
+| `SPEED+`         | `0x1f`  | `+` (keypad) — Increase playback speed           |
+| `SPEED-`         | `0x40`  | `-` (keypad) — Decrease playback speed           |
+| `VOL+`           | `0x4c`  | `↑` — Increase volume 10%                        |
+| `VOL-`           | `0x54`  | `↓` — Decrease volume 10%                        |
+| `MUTE-UNMUTE`    | `0x4`   | `m` — Toggle mute                                |
+| `LOOP`           | `0x16`  | `l` — Loop current video                         |
+| `SCREENSHOT`     | `0x19`  | `s` — Save screenshot                            |
+| `SCRNSHOT`       | `0x58`  | `s` — Save screenshot (alternate button)         |
+| `RESTART`        | `0x18`  | `r` / `Home` — Restart video from beginning      |
+| `MENU`           | `0x1a`  | `h` — Show remote control help overlay           |
+| `1`              | `0xa`   | `o` — Toggle OSD (3 states)                      |
+| `2`              | `0x9`   | `t` — Toggle video title display (4 states)      |
+| `3`              | `0x8`   | `w` — Save playlist to file                      |
+| `4`              | `0x12`  | `j` — Randomise / reshuffle playlist             |
+| `5`              | `0x11`  | `i` — Show video metadata window                 |
+| `6`              | `0x10`  | `Shift+I` — Cycle interpolation method           |
+| `7`              | `0xe`   | `g` — Toggle greyscale filter                    |
+
+To adapt the keymap to a different remote, point an IR receiver at the remote, capture the codes it emits (the Pico's serial output will print them when running in debug mode), and update `~/.local/share/pyVid/ir_keymap.conf` accordingly.
+
+---
 
 ### 💻 <span style="color:DodgerBlue">OSD</span>
 

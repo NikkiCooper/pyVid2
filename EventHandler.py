@@ -10,6 +10,7 @@ import inspect
 import pygame
 import constants as const
 from debug_utils import debug
+from IRRemoteControl import IRRemoteControl
 
 # Mouse constants used in the pygame event loop.
 LEFT = 0
@@ -96,6 +97,31 @@ class EventHandler:
         self.PlayVideoInstance = PlayVideoInstance              # Create a PlayVideo Instance.
         self.REWIND_SEEK_EVENT = pygame.USEREVENT + 10          # User defined pygame timer event
         self.FWD_SEEK_EVENT = pygame.USEREVENT + 15
+
+        # IR Remote custom events
+        #self.IR_QUIT = pygame.USEREVENT + 20
+        #self.IR_SEEK_BACK = pygame.USEREVENT + 21
+        #self.IR_SEEK_FWD = pygame.USEREVENT + 22
+        #self.IR_NEXT_VIDEO = pygame.USEREVENT + 23
+        #self.IR_PREV_VIDEO = pygame.USEREVENT + 24
+        #self.IR_TOGGLE_PAUSE = pygame.USEREVENT + 25
+        #self.IR_SPEED_UP = pygame.USEREVENT + 26
+        #self.IR_SPEED_DOWN = pygame.USEREVENT + 27
+        #self.IR_VOL_UP = pygame.USEREVENT + 28
+        #self.IR_VOL_DOWN = pygame.USEREVENT + 29
+        #self.IR_TOGGLE_MUTE = pygame.USEREVENT + 30
+        #self.IR_TOGGLE_LOOP = pygame.USEREVENT + 31
+        #self.IR_SCREENSHOT = pygame.USEREVENT + 32
+        #self.IR_RESTART = pygame.USEREVENT + 33
+        self.IR_MENU = pygame.USEREVENT + 34
+        #self.IR_BTN_1 = pygame.USEREVENT + 35
+        #self.IR_BTN_2 = pygame.USEREVENT + 36
+        #self.IR_BTN_3 = pygame.USEREVENT + 37
+        #self.IR_BTN_4 = pygame.USEREVENT + 38
+        #self.IR_BTN_5 = pygame.USEREVENT + 39
+        #self.IR_BTN_6 = pygame.USEREVENT + 40
+        #self.IR_BTN_7 = pygame.USEREVENT + 41
+
         pygame.time.set_timer(self.FWD_SEEK_EVENT, 20)
         pygame.time.set_timer(self.FWD_SEEK_EVENT, 0)
         pygame.time.set_timer(self.REWIND_SEEK_EVENT, 20)
@@ -121,6 +147,102 @@ class EventHandler:
         # initialization code for the various single argument post-processing functions.
         self.pp_args = None
         self.debug = False
+
+        # Initialize IR Remote Control (set debug=True to troubleshoot IR codes)
+        # Use --disable-IR on the command line to skip the UDP listener entirely.
+        if not self.PlayVideoInstance.opts.disable_IR:
+            self.ir_remote = IRRemoteControl(debug=False)
+            self._setup_ir_callbacks()
+            self.ir_remote.start()
+        else:
+            self.ir_remote = None
+            print("IR Remote: disabled via --disable-IR")
+
+    def _setup_ir_callbacks(self):
+        """
+        Registers callback functions for handling IR remote control signals. Each callback
+        is associated with a specific button on the remote and posts a corresponding
+        Pygame event when triggered. These events simulate keyboard key presses to
+        control the application, such as playback, volume, and other functionalities.
+
+        Raises:
+            pygame.event.Event: Posts a specific Pygame event for each registered
+            callback function.
+
+        Parameters:
+            None
+
+        Returns:
+            None
+        """
+        # PWR - Quit program using the built-in pygame event pygame.QUIT
+        self.ir_remote.register_callback('PWR', lambda: pygame.event.post(pygame.event.Event(pygame.QUIT)), False)
+
+        # REW - Seek backward
+        #self.ir_remote.register_callback('REW', lambda: pygame.event.post(pygame.event.Event(self.IR_SEEK_BACK)), allow_repeat=True)
+        self.ir_remote.register_callback('REW', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT, mod=0)), allow_repeat=True)
+
+        # FWD - Seek forward
+        #self.ir_remote.register_callback('FWD', lambda: pygame.event.post(pygame.event.Event(pygame.K_RIGHT)), allow_repeat=True)
+        self.ir_remote.register_callback('FWD', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RIGHT, mod=0)), allow_repeat=True)
+
+        # PLAY_NEXT - Next video pygame.K_n
+        #self.ir_remote.register_callback('PLAY_NEXT', lambda: pygame.event.post(pygame.event.Event(self.IR_NEXT_VIDEO)))
+        self.ir_remote.register_callback('PLAY_NEXT', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n, mod=0)), allow_repeat=True)
+
+        # PLAY_PREV - Previous video pygame.K_BACKSPACE
+        #self.ir_remote.register_callback('PLAY_PREV', lambda: pygame.event.post(pygame.event.Event(self.IR_PREV_VIDEO)))
+        self.ir_remote.register_callback('PLAY_PREV', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_BACKSPACE, mod=0)), allow_repeat=True)
+
+        # PLAY_PAUSE - Toggle pause/play pygame.K_p
+        #self.ir_remote.register_callback('PLAY_PAUSE', lambda: pygame.event.post(pygame.event.Event(self.IR_TOGGLE_PAUSE)))
+        self.ir_remote.register_callback('PLAY_PAUSE', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_p, mod=0)), False)
+
+        # SPEED+ - Increase playback speed
+        #self.ir_remote.register_callback('SPEED+', lambda: pygame.event.post(pygame.event.Event(self.IR_SPEED_UP)))
+        self.ir_remote.register_callback('SPEED+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_KP_PLUS,mod=0)), allow_repeat=True)
+
+        # SPEED- - Decrease playback speed
+        #self.ir_remote.register_callback('SPEED-', lambda: pygame.event.post(pygame.event.Event(self.IR_SPEED_DOWN)))
+        self.ir_remote.register_callback('SPEED-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_KP_MINUS, mod=0)), allow_repeat=True)
+
+        # VOL+ - Increase volume pygame.K_UP
+        self.ir_remote.register_callback('VOL+', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_UP, mod=0)), allow_repeat=True)
+
+        # VOL- - Decrease volume pygame.K_DOWN
+        self.ir_remote.register_callback('VOL-', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_DOWN, mod=0)), allow_repeat=True)
+
+        # MUTE-UNMUTE - Toggle mute  pygame.K_m
+        self.ir_remote.register_callback('MUTE-UNMUTE', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_m, mod=0)), allow_repeat=True)
+
+        # LOOP - Toggle single video loop pygame.K_l
+        self.ir_remote.register_callback('LOOP', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_l, mod=0)), False)
+
+        # SCREENSHOT - Take screenshot pygame.K_s
+        self.ir_remote.register_callback('SCREENSHOT', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_s, mod=0)), False)
+        self.ir_remote.register_callback('SCRNSHOT', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_s, mod=0)), False)
+
+        # RESTART - Restart video to beginning pygame.K_r
+        self.ir_remote.register_callback('RESTART', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r, mod=0)), False)
+
+        # MENU - Remote control help box
+        self.ir_remote.register_callback('MENU', lambda: pygame.event.post(pygame.event.Event(self.IR_MENU)))
+
+        # Number buttons 1-7
+        # pygame.K_o
+        self.ir_remote.register_callback('1', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_o, mod=0)))
+        # pygame.K_t
+        self.ir_remote.register_callback('2', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_t, mod=0)))
+        # pygame.k_w
+        self.ir_remote.register_callback('3', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_w, mod=0)), False)
+        # pygame.K_j
+        self.ir_remote.register_callback('4', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_j, mod=0)), False)
+        # pygame.K_i
+        self.ir_remote.register_callback('5', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_i, mod=0)), False)
+        # pygame.k_i if event.mod & pygame.KMOD_SHIFT
+        self.ir_remote.register_callback('6', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_i, mod=pygame.KMOD_SHIFT)), False)
+        # pygame.K_g
+        self.ir_remote.register_callback('7', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_g, mod=0)), False)
 
     @property
     def opts(self):
@@ -164,6 +286,8 @@ class EventHandler:
             match event.type:
                 case pygame.QUIT:
                     self.running = False
+                    if self.ir_remote:
+                        self.ir_remote.stop()
                     self.PlayVideoInstance.quit_video()
                 case pygame.MOUSEMOTION:
                     if self.PlayVideoInstance.control_panel.handle_mouse_motion(event.pos):
@@ -231,6 +355,26 @@ class EventHandler:
                     self.handle_fwd_seek_event()
                 case self.REWIND_SEEK_EVENT:
                     self.handle_rewind_seek_event()
+                # IR Remote events
+                case self.IR_MENU:
+                    # Toggle IR Remote Control Help box
+                    if self.PlayVideoInstance.video_info_box or \
+                            self.PlayVideoInstance.drawHelpInfo.is_visible() or \
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or \
+                            self.PlayVideoInstance.filter_info_box or \
+                            self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                        # Close other dialogs first
+                        if self.PlayVideoInstance.video_info_box:
+                            self.PlayVideoInstance.video_info_box = False
+                        if self.PlayVideoInstance.drawHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.filter_info_box:
+                            self.PlayVideoInstance.filter_info_box = False
+                        if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
+                            self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
+                    self.PlayVideoInstance.drawRemoteHelpInfo.toggle_visibility()
 
     def handle_mouse_button_up(self, event):
         """
@@ -329,6 +473,10 @@ class EventHandler:
                         if hasattr(self.PlayVideoInstance, 'filter_help_button_rect') and self.PlayVideoInstance.filter_help_button_rect is not None:
                             if self.PlayVideoInstance.filter_help_button_rect.collidepoint(mouse_pos):
                                 self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        # Remote Help
+                        if hasattr(self.PlayVideoInstance, 'remote_help_button_rect') and self.PlayVideoInstance.remote_help_button_rect is not None:
+                            if self.PlayVideoInstance.remote_help_button_rect.collidepoint(mouse_pos):
+                                self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         # volume
                         self.update_volume(mouse_x, mouse_y)
                         self.update_video_speed(mouse_x, mouse_y)
@@ -381,6 +529,13 @@ class EventHandler:
                 self.PlayVideoInstance.is_hovered = self.PlayVideoInstance.filter_help_button_rect.collidepoint(mouse_pos)
             else:
                 self.PlayVideoInstance.is_hovered = False  # default value
+
+        if self.PlayVideoInstance.drawRemoteHelpInfo.is_visible():
+            mouse_pos = (mouse_x, mouse_y)
+            if hasattr(self.PlayVideoInstance, 'remote_help_button_rect') and self.PlayVideoInstance.remote_help_button_rect is not None:
+                self.PlayVideoInstance.remote_is_hovered = self.PlayVideoInstance.remote_help_button_rect.collidepoint(mouse_pos)
+            else:
+                self.PlayVideoInstance.remote_is_hovered = False  # default value
 
         if self.PlayVideoInstance.filter_info_box:
             self.PlayVideoInstance.drawFilterInfo.is_hovered = self.PlayVideoInstance.drawFilterInfo.button_rect.collidepoint(mouse_x, mouse_y)
@@ -563,6 +718,7 @@ class EventHandler:
                     if (self.PlayVideoInstance.video_info_box or
                             self.PlayVideoInstance.drawHelpInfo.is_visible() or
                             self.PlayVideoInstance.filter_info_box or
+                            self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
                             self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
 
                         if self.PlayVideoInstance.video_info_box:
@@ -571,6 +727,8 @@ class EventHandler:
                             self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.filter_info_box:
                             self.PlayVideoInstance.filter_info_box = False
+                        if self.PlayVideoInstance.drawRemoteHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
                             self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
                     self.PlayVideoInstance.drawFilterHelpInfo.toggle_visibility()
@@ -578,6 +736,7 @@ class EventHandler:
                     if self.PlayVideoInstance.video_info_box or \
                             self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or \
                             self.PlayVideoInstance.filter_info_box or \
+                            self.PlayVideoInstance.drawRemoteHelpInfo.is_visible() or \
                             self.PlayVideoInstance.filterCheckboxPanel.is_visible():
 
                         if self.PlayVideoInstance.video_info_box:
@@ -586,6 +745,8 @@ class EventHandler:
                             self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.filter_info_box:
                             self.PlayVideoInstance.filter_info_box = False
+                        if self.PlayVideoInstance.drawRemoteHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.filterCheckboxPanel.is_visible():
                             self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
                     self.PlayVideoInstance.drawHelpInfo.toggle_visibility()
@@ -613,11 +774,13 @@ class EventHandler:
                     if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
                             self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
                             self.PlayVideoInstance.filter_info_box or
+                            self.PlayVideoInstance.drawRemoteHelpInfo.is_visible() or
                             self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
 
                         self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.filter_info_box = False
+                        self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
 
                     self.PlayVideoInstance.video_info_box = not self.PlayVideoInstance.video_info_box
@@ -639,6 +802,7 @@ class EventHandler:
                     #bilateral_debug(f"opts.apply_bilateral_filter set to: {self.opts.apply_bilateral_filter}")
                 case const.KEY_LOOP:
                     self.PlayVideoInstance.opts.loop_flag = not self.PlayVideoInstance.opts.loop_flag
+                    self.PlayVideoInstance.FilterDialogBox(f"Loop: {'On' if self.PlayVideoInstance.opts.loop_flag else 'Off'}")
                 case const.KEY_MUTE:
                     if self.PlayVideoInstance.mute_flag:
                         self.PlayVideoInstance.vid.toggle_mute()
@@ -648,8 +812,10 @@ class EventHandler:
                         self.PlayVideoInstance.key_mute_flag = not self.PlayVideoInstance.key_mute_flag
                         if self.PlayVideoInstance.key_mute_flag:
                             self.PlayVideoInstance.vid.mute()
+                            self.PlayVideoInstance.FilterDialogBox("Muted")
                         else:
                             self.PlayVideoInstance.vid.unmute()
+                            self.PlayVideoInstance.FilterDialogBox("Unmuted")
 
                 case const.KEY_NEXT_VID:
                     self.PlayVideoInstance.forwardsFlag = True
@@ -681,8 +847,10 @@ class EventHandler:
                     self.PlayVideoInstance.vid.toggle_pause()
                     if self.PlayVideoInstance.vid.paused:
                         self.PlayVideoInstance.pause = self.PlayVideoInstance.vid.paused
+                        self.PlayVideoInstance.FilterDialogBox("Paused")
                     else:
                         self.PlayVideoInstance.pause = False
+                        self.PlayVideoInstance.FilterDialogBox("Playing")
                 case const.KEY_SPACE:
                     if self.PlayVideoInstance.saveMode:
                         self.saveFrameShot()
@@ -729,6 +897,7 @@ class EventHandler:
                     # **Step 3: Immediately refresh the display**
                     self.PlayVideoInstance.draw_OSD()
                 case const.KEY_RESTART:
+                    self.PlayVideoInstance.FilterDialogBox("Restarting video...")
                     self.PlayVideoInstance.vid.restart()
                     self.PlayVideoInstance.progress_value = 0
                     self.PlayVideoInstance.progress_percentage = 0
@@ -785,13 +954,15 @@ class EventHandler:
                     if not self.PlayVideoInstance.opts.key_mute_flag:
                         self.PlayVideoInstance.vol = min(1.0, self.PlayVideoInstance.vol + 0.1)
                         self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.vol)
+                        self.PlayVideoInstance.FilterDialogBox(f"Volume: {int(self.PlayVideoInstance.vol * 100)}%")
                 case const.KEY_VOL_DOWN:
                     # Only update the volume if the opts['key_mute_flag'] isn't set
                     if not self.PlayVideoInstance.opts.key_mute_flag:
                         self.PlayVideoInstance.vol = max(0.0, self.PlayVideoInstance.vol - 0.1)
                         self.PlayVideoInstance.vid.set_volume(self.PlayVideoInstance.vol)
+                        self.PlayVideoInstance.FilterDialogBox(f"Volume: {int(self.PlayVideoInstance.vol * 100)}%")
                 case const.KEY_PLAY_SPEED_UP:
-                    self.PlayVideoInstance.opts.playSpeed = min(5.0, self.PlayVideoInstance.opts.playSpeed + 0.50)
+                    self.PlayVideoInstance.opts.playSpeed = min(10.0, self.PlayVideoInstance.opts.playSpeed + 0.50)
                     # Get the current frame that is playing before stoping and closing the video
                     currFrame = self.PlayVideoInstance.vid.frame
                     self.PlayVideoInstance.vid.stop()
@@ -805,6 +976,7 @@ class EventHandler:
                         self.PlayVideoInstance.vid.seek_frame(currFrame)
                         # Update vid internals
                         self.PlayVideoInstance.vid.update()
+                        self.PlayVideoInstance.FilterDialogBox(f"Speed: {self.PlayVideoInstance.opts.playSpeed:.1f}x")
                     # pylint: disable=(broad-exception-caught
                     except Exception as e:  # pylint: disable=unused-variable
                         pass
@@ -819,6 +991,7 @@ class EventHandler:
                         )
                         self.PlayVideoInstance.vid.seek_frame(currFrame)
                         self.PlayVideoInstance.vid.update()
+                        self.PlayVideoInstance.FilterDialogBox(f"Speed: {self.PlayVideoInstance.opts.playSpeed:.1f}x")
                     # pylint: disable=broad-exception-caught
                     except Exception as e:  # pylint: disable=unused-variable
                         pass
@@ -826,12 +999,15 @@ class EventHandler:
                     if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
                             self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
                             self.PlayVideoInstance.video_info_box or
+                            self.PlayVideoInstance.drawRemoteHelpInfo.is_visible() or
                             self.PlayVideoInstance.filter_info_box):
 
                         if self.PlayVideoInstance.drawHelpInfo.is_visible():
                             self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.drawFilterHelpInfo.is_visible():
                             self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
+                        if self.PlayVideoInstance.drawRemoteHelpInfo.is_visible():
+                            self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         if self.PlayVideoInstance.video_info_box:
                             self.PlayVideoInstance.video_info_box = False
                         if self.PlayVideoInstance.filter_info_box:
@@ -848,11 +1024,13 @@ class EventHandler:
                     if (self.PlayVideoInstance.drawHelpInfo.is_visible() or
                             self.PlayVideoInstance.drawFilterHelpInfo.is_visible() or
                             self.PlayVideoInstance.video_info_box or
+                            self.PlayVideoInstance.drawRemoteHelpInfo.is_visible() or
                             self.PlayVideoInstance.filterCheckboxPanel.is_visible()):
 
                         self.PlayVideoInstance.drawHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.drawFilterHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.video_info_box = False
+                        self.PlayVideoInstance.drawRemoteHelpInfo.set_visibility(False)
                         self.PlayVideoInstance.filterCheckboxPanel.set_visible(False)
                     #
                     self.PlayVideoInstance.filter_info_box = not self.PlayVideoInstance.filter_info_box
@@ -1386,7 +1564,9 @@ class EventHandler:
                     case 'plusIcon':
                         currFrame = 0
                         videoFile = self.PlayVideoInstance.videoList[self.PlayVideoInstance.currVidIndx]
-                        new_speed = max(0.50, round(self.PlayVideoInstance.opts.playSpeed + 0.50, 1))
+                        #new_speed = max(0.50, round(self.PlayVideoInstance.opts.playSpeed + 0.50, 1))
+                        new_speed = min(10.0, round(self.PlayVideoInstance.opts.playSpeed + 0.50, 1))
+
                         if new_speed != self.PlayVideoInstance.opts.playSpeed:
                             self.PlayVideoInstance.opts.playSpeed = new_speed
                             # Get the current frame that is playing before stoping and closing the video

@@ -42,6 +42,7 @@ import embossFilter
 from ThumbNailMaint import ThumbNailMaint
 from DrawHelpInfo import DrawHelpInfo
 from DrawFilterHelpInfo import DrawFilterHelpInfo
+from DrawRemoteHelpInfo import DrawRemoteHelpInfo
 from DrawVideoInfo import DrawVideoInfo
 from DrawFilterInfo import DrawFilterInfo
 from FilterCheckboxPanel import FilterCheckboxPanel
@@ -450,6 +451,12 @@ class PlayVideo:
         self.filter_help_visible = False
         self.filter_is_hovered = False
         self.filter_help_button_rect = None
+        #
+        # Remote control help window
+        self.drawRemoteHelpInfo = DrawRemoteHelpInfo(self)
+        self.remote_help_visible = False
+        self.remote_is_hovered = False
+        self.remote_help_button_rect = None
         #
         # saveMode
         self.saveMode = False
@@ -1798,7 +1805,7 @@ class PlayVideo:
         font_height = font_bold_regular.get_height()
         padding = 20  # Extra space around the text
         message_lines = [f"Saving {filename} to: ", os.path.expanduser(path)]
-        box_height = (len(message_lines) * int((font_height + 10*self.height_multiplier)) + padding*self.height_multiplier)
+        box_height = int(len(message_lines) * int((font_height + 10*self.height_multiplier)) + padding*self.height_multiplier)
         box_x = (self.displayWidth - box_width) // 2
         box_y = (self.displayHeight - box_height) // 2
 
@@ -2401,7 +2408,7 @@ class PlayVideo:
             progress_surface.set_colorkey((0, 255, 0))
             progress_bar_rect = progress_surface.get_rect()
             #if not self.help_visible and not self.video_info_box:
-            if not self.help_visible and not self.filter_help_visible and not self.video_info_box:
+            if not self.help_visible and not self.filter_help_visible and not self.remote_help_visible and not self.video_info_box:
                 PlayVideo.apply_gradient(progress_surface,
                                          DODGERBLUE,
                                          DODGERBLUE4,
@@ -3003,6 +3010,8 @@ class PlayVideo:
             self.help_button_rect = self.drawHelpInfo.draw_help(self.is_hovered)
         elif self.drawFilterHelpInfo.is_visible():
             self.filter_help_button_rect = self.drawFilterHelpInfo.draw_filter_help(self.is_hovered)
+        elif self.drawRemoteHelpInfo.is_visible():
+            self.remote_help_button_rect = self.drawRemoteHelpInfo.draw_remote_help(self.remote_is_hovered)
 
         if self.drawVideoPlayBarFlag:
             self.videoPlayBar.loop_flag = self.opts.loop_flag

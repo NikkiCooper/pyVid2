@@ -102,6 +102,7 @@ help = dict(
 	verbose=f"{bc.Light_Yellow_f}Enable verbose output.{bc.RESET}",
 	display=f"{bc.Light_Yellow_f}Enable output on a specific display.\n{bc.Magenta_f}Default: {bc.Green_f}The currenty active display{bc.RESET}",
 	consoleStatusBar=f"{bc.Light_Yellow_f}Enables a debug status bar in the console.{bc.RESET}",
+	disable_IR=f"{bc.Light_Yellow_f}Disable the {bc.White_f}IR Remote Control{bc.Light_Yellow_f} UDP listener.\n{bc.Magenta_f}Default: {bc.Green_f}IR Remote enabled{bc.RESET}",
 	#
 	noIgnore=f"{bc.Light_Yellow_f}Do not honor {bc.Green_f}.ignore{bc.Light_Yellow_f} files.{bc.RESET}",
 	noRecurse=f"{bc.Light_Yellow_f}Do not recurse into subfolders specified by {bc.White_f}--Paths.{bc.RESET}",
