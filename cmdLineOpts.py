@@ -381,8 +381,8 @@ def restricted_float_or_int(x):
         raise argparse.ArgumentTypeError(f"{bc.Red_f}{x}{bc.Light_Yellow_f} is not a valid number{bc.RESET}")
 
     # Ensure the value is either a whole number or a float within range
-    if x < 0.5 or x > 5.0:
-        raise argparse.ArgumentTypeError(f"{bc.Light_Yellow_f}Value must be between{bc.Green_f} 0.5{bc.Light_Yellow_f} and{bc.Green_f} 5.0{bc.Light_Yellow_f}, but got{bc.Red_f} {x}{bc.RESET}")
+    if x < 0.5 or x > 10.0:
+        raise argparse.ArgumentTypeError(f"{bc.Light_Yellow_f}Value must be between{bc.Green_f} 0.5{bc.Light_Yellow_f} and{bc.Green_f} 10.0{bc.Light_Yellow_f}, but got{bc.Red_f} {x}{bc.RESET}")
 
     if x.is_integer():  # Convert integer-like floats to ints (e.g., 2.0 → 2)
         return int(x)
