@@ -188,11 +188,11 @@ class EventHandler:
 
         # PLAY_NEXT - Next video pygame.K_n
         #self.ir_remote.register_callback('PLAY_NEXT', lambda: pygame.event.post(pygame.event.Event(self.IR_NEXT_VIDEO)))
-        self.ir_remote.register_callback('PLAY_NEXT', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('PLAY_NEXT', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_n, mod=0)), False)
 
         # PLAY_PREV - Previous video pygame.K_BACKSPACE
         #self.ir_remote.register_callback('PLAY_PREV', lambda: pygame.event.post(pygame.event.Event(self.IR_PREV_VIDEO)))
-        self.ir_remote.register_callback('PLAY_PREV', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_BACKSPACE, mod=0)), allow_repeat=True)
+        self.ir_remote.register_callback('PLAY_PREV', lambda: pygame.event.post(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_BACKSPACE, mod=0)), False)
 
         # PLAY_PAUSE - Toggle pause/play pygame.K_p
         #self.ir_remote.register_callback('PLAY_PAUSE', lambda: pygame.event.post(pygame.event.Event(self.IR_TOGGLE_PAUSE)))
